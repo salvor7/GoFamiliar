@@ -2,6 +2,8 @@ from numpy import random
 import numpy as np
 import cProfile
 
+#TODO turn into a ipy sheet and a unit test 
+
 size = 19
 number_games = 1000000
 
