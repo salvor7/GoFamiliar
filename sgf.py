@@ -13,12 +13,6 @@ player_assign = {'B': 1, 'W': -1}
 letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(size))}
 
 
-#TODO vreate gogame object as numpy array or dataframe in seperate file
-
-#TODO investigate numpy, scipy or pandas for a branching, fast data structure
-
-
-
 def branchreader(sgfstr):
     """
 
@@ -50,7 +44,7 @@ def node_to_board(node):
     :return:
     """
     board = np.zeros((size, size), dtype=np.int8)
-#TODO consider using a dataframe instead of an array
+    #TODO consider using a dataframe instead of an array
     try:
         move = re.findall(sgf_move_patt, node)[0]
     except IndexError:
