@@ -1,0 +1,3 @@
+July 30
+# TODO find bokeh's other output methods
+    notebook and server, neither look useful

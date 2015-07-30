@@ -1,6 +1,4 @@
 __author__ = 'salvor7'
-#TODO test unittests can run from new folder
-
 from unittest import TestCase
 import sgf
 
