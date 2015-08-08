@@ -8,10 +8,10 @@ def make_heatmap(counts_df, file_name='ghm.html'):
     show(HeatMap(counts_df, palette=palette))
 
 
-# TODO find if colours can be transparent
-# TODO find if a background png can be added to the display ie a goban
-# TODO create a user defined palettes
-# TODO pixelate the heatmap     pixels = 7
+# DO LATER find if colours can be transparent
+# DO LATER find if a background png can be added to the display ie a goban
+# DO LATER create a user defined palettes
+# DO LATER pixelate the heatmap     pixels = 7
 
-# TODO test how updating works
+# DO LATER test how updating works
 

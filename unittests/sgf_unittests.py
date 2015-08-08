@@ -1,14 +1,15 @@
 __author__ = 'salvor7'
 from unittest import TestCase
 import sgf
+from os import path
 
 class SGFReaderTests(TestCase):
+    test_sgf_path = 'test_sgfs'
+    linear_sgf = path.join(test_sgf_path, r'linear_test.sgf')
+    branching_sgf = path.join(test_sgf_path, r'branching_test.sgf')
 
-    with open(r'test2.sgf', encoding="utf8") as file:
-        linear_sgf = file.read()
-
-    with open(r'testsgf.sgf', encoding="utf8") as file:
-        branchy_sgf = file.read()
+    def test_sgf2df(self):
+        print(sgf.sgf2df(self.linear_sgf))
 
     def test_branchreader(self):
         def diveintobranches(branchlist):
@@ -21,7 +22,7 @@ class SGFReaderTests(TestCase):
         length_of_branchy_sgf = 12
 
         assert len(sgf.branchreader(self.linear_sgf)) == length_of_linear_sgf
-        assert len(sgf.branchreader(self.branchy_sgf)) == length_of_branchy_sgf
+        assert len(sgf.branchreader(self.branching_sgf)) == length_of_branchy_sgf
 
     def test_node_to_board(self):
         assert sgf.node_to_board(r'B[dd]')[3][3] == 1
