@@ -1,5 +1,3 @@
-__author__ = 'salvor7'
-
 from unittest import TestCase
 import go_heatmap as ghm
 import numpy as np

@@ -2,8 +2,6 @@
 This module defines the GoGame object as a representation a Go game. The GoGame object is a store of all the game states
 or just the final game state of a go game.
 """
-__author__ = 'salvor7'
-
 import numpy as np
 
 

@@ -1,5 +1,4 @@
-__author__ = 'salvor7'
-from unittest import TestCase
+m unittest import TestCase
 import sgf
 from os import path
 

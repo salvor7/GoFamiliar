@@ -1,9 +1,6 @@
 """
 This module defines the go analysis functions of the GoFamiliar.
 """
-
-__author__ = 'salvor7'
-
 from bokeh.charts import HeatMap, show, output_file
 from bokeh.palettes import Spectral11 as palette
 

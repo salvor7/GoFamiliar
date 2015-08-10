@@ -5,9 +5,6 @@
 ... 'you')
 you6
 """
-
-__author__ = 'salvor7'
-
 from os import walk, path
 import fnmatch
 
