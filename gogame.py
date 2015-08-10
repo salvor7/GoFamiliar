@@ -5,7 +5,7 @@ or just the final game state of a go game.
 import numpy as np
 
 
-class GoGame(np.array):
+class GoGame(np.ndarray):
     """
     The size (k) of the game board is set at object construction, can be any odd integer and is based.
 
@@ -19,12 +19,52 @@ class GoGame(np.array):
 
     default_size = 19
 
-    def __init__(self, game):
-        """The GoGame object can be constructed as a blank board (default)
+    def __init__(self, game=None, size=default_size):
+        """The GoGame object can be constructed as a blank board 19 by 19 (default)
         or using
             - an sgf file (principle branch only)
             - a michi style game string
-            - a 19 by 19 by n array with entries 0,1,-1
+            - a k by k by n array with entries 0,1,-1
+
+        >>> print(GoGame(size=3))
+        [[0 0 0]
+         [0 0 0]
+         [0 0 0]]
+        >>> print(GoGame(game='(SZ[3]B[ac]W[cc]B[ca])'))
+        [[0 0 1]
+         [0 0 0]
+         [1 0 -1]]
+        >>> michi_string = '      ..X  O..  .X.      '
+        >>> print(GoGame(game=michi_string))
+        [[0 0 1]
+         [-1 0 0]
+         [0 1 0]]
+
+        :param game: sgf formated string, or a michi formatted string or a k by k by n np.array
+        :param size: size of goban. size of game overrides parameter
         """
-        super(np.array, self).__init__()
-        self += np.zeros((self.default_size, self.default_size))
+        super(np.zeros(shape=(size, size), dtype=np.int8), self).__init__()
+
+    def add_move(self, location):
+        """
+        Add a new k by k board representing the game state after the player move.
+
+        >>> game = GoGame(size=3)
+        >>> print(game.add_move('B[ab]'))  #SGF format
+        [[0 0 0]
+         [1 0 0]
+         [0 0 0]]
+        >>> print(game.add_move('W(1,3)'))  #colour + coordinate format
+        [[0 0 -1]
+         [1 0 0]
+         [0 0 0]]
+
+        :param location: location of move in sgf format, colour + coordinate format
+        :return: GoGame of new state
+        """
+        pass
+
+if __name__ == '__main__':
+    import doctest
+
+    doctest.testmod(verbose=True)
