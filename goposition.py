@@ -5,7 +5,7 @@ or just the final game state of a go game.
 import numpy as np
 
 
-class GoGame(np.ndarray):
+class GoPosition(np.ndarray):
     """
     The size (k) of the game board is set at object construction, can be any odd integer and is based.
 
@@ -26,16 +26,16 @@ class GoGame(np.ndarray):
             - a michi style game string
             - a k by k by n array with entries 0,1,-1
 
-        >>> print(GoGame(size=3))
+        >>> print(GoPosition(size=3))
         [[0 0 0]
          [0 0 0]
          [0 0 0]]
-        >>> print(GoGame(game='(SZ[3]B[ac]W[cc]B[ca])'))
+        >>> print(GoPosition(game='(SZ[3]B[ac]W[cc]B[ca])'))
         [[0 0 1]
          [0 0 0]
          [1 0 -1]]
         >>> michi_string = '      ..X  O..  .X.      '
-        >>> print(GoGame(game=michi_string))
+        >>> print(GoPosition(game=michi_string))
         [[0 0 1]
          [-1 0 0]
          [0 1 0]]
@@ -49,7 +49,7 @@ class GoGame(np.ndarray):
         """
         Add a new k by k board representing the game state after the player move.
 
-        >>> game = GoGame(size=3)
+        >>> game = GoPosition(size=3)
         >>> print(game.add_move('B[ab]'))  #SGF format
         [[0 0 0]
          [1 0 0]
