@@ -1,6 +1,5 @@
 """
-This module defines the GoGame object as a representation a Go game. The GoGame object is a store of all the game states
-or just the final game state of a go game.
+This module defines the GoPosition object as a representation a Go game snap shot as a numpy array.
 """
 import numpy as np
 
@@ -14,55 +13,47 @@ class GoPosition(np.ndarray):
         1 for a black stone
         -1 for a white stone
 
-    GoGame object is a numpy.array object, with the additional entry constraints and shape constraints, ie. k by k by n
+    GoPosition object is a numpy.array object, with the additional entry constraints and shape constraints, ie. k by k
     """
-
     default_size = 19
 
-    def __init__(self, game=None, size=default_size):
-        """The GoGame object can be constructed as a blank board 19 by 19 (default)
-        or using
-            - an sgf file (principle branch only)
-            - a michi style game string
-            - a k by k by n array with entries 0,1,-1
+    def __init__(self, moves=None, size=default_size, komi=6.5):
+        """The GoPosition object can be constructed as a blank board 19 by 19 (default)
+        or using a list of GoMoves.
 
         >>> print(GoPosition(size=3))
         [[0 0 0]
          [0 0 0]
          [0 0 0]]
-        >>> print(GoPosition(game='(SZ[3]B[ac]W[cc]B[ca])'))
-        [[0 0 1]
-         [0 0 0]
-         [1 0 -1]]
-        >>> michi_string = '      ..X  O..  .X.      '
-        >>> print(GoPosition(game=michi_string))
-        [[0 0 1]
-         [-1 0 0]
-         [0 1 0]]
+        >>> list init test
 
-        :param game: sgf formated string, or a michi formatted string or a k by k by n np.array
-        :param size: size of goban. size of game overrides parameter
+        :param game: size by size  np.array
+        :param size: size of goban
         """
-        super(np.zeros(shape=(size, size), dtype=np.int8), self).__init__()
+        super().__init__()
+        self.komi = komi
+        self.lastmove = None
 
-    def add_move(self, location):
+        for move in moves:
+            self.add_move(move)
+
+
+    def add_move(self, move):
         """
-        Add a new k by k board representing the game state after the player move.
+        Add a new k by k board representing the game state after the player move, including removing captures, and
+        updating self.last_move with move.
 
-        >>> game = GoPosition(size=3)
-        >>> print(game.add_move('B[ab]'))  #SGF format
-        [[0 0 0]
-         [1 0 0]
-         [0 0 0]]
-        >>> print(game.add_move('W(1,3)'))  #colour + coordinate format
-        [[0 0 -1]
-         [1 0 0]
-         [0 0 0]]
+        >>> position = GoPosition()
+        >>> pos.add_move(GoMove(1,4,4))[3][3]
+        1
 
-        :param location: location of move in sgf format, colour + coordinate format
-        :return: GoGame of new state
+        :param move: GoMove
+        :return: GoPostion
         """
+        #np.sum([boardlist[-1], board]
         pass
+
+
 
 if __name__ == '__main__':
     import doctest
