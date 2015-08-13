@@ -7,7 +7,7 @@ There are two principal inputs: a library of professional games and a Monte Carl
 # Use of the professional game library:
 The planned use of the pro game library is as an aid to opening play in a Go game being played. This is accomplished by searching the library for games with the same or similar moves so far, and giving an indication of the places where pros played next via a heatmap or similar board overlay.
 
-_(Note Aug 4, 2015 - Give the relative simplicity of using the pro games, it is the first idea I aim to implement)_
+_(Note Aug 4, 2015 - Given the relative simplicity of using the pro games, it is the first idea I aim to implement)_
 
 # Use of the Monte Carlo simulator:
 The planned use of the Monte Carlo simulator is to "siphon off" the random games used in its calculation, save them, and use them in various ways. As these are random games, the intermediate game states may not be very useful, but the final game states should offer the same usefulness as they do for the MC computer players.
