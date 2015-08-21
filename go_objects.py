@@ -1,8 +1,10 @@
 """
-This module defines the GoPosition object as a representation a Go game snap shot as a numpy array.
+This module defines the objects which represent aspects of a Go game .
 """
 import numpy as np
+from collections import namedtuple
 
+GoMove = namedtuple('Move','player x y')
 
 class GoPosition(np.ndarray):
     """GoPosition object.
