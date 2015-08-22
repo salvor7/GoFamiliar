@@ -80,33 +80,35 @@ def sgf_parser(sgf_str):
 def node_to_move(node):
     """Return the GoMove for an SGF move node.
 
-    >>> move = node_to_move(r'B[dc]')
-    >>> move.player
-    1
-    >>> move.x
-    4
-    >>> move.y
-    3
+    This function will also work with the alternative SGF move notation used in sgf_parser.
+
+    >>> node_to_move('B[dc]')
+    GoMove(player=1, x=4, y=3)
+    >>> node_to_move('W<pq>')
+    GoMove(player=-1, x=16, y=17)
+    >>> try:
+    ...     node_to_move('error')
+    ... except TypeError as err:
+    ...     print(err)
+    node is not Smart Game formatted
+
 
     :param node: sgf node eg B[ah]
     :return: GoMove
     """
     size = 19
-    letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(size))}
+    letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(1, size + 1))}
     player_assign = {'B': 1, 'W': -1}
     # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 
-    sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
+    sgf_move_patt = re.compile(r'[BW][\[<][a-s][a-s][\]>]')
 
-    board = np.zeros((size, size), dtype=np.int8)
     try:
-        move = re.findall(sgf_info_patt, node)[0]
+        move = re.findall(sgf_move_patt, node)[0]
     except IndexError:
-        return board
+        raise TypeError('node is not Smart Game formatted')
 
     player = player_assign[move[0]]
     x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
 
-    board[y_coord][x_coord] += player
-
-    return board
+    return GoMove(player, x_coord, y_coord)
