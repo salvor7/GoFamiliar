@@ -2,8 +2,10 @@
 
 >>> black_tengen = GoMove(player=1, x=10, y=10)
 >>> black_tengen
-(1, 10, 10)
-
+GoMove(player=1, x=10, y=10)
+>>> white_komoku = GoMove(-1,3,4)
+>>> white_komoku
+GoMove(player=-1, x=3, y=4)
 """
 
 import numpy as np
@@ -27,7 +29,7 @@ class GoPosition:
     """
     default_size = 19
 
-    def __init__(self, moves=None, size=default_size, komi=6.5):
+    def __init__(self, moves=None, size=default_size, komi=6.5, lastmove=None, kolock=None):
         """GoPosition constructor.
         
         The GoPosition object can be constructed as a blank board 19 by 19 (default)
@@ -42,10 +44,10 @@ class GoPosition:
         :param game: size by size  np.array
         :param size: size of goban
         """
-        self.board = np.zeroes((size, size))
+        self.board = np.zeros((size, size))
         self.komi = komi
-        self.lastmove = None
-        self.kolock = None
+        self.lastmove = lastmove
+        self.kolock = kolock
 
         for move in moves:
             self.add_move(move)
@@ -64,7 +66,6 @@ class GoPosition:
         :param move: GoMove
         :return: GoPostion
         """
-        #np.sum([boardlist[-1], board]
         pass
 
 
