@@ -1,10 +1,19 @@
 """
-This module defines the GoPosition object as a representation a Go game snap shot as a numpy array.
+This module defines the objects which represent aspects of a Go game.
+
+>>> black_tengen = GoMove(player=1, x=10, y=10)
+>>> black_tengen
+(1, 10, 10)
+
+>>> 
+
 """
 import numpy as np
+from collections import namedtuple
 
+GoMove = namedtuple('GoMove','player x y')
 
-class GoPosition(np.ndarray):
+class GoPosition():
     """GoPosition object.
     
     The size (k) of the game board is set at object construction, can be any odd integer and is based.
@@ -33,9 +42,10 @@ class GoPosition(np.ndarray):
         :param game: size by size  np.array
         :param size: size of goban
         """
-        super().__init__()
+        self.board = np.zeroes((size, size))
         self.komi = komi
         self.lastmove = None
+        self.kolock = None
 
         for move in moves:
             self.add_move(move)
@@ -62,5 +72,4 @@ class GoPosition(np.ndarray):
 
 if __name__ == '__main__':
     import doctest
-
     doctest.testmod(verbose=True)
