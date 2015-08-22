@@ -1,10 +1,17 @@
 """
-This module defines the objects which represent aspects of a Go game .
+This module defines the objects which represent aspects of a Go game.
+
+>>> black_tengen = GoMove(player=1, x=10, y=10)
+>>> black_tengen
+(1, 10, 10)
+
+>>> 
+
 """
 import numpy as np
 from collections import namedtuple
 
-GoMove = namedtuple('Move','player x y')
+GoMove = namedtuple('GoMove','player x y')
 
 class GoPosition(np.ndarray):
     """GoPosition object.
