@@ -76,6 +76,38 @@ def sgf_parser(sgf_str):
     return ast.literal_eval(sgf_str)
 
 
+def sgf_main_branch(sgf_list):
+    """Returns the main branch of an sgf string.
+
+    Searches every branch of the sgf list, and returns the first branch at each branch.
+
+    >>> linear_sgf = '(;KM[2.75]SZ[19];B[qd];W[dd];B[oc];W[pp];B[do];W[dq])'
+    >>> sgf_parser(linear_sgf) == sgf_main_branch(sgf_parser(linear_sgf))
+    True
+    >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
+    >>> sgf_main_branch(sgf_parser(basic_branching1))
+    ['SZ<19>', 'B<qd>', 'W<dd>', 'B<oc>']
+    >>> complex_branching = ('(;RU[Japanese]SZ[19]KM[6.50];B[jj];W[kl]'
+    ...                 '(;B[pd](;W[pp])(;W[dc](;B[de])(;B[dp])))'
+    ...                 '(;B[cd];W[dp])'
+    ...                 '(;B[cq](;W[pq])(;W[pd]))'
+    ...                 '(;B[oq];W[dd]))')
+    >>> sgf_main_branch(sgf_parser(complex_branching))
+    ['RU<Japanese>', 'SZ<19>', 'KM<6.50>', 'B<jj>', 'W<kl>', 'B<pd>', 'W<pp>']
+
+    :param sgf_str:
+    :return:
+    """
+    main_branch = []
+    for node in sgf_list:
+        if type(node) == list:
+            main_branch += sgf_main_branch(node)
+            break
+        else:
+            main_branch.append(node)
+
+    return main_branch
+
 
 def node_to_move(node):
     """Return the GoMove for an SGF move node.
@@ -112,3 +144,11 @@ def node_to_move(node):
     x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
 
     return GoMove(player, x_coord, y_coord)
+
+
+def sgf_to_final(sgf_str):
+    pass
+
+
+def sgf_to_game(sgf_str):
+    pass
