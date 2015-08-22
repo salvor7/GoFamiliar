@@ -1,13 +1,13 @@
-"""
-This module defines the go analysis functions of the GoFamiliar.
-"""
+"""Go analysis functions of the GoFamiliar."""
+
 from bokeh.charts import HeatMap, show, output_file
 from bokeh.palettes import Spectral11 as palette
 import numpy as np
+import random
 
 
 def make_heatmap(count_array, output_save='ghm.html'):
-    """Displays a heatmap, based on counts_array, overlaid on a goban.
+    """Displays a heatmap overlaid on a goban.
 
     >>> not sure what to test
 
@@ -20,22 +20,26 @@ def make_heatmap(count_array, output_save='ghm.html'):
     show(HeatMap(count_array, palette=palette))
 
 def add_games(games_array, prev_counts=None):
-    """For each interection, function counts the number of times black, white and no-one has played there. Counts are
-    recorded as three integer arrays, one each for black, white and no-one.
+    """Sum a set of GoPositions.
+
+    For each interection, function counts the number of times black, white and no-one has played there.
+    Counts are recorded as three integer arrays, one each for black, white and no-one.
 
     New counts are added to prev_counts if not None.
     >>> not sure what to test
 
-    :param games_array: numpy.array, -1,0,1 entries, shape k by k by n
+    :param games_array: n array of GoPositions.
     :param prev_counts: numpy.array, integer entries, shape k by k (default None)
     :return: k by k by 3 integer array
     """
     pass
 
+
 def intersection_ownership(count_array):
-    """Returns a k by k chart overlaid on a goban showing end of game expected ownership of each intersection as a go
-    stone coloured x% black, y% gray (or clear) and z% white where x+y+z = 100 and represent the percentage chance of
-    end of game ownership.
+    """Returns chart showing end of game expected ownership.
+
+    Chart is overlaid in a goban, and each intersection shows x% black, y% gray (or clear) and z% white
+    where x+y+z = 100 and represent the percentage chance of end of game ownership.
 
     >>> not sure what to test
 
@@ -44,15 +48,16 @@ def intersection_ownership(count_array):
     """
     pass
 
+
 def __random_game_accessor(size=19, number_positions=1000000, yield_size = 2**14):
-    """A function for testing these functions on randomly generated sets of Go positions.
+    """Yields randomly generated sets of GoPositions.
 
     >>> Need tests
 
     :param number_positions: int = number of random games to yield total
     :param size: int = game board size (default 19)
     :param yield_size: int = number of random games to yield at a once
-    :yield: random array of -1,0,1 of shape size by size by yield_size
+    :yield: random array of GoPositions
     """
 
     for __ in range(number_positions//yield_size):
@@ -62,7 +67,7 @@ def __random_game_accessor(size=19, number_positions=1000000, yield_size = 2**14
 
 
 def __compute_spots(position_array_iter, size=19):
-    """From an iterator over a set of go positions, calculate the percentage chance of intersection ownership.
+    """Calculate the percentage chance of intersection ownership.
 
     >>> need tests
 
@@ -85,14 +90,14 @@ def __compute_spots(position_array_iter, size=19):
         white = np.add(white, new_white)
     return black, white
 
+
 def __compute_score(position_array_iter, size=19):
-    """Compute expected score. Positive indicated black is winning; negative indicates white is winning.
+    """Compute expected score.
+
+    Positive indicated black is winning; negative indicates white is winning.
 
     :param position_array_iter: iterator  over a set of go positions
     :return: float = expected final score given the position array
     """
     return np.sum(np.add(__compute_spots(position_array_iter,size)))
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()

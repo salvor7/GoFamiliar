@@ -1,19 +1,19 @@
-"""
-This module defines the objects which represent aspects of a Go game.
+"""Objects representation of aspects of Go.
 
 >>> black_tengen = GoMove(player=1, x=10, y=10)
 >>> black_tengen
 (1, 10, 10)
 
->>> 
-
 """
+
 import numpy as np
 from collections import namedtuple
 
-GoMove = namedtuple('GoMove','player x y')
 
-class GoPosition():
+GoMove = namedtuple('GoMove','player x y')
+"""GoMove object"""
+
+class GoPosition:
     """GoPosition object.
     
     The size (k) of the game board is set at object construction, can be any odd integer and is based.
@@ -52,8 +52,7 @@ class GoPosition():
 
 
     def add_move(self, move):
-        """
-        Return a GoPosition post adding a move to self.
+        """Return a GoPosition post adding a move to self.
         
         Add a new k by k board representing the game state after the player move, including removing captures, and
         updating self.last_move with move.
@@ -69,7 +68,5 @@ class GoPosition():
         pass
 
 
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod(verbose=True)
+class GameSet:
+    pass

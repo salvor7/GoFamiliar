@@ -1,6 +1,9 @@
+"""Node object definition for tree construction. """
 
 class Node:
-    """Construct can be found at http://cbio.ufs.ac.za/live_docs/nbn_tut/trees.html
+    """Node object for tree construction.
+
+    This construction can be found at http://cbio.ufs.ac.za/live_docs/nbn_tut/trees.html
 
     >>> tree = Node('grandmother', [
     ...                             Node('daughter', [ Node('granddaughter'), Node('grandson')]),
@@ -17,12 +20,20 @@ class Node:
     def __init__(self, value, children = None):
         """Construct a Node.
 
+        Error checks the children parameter ensuring it iterates over Node objects.
+
         :param value: Node value
-        :param children: [Nodes]
+        :param children: iterable over Node objects
         """
+
+        if not children:
+            children = []
+
+        try:
+            for node in children:
+                assert type(node) == Node
+        except TypeError:
+            raise TypeError(str(children) + 'is not iterable')
+
         self.value = value
         self.children = children
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()

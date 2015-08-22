@@ -1,11 +1,11 @@
-"""This module deals with all sgf related transformations.
-"""
+"""All sgf related transformations."""
+
 import ast
 import re
 from string import ascii_letters
 import numpy as np
 
-from gomove import GoMove
+from go_objects import GoMove
 
 # regex pattern found at at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
@@ -56,6 +56,7 @@ def sgf_parser(sgf_str):
     ['B<oq>', 'W<dd>']
     >>> branchy_sgf = open('sgf_store/test_sgfs/branching_test.sgf').read()
     >>> game = sgf_parser(branchy_sgf)
+
     """
 
     # regex replacement format found at https://docs.python.org/2/howto/regex.html#modifying-strings
@@ -76,42 +77,36 @@ def sgf_parser(sgf_str):
 
 
 
-# def node_to_move(node):
-#     """Return the GoMove for an sgf move node.
-#
-#     >>> move = node_to_move(r'B[dc]')
-#     >>> move.player
-#     1
-#     >>> move.x
-#     4
-#     >>> move.y
-#     3
-#
-#     :param node: sgf node eg B[ah]
-#     :return: GoMove
-#     """
-#     size = 19
-#     letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(size))}
-#     player_assign = {'B': 1, 'W': -1}
-#     # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
-#
-#     sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
-#
-#     board = np.zeros((size, size), dtype=np.int8)
-#     try:
-#         move = re.findall(sgf_info_patt, node)[0]
-#     except IndexError:
-#         return board
-#
-#     player = player_assign[move[0]]
-#     x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
-#
-#     board[y_coord][x_coord] += player
-#
-#     return board
+def node_to_move(node):
+    """Return the GoMove for an SGF move node.
 
+    >>> move = node_to_move(r'B[dc]')
+    >>> move.player
+    1
+    >>> move.x
+    4
+    >>> move.y
+    3
 
-if __name__ == '__main__':
-    branchy_sgf = open('sgf_store/test_sgfs/branching_test.sgf').read()
-    game = sgf_parser(branchy_sgf)
-    print(game)
+    :param node: sgf node eg B[ah]
+    :return: GoMove
+    """
+    size = 19
+    letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(size))}
+    player_assign = {'B': 1, 'W': -1}
+    # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
+
+    sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
+
+    board = np.zeros((size, size), dtype=np.int8)
+    try:
+        move = re.findall(sgf_info_patt, node)[0]
+    except IndexError:
+        return board
+
+    player = player_assign[move[0]]
+    x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
+
+    board[y_coord][x_coord] += player
+
+    return board
