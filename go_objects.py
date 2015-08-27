@@ -11,6 +11,7 @@ GoMove(player=-1, x=3, y=4)
 import numpy as np
 from collections import namedtuple
 
+DEFAULT_SIZE = 19
 
 GoMove = namedtuple('GoMove','player x y')
 """GoMove object"""
@@ -27,9 +28,8 @@ class GoPosition:
 
     GoPosition object is a numpy.array object, with the additional entry constraints and shape constraints, ie. k by k
     """
-    default_size = 19
 
-    def __init__(self, moves=None, size=default_size, komi=6.5, lastmove=None, kolock=None):
+    def __init__(self, moves=None, size=DEFAULT_SIZE, komi=6.5, lastmove=None, kolock=None):
         """GoPosition constructor.
         
         The GoPosition object can be constructed as a blank board 19 by 19 (default)
@@ -69,5 +69,8 @@ class GoPosition:
         pass
 
 
-class GameSet:
+class GoPositionArray:
+    pass
+
+class GoGame:
     pass
