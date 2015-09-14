@@ -1,7 +1,9 @@
-"""Go analysis functions of the GoFamiliar."""
+"""Go analysis functions of the GoFamiliar implemented in kivy."""
 
-from bokeh.charts import HeatMap, show, output_file
-from bokeh.palettes import Spectral11 as palette
+from kivy.app import App
+from kivy.uix.widget import Widget
+
+
 import numpy as np
 import random
 
