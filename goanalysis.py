@@ -19,7 +19,7 @@ Builder.load_string('''
 
 class HeatGridWidget(Widget):
     """
-    
+
     """
 
     def __init__(self, prob_array=None):
