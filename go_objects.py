@@ -35,22 +35,24 @@ class GoPosition:
         The GoPosition object can be constructed as a blank board 19 by 19 (default)
         or using a list of GoMoves.
 
-        >>> print(GoPosition(size=3))
+        >>> print(GoPosition(size=3).board)
         [[0 0 0]
          [0 0 0]
          [0 0 0]]
-        >>> list init test
 
         :param game: size by size  np.array
         :param size: size of goban
         """
-        self.board = np.zeros((size, size))
+        self.board = np.zeros((size, size), dtype=np.int)
         self.komi = komi
         self.lastmove = lastmove
         self.kolock = kolock
 
-        for move in moves:
-            self.add_move(move)
+        try:
+            for move in moves:
+                self.add_move(move)
+        except TypeError:
+            pass
 
 
     def add_move(self, move):
@@ -60,13 +62,14 @@ class GoPosition:
         updating self.last_move with move.
 
         >>> position = GoPosition()
-        >>> pos.add_move(GoMove(1,4,4))[3][3]
+        >>> position.add_move(GoMove(1,4,4))
+        >>> position.board[3][3]
         1
 
         :param move: GoMove
-        :return: GoPostion
+        :return: None
         """
-        pass
+        self.board[move.x - 1, move.y - 1] += move.player
 
 
 class GoPositionArray:
