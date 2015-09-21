@@ -8,6 +8,7 @@ import ast
 import re
 from string import ascii_letters
 import numpy as np
+import util.directory_tools as dt
 
 from go_objects import GoMove
 
@@ -151,7 +152,7 @@ def node_to_move(node):
 def sgf_to_final(sgf_str):
     """Return GoPostion object of final game position of sgf_str.
 
-    >>> basic = '(;SZ[19];B[bb];W[ba];B[ab];B[cb])'
+    >>> basic = '(;SZ[3];B[bb];W[ba];B[ab];B[cb])'
     >>> sgf_to_final(basic).board
     [[0 1 0]
      [1 1 -1]
@@ -170,3 +171,25 @@ def sgf_to_game(sgf_str):
     :return: GoGame
     """
     pass
+
+
+def sgf_store():
+    """Yield all GoGame from sgfs in Sgf_store
+
+    >>> [game for game in sgf_store()]
+
+    :yield: GoGame
+    """
+    dir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store/baduk-pro-collection'
+
+    files_found = dt.search_tree(directory=dir, file_sig='*.sgf')
+    for file in files_found:
+        with open(file, errors='replace', encoding='utf-8') as sgf_file:
+
+            try:
+                string = sgf_file.read()
+            except:
+                print(file)
+                raise
+            if 'SZ[19]' in string:
+                yield sgf_main_branch(string)
