@@ -7,6 +7,7 @@ An SGF string is formatted as described at the website.
 import ast
 import re
 from string import ascii_letters
+import h5py
 import numpy as np
 import util.directory_tools as dt
 
@@ -149,6 +150,19 @@ def node_to_move(node):
     return GoMove(player, x_coord, y_coord)
 
 
+def sgf_info(attribute):
+    """Return the sgf attribute name and value.
+
+    >>> sgf_info('SZ[19]')
+    ('SZ', '19')
+
+    :param attribute: string
+    :return: string, string
+    """
+    name, value = attribute.replace(']', '').split('[')
+    return name, value
+
+
 def sgf_to_final(sgf_str):
     """Return GoPostion object of final game position of sgf_str.
 
@@ -174,15 +188,17 @@ def sgf_to_game(sgf_str):
 
 
 def sgf_store():
-    """Yield all GoGame from sgfs in Sgf_store
+    """Yield all GoGame from size 19 sgfs in sgf_store
 
-    >>> [game for game in sgf_store()]
+    >>> sum(1 for game in sgf_store()) > 45000
+    True
 
     :yield: GoGame
     """
     dir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store/baduk-pro-collection'
 
     files_found = dt.search_tree(directory=dir, file_sig='*.sgf')
+
     for file in files_found:
         with open(file, errors='replace', encoding='utf-8') as sgf_file:
 
@@ -191,5 +207,7 @@ def sgf_store():
             except:
                 print(file)
                 raise
-            if 'SZ[19]' in string:
-                yield sgf_main_branch(string)
+            yield sgf_main_branch(string)
+
+
+
