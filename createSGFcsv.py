@@ -9,9 +9,9 @@ with open('sgf_store/all_sgfs.csv', 'w', encoding='utf-8') as csv_file:
         with open(file, errors='replace', encoding='utf-8') as sgf_file:
 
             try:
-                string = sgf_file.read().replace('\n', '')
+                string = sgf_file.read()
             except:
                 print(file)
                 raise
             if 'SZ[19]' in string:
-                csv_file.writelines(string + '\n')
+                csv_file.writelines(string.replace('\n', '') + '\n')
