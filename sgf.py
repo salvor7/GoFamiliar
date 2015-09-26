@@ -211,3 +211,30 @@ def sgf_store():
 
 
 
+def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/'):
+    """Create hdf5 file of sgf_store
+
+    >>> create_sgf_hdf5()
+
+    :param file: string
+    :param dir: string
+    :return: None
+    """
+    pro_games = h5py.File(dir + file, 'w')
+
+    for game_id, sgf_nodes in enumerate(sgf_store()):
+        curr_game = 'Game' + str(game_id)
+        pro_games.create_group(curr_game)
+
+        move_list = []
+        for node in sgf_nodes:
+            try:
+                move_list.append(node_to_move(node))
+            except TypeError:
+                name, value = sgf_info(node)
+                pro_games[curr_game].attrs[name.encode('UTF8')] = value.encode('UTF8')
+
+        pro_games[curr_game].create_dataset('moves', data=np.array(move_list))
+
+if __name__ == '__main__':
+    create_sgf_hdf5()
