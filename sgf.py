@@ -174,30 +174,6 @@ def sgf_info(attribute):
     return name, value
 
 
-def sgf_to_final(sgf_str):
-    """Return GoPostion object of final game position of sgf_str.
-
-    >>> basic = '(;SZ[3];B[bb];W[ba];B[ab];B[cb])'
-    >>> sgf_to_final(basic).board
-    [[0 1 0]
-     [1 1 -1]
-     [0 -1 0]]
-
-    :param sgf_str: SGF string
-    :return: GoPostion
-    """
-    pass
-
-
-def sgf_to_game(sgf_str):
-    """Return GoGame from sgf_str
-
-    :param sgf_str: SGF string
-    :return: GoGame
-    """
-    pass
-
-
 def sgf_store(dir=sgfdir):
     """Yield all raw strings from size 19 sgfs in sgf_store
 
