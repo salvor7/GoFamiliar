@@ -13,6 +13,8 @@ import util.directory_tools as dt
 
 from go_objects import GoMove
 
+sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
+
 # regex pattern found at at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
@@ -60,9 +62,6 @@ def sgf_parser(sgf_str):
     ['B[cd]', 'W[dp]']
     ['B[cq]', ['W[pq]'], ['W[pd]']]
     ['B[oq]', 'W[dd]']
-    >>> branchy_sgf = open('sgf_store/test_sgfs/branching_test.sgf').read()
-    >>> game = sgf_parser(branchy_sgf)
-
     """
     bad_chars = [('\n', '')         # get rid of newline
                  , ('][', ' ')      # combine sequence (AB, AW, LB) info into one item
@@ -89,7 +88,6 @@ def sgf_parser(sgf_str):
     except Exception as err:
         message = str(err) + '\n' + sgf_str
         raise SGFError(message)
-
 
 
 def sgf_main_branch(sgf_list):
@@ -200,33 +198,46 @@ def sgf_to_game(sgf_str):
     pass
 
 
-def sgf_store():
-    """Yield all GoGame from size 19 sgfs in sgf_store
+def sgf_store(dir=sgfdir):
+    """Yield all raw strings from size 19 sgfs in sgf_store
 
     >>> sum(1 for game in sgf_store()) > 45000
     True
 
-    :yield: GoGame
+    :param dir: string
+    :yield: string
     """
-    dir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store/baduk-pro-collection'
-
     files_found = dt.search_tree(directory=dir, file_sig='*.sgf')
-    bad_files = []
+
     for file in files_found:
         with open(file, errors='ignore', encoding='utf-8') as sgf_file:
-
-            string = sgf_file.read()
-
             try:
-                yield sgf_main_branch(sgf_parser(string))
+                string = sgf_file.read()
             except Exception as err:
                 message = str(err) + '\n' + file + '\n' + string + '\n'*2
-                message = message.encode('utf-8', errors='ignore').decode(encoding='ascii', errors='ignore')
-                bad_files.append(message)
+                raise SGFError(message)
+
+            yield string
+
+def sgf_store_parser(dir=sgfdir):
+    """Generator of parsed main branches of all sgf files in sgf_store
+
+    >>> for _ in sgf_store_parser():
+    ...     pass
+
+    :param dir: string
+    :yield: list
+    """
+    bad_files = []
+    for sgf_str in sgf_store(dir):
+        try:
+            yield sgf_main_branch(sgf_parser(sgf_str))
+        except Exception as err:
+            message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii', errors='ignore')
+            bad_files.append(message)
 
     for msg in bad_files:
         print(msg)
-
 
 
 class SGFError(Exception):
