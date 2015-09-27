@@ -1,4 +1,5 @@
 .idea
 __pycache__
-sgf_store/baduk-pro-collection
-.hdf5
+sgf_store
+*.hdf5
+*.csv
