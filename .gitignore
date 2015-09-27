@@ -1,5 +1,5 @@
 .idea
 __pycache__
-sgf_store
+sgf_store/*
 *.hdf5
 *.csv
