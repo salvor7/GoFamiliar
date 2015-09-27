@@ -269,6 +269,13 @@ def create_sgf_csv(file='pro_collection.csv', dir='sgf_store/', limit=None):
 def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
 
+    Add sgf details from sgf files in sgf_store to a hdf5 binary.
+    Each game is added as a group.
+    Each sgf piece of info is added as an attribute of the group.
+    All the moves are added as a data set under the group.
+    Limit caps the number of iterations to that integer for testing.
+    >>> create_sgf_csv(file='sgfhdf5_doctest.hdf5', limit=100)
+
     :param file: string
     :param dir: string
     :return: None
@@ -276,6 +283,9 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     pro_games = h5py.File(dir + file, 'w')
 
     for game_id, sgf_nodes in enumerate(sgf_store()):
+        if limit and game_id > abs(limit):
+            break
+
         curr_game = 'Game' + str(game_id)
         pro_games.create_group(curr_game)
 
