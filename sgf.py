@@ -244,7 +244,29 @@ class SGFError(Exception):
     pass
 
 
-def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/'):
+def create_sgf_csv(file='pro_collection.csv', dir='sgf_store/', limit=None):
+    """Create csv file of sgf_store
+
+    Add sgf strings from files in sgf_store folder as single lines in the csv file.
+    Limit caps the number of iterations to that integer for testing.
+    >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
+
+    :param file: string
+    :param dir: string
+    :param limit: int
+    :return: None
+    """
+    with open(dir + file, 'w', encoding='utf-8') as csv_file:
+        for sgf_id, sgf_str in enumerate(sgf_store()):
+            if limit and sgf_id > abs(limit):
+                break
+            csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
+
+
+
+
+
+def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
 
     :param file: string
