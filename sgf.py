@@ -249,34 +249,33 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_sgf_csv(file='sgfhdf5_doctest.hdf5', limit=100)
+    >>> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
 
     :param file: string
     :param dir: string
     :return: None
     """
-    pro_games = h5py.File(dir + file, 'w')
+    with h5py.File(dir + file, 'w') as pro_games:
+        for game_id, sgf_nodes in enumerate(sgf_store_parser()):
+            if limit and game_id > abs(limit):
+                break
 
-    for game_id, sgf_nodes in enumerate(sgf_store_parser()):
-        if limit and game_id > abs(limit):
-            break
+            curr_game = 'Game' + str(game_id)
+            pro_games.create_group(curr_game)
 
-        curr_game = 'Game' + str(game_id)
-        pro_games.create_group(curr_game)
+            move_list = []
+            for node in sgf_nodes:
+                try:
+                    move_list.append(node_to_move(node))
+                except ValueError:
+                    name, value = sgf_info(node)
+                    if value == '' or value == ' ':     # don't record blank info
+                        continue
+                    if name == 'C':
+                        name += str(len(move_list))     # associated comment to specific move
+                    pro_games[curr_game].attrs[name] = value
 
-        move_list = []
-        for node in sgf_nodes:
-            try:
-                move_list.append(node_to_move(node))
-            except ValueError:
-                name, value = sgf_info(node)
-                if value == '' or value == ' ':     # don't record blank info
-                    continue
-                if name == 'C':
-                    name += str(len(move_list))     # associated comment to specific move
-                pro_games[curr_game].attrs[name] = value
-
-        pro_games[curr_game].create_dataset('moves', data=np.array(move_list))
+            pro_games[curr_game].create_dataset('moves', data=np.array(move_list))
 
 
 if __name__ == '__main__':
