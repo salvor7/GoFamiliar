@@ -1,8 +1,13 @@
-"""GoFamiliar app holding the Go analysis functions."""
+"""Go analysis functions of the GoFamiliar implemented in kivy."""
+
 from kivy.app import App
 from kivy.graphics import Color, Ellipse
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
+
+from bokeh.charts import HeatMap, show, output_file
+from bokeh.palettes import Spectral11 as palette
+
 import numpy as np
 
 size = 19
