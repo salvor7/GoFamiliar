@@ -70,7 +70,8 @@ def sgf_parser(sgf_str):
     for bad, fix in bad_chars:      # clear all round braces in sgf info nodes
         sgf_str = sgf_str.replace(bad, fix)
 
-    # regex replacement format found at https://docs.python.org/2/howto/regex.html#modifying-strings
+    # regex replacement format found at
+    # https://docs.python.org/2/howto/regex.html#modifying-strings
     sgf_str = sgf_info_patt.sub(r'r"\1[\2]",', sgf_str)     # add double quotes and raw string r
 
     new_chars = [(';', ''),         # get rid of colons
@@ -195,6 +196,7 @@ def sgf_store(dir=sgfdir):
 
             yield string
 
+
 def sgf_store_parser(dir=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
 
@@ -239,9 +241,6 @@ def create_sgf_csv(file='pro_collection.csv', dir='sgf_store/', limit=None):
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-
-
-
 def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
 
@@ -258,7 +257,7 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     """
     pro_games = h5py.File(dir + file, 'w')
 
-    for game_id, sgf_nodes in enumerate(sgf_store()):
+    for game_id, sgf_nodes in enumerate(sgf_store_parser()):
         if limit and game_id > abs(limit):
             break
 
