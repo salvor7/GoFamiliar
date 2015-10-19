@@ -256,13 +256,15 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     :return: None
     """
     with h5py.File(dir + file, 'w') as pro_games:
+
+        pro_games.create_group('19')
+        pro_games.create_group('13')
+        pro_games.create_group('9')
         for game_id, sgf_nodes in enumerate(sgf_store_parser()):
             if limit and game_id > abs(limit):
                 break
 
-            curr_game = 'Game' + str(game_id)
-            pro_games.create_group(curr_game)
-
+            game_attrs = {}
             move_list = []
             for node in sgf_nodes:
                 try:
@@ -273,10 +275,20 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
                         continue
                     if name == 'C':
                         name += str(len(move_list))     # associated comment to specific move
-                    pro_games[curr_game].attrs[name] = value
+                    game_attrs[name] = value
+            try:
+                size = str(game_attrs['SZ'])
+            except KeyError:
+                size = '19'
 
-            pro_games[curr_game].create_dataset('moves', data=np.array(move_list))
-
+            curr_game = str(game_id)
+            try:
+                pro_games[size].create_dataset(curr_game, data=np.array(move_list))
+            except:
+                print(size)
+                raise
+            for name in game_attrs:
+                pro_games[size][curr_game].attrs[name] = game_attrs[name]
 
 if __name__ == '__main__':
     create_sgf_hdf5()
