@@ -55,6 +55,10 @@ class Position():
             raise MoveError('Playing on another stone.')
 
     def __iter__(self):
+        """Iterator over every board point
+
+        :return: iter
+        """
         return iter(self.board)
 
 class MoveError(Exception):
