@@ -1,3 +1,19 @@
+from unionfind import UnionFind
+
+
+class Board():
+
+    def __init__(self, size):
+        self.points = UnionFind()
+        self.pounts[size**2 - 1]
+        self.groups = {}
+        
+    def __iter__(self):
+        return iter(self.points)
+    
+    def move(self):
+        
+    
 NEIGHBORS = {}
 
 class Position():
