@@ -15,3 +15,10 @@ class Position():
 
     def __iter__(self):
         return iter(self.board)
+
+class MoveError(Exception):
+    """The exception throw when an illegal move is made.
+
+    ie suicide or on a ko
+    """
+    pass
