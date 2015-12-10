@@ -3,6 +3,9 @@ from collections import namedtuple
 from unionfind import UnionFind
 import numpy as np
 
+BLACK = 1
+WHITE = -1
+
 
 def make_neighbors(size=19):
     """Generator of neighbors coordinates
@@ -47,6 +50,7 @@ class Position():
         self.groups = {}
         self.ko = None
         self.size = size
+        self.next_colour = BLACK
 
     def __getitem__(self, pt):
         """Return the group pt is a part of
@@ -71,6 +75,15 @@ class Position():
             colour = self.next_colour
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))
+
+        liberty_count = 0
+        for group in self.neigh_groups(pt):
+            if group is OPEN_POINT:
+                liberty_count += 1
+            elif group.colour == colour:
+                liberty_count += group.liberties - 1
+        if liberty_count == 0:
+            raise MoveError('Playing self capture.')
 
     def neigh_groups(self, pt):
         """Find the groups around pt
