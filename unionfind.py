@@ -1,11 +1,13 @@
 import numpy as np
 
 class UnionFind():
-    def __init__(self, size=None):
-        self.pointers = np.array([range(size)])
+    def __init__(self):
+        self.pointers = np.array([])
         
     def __getitem__(self, elem):
-        if self.pointers[elem] == elem:
+        try:
+            self.pointers[elem]
+        if  == elem:
             return elem
         else:
             repre = self.__getitem__(self.pointers[elem])
