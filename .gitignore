@@ -3,3 +3,4 @@ __pycache__
 sgf_store/*
 *.hdf5
 *.csv
+*.sgf
