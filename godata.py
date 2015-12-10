@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from unionfind import UnionFind
 import numpy as np
 
@@ -36,6 +38,8 @@ def make_neighbors(size=19):
 
 NEIGHBORS = {pt:neigh for pt, neigh in make_neighbors()}
 
+Group = namedtuple('Group', 'colour size liberties')
+OPEN_POINT = Group(colour=0, size=0, liberties=0)
 
 class Position():
     def __init__(self, size=19):
