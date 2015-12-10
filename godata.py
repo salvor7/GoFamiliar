@@ -50,7 +50,9 @@ class Position():
     
     def move(self, pt):
         if self.ko is not None:
-            raise MoveError(str(pt) + 'is a ko point')
+            raise MoveError('Playing on a ko point.')
+        elif self[pt] is not OPEN_POINT:
+            raise MoveError('Playing on another stone.')
 
     def __iter__(self):
         return iter(self.board)
@@ -58,6 +60,6 @@ class Position():
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
 
-    ie suicide or on a ko
+    ie repeat play, suicide or on a ko
     """
     pass
