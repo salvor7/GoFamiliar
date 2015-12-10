@@ -19,6 +19,7 @@ sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
 
+
 def sgf_parser(sgf_str):
     """Return a recursive list of lists representing an SGF string.
 
@@ -76,8 +77,7 @@ def sgf_parser(sgf_str):
 
     new_chars = [(';', ''),         # get rid of colons
                  ('(', '['),        # change tuple braces to list braces
-                 (')', ']'),
-                 ]
+                 (')', ']'),]
 
     for char, new in new_chars:
         sgf_str = sgf_str.replace(char, new)
@@ -110,8 +110,8 @@ def sgf_main_branch(sgf_list):
     >>> sgf_main_branch(sgf_parser(complex_branching))
     ['RU[Japanese]', 'SZ[19]', 'KM[6.50]', 'B[jj]', 'W[kl]', 'B[pd]', 'W[pp]']
 
-    :param sgf_str:
-    :return:
+    :param sgf_list: list
+    :return: list
     """
     main_branch = []
     for node in sgf_list:
