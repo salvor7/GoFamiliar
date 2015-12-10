@@ -16,6 +16,22 @@ def make_neighbors(size=19):
     Neighbor checking is the most common function in the MCTS, so we have used np.array for a
     speed boost.
 
+    Doctest creates neighbors for this grid.
+    0 1 2
+    3 4 5
+    6 7 8
+    >>> for c, neigh in make_neighbors(size=3):
+    ...     print(c,neigh)
+    0 [3 1]
+    1 [4 0 2]
+    2 [5 1]
+    3 [0 6 4]
+    4 [1 7 3 5]
+    5 [2 8 4]
+    6 [3 7]
+    7 [4 6 8]
+    8 [5 7]
+
     :param size: int for board size
     :yield: int, np.array  for coordinate and array of neighbors.
     """
@@ -23,19 +39,22 @@ def make_neighbors(size=19):
         if pt < size:
             up = []
         else:
-            up = [pt - 1]
+            up = [pt - size]
+
         if pt >= size*(size - 1):
             down = []
         else:
-            down = [pt + 1]
+            down = [pt + size]
+
         if pt % size == 0:
             left = []
         else:
-            left = [pt - size]
+            left = [pt - 1]
+
         if (pt + 1) % size == 0:
             right = []
         else:
-            right = [pt + size]
+            right = [pt + 1]
 
         yield pt, np.array(up+down+left+right)
 
