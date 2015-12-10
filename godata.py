@@ -61,11 +61,16 @@ class Position():
         except KeyError:
             return OPEN_POINT
 
-    def move(self, pt):
+    def move(self, pt, colour=0):
         if self.ko is not None:
             raise MoveError('Playing on a ko point.')
         elif self[pt] is not OPEN_POINT:
             raise MoveError('Playing on another stone.')
+
+        if colour == 0:
+            colour = self.next_colour
+        elif colour not in [BLACK, WHITE]:
+            raise ValueError('Unrecognized move colour: ' + str(colour))
 
     def neigh_groups(self, pt):
         """Find the groups around pt
