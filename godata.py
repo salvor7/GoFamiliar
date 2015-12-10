@@ -4,7 +4,7 @@ NEIGHBORS = {}
 
 class Position():
     def __init__(self, size=19):
-        self.board = UnionFind(size=size**2)
+        self.board = UnionFind(size_limit=size ** 2)
         self.groups = {}
         self.ko = None
         self.size = size

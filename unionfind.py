@@ -1,9 +1,9 @@
 import numpy as np
 
 class UnionFind():
-    def __init__(self, size=0):
-        self.pointers = np.array(range(size), dtype=np.int16)
-        self.size = size
+    def __init__(self, size_limit=0):
+        self.pointers = np.array(range(size_limit), dtype=np.int16)
+        self.size = size_limit
 
     def __getitem__(self, elem):
         try:
