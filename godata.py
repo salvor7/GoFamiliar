@@ -53,9 +53,8 @@ class Position():
         self.next_colour = BLACK
 
     def __getitem__(self, pt):
-        """Return the group pt is a part of
+        """Return group pt is a part of
 
-        The
         :param pt: int
         :return: Group
         """
