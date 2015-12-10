@@ -47,7 +47,20 @@ class Position():
         self.groups = {}
         self.ko = None
         self.size = size
-    
+
+    def __getitem__(self, pt):
+        """Return the group pt is a part of
+
+        The
+        :param pt: int
+        :return: Group
+        """
+        repre = self.board[pt]
+        try:
+            return self.groups[repre]
+        except KeyError:
+            return OPEN_POINT
+
     def move(self, pt):
         if self.ko is not None:
             raise MoveError('Playing on a ko point.')
