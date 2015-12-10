@@ -19,6 +19,7 @@ sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
 
+
 def sgf_parser(sgf_str):
     """Return a recursive list of lists representing an SGF string.
 
@@ -76,8 +77,7 @@ def sgf_parser(sgf_str):
 
     new_chars = [(';', ''),         # get rid of colons
                  ('(', '['),        # change tuple braces to list braces
-                 (')', ']'),
-                 ]
+                 (')', ']'),]
 
     for char, new in new_chars:
         sgf_str = sgf_str.replace(char, new)
@@ -110,8 +110,8 @@ def sgf_main_branch(sgf_list):
     >>> sgf_main_branch(sgf_parser(complex_branching))
     ['RU[Japanese]', 'SZ[19]', 'KM[6.50]', 'B[jj]', 'W[kl]', 'B[pd]', 'W[pp]']
 
-    :param sgf_str:
-    :return:
+    :param sgf_list: list
+    :return: list
     """
     main_branch = []
     for node in sgf_list:
@@ -169,22 +169,22 @@ def sgf_info(attribute):
     """
     try:
         name, value = re.findall(sgf_info_patt, attribute)[0]
-    except BaseException as err:
+    except:
         message = '"' + attribute + '" ' + 'is not a sgf info formatted node.'
         raise ValueError(message)
     return name, value
 
 
-def sgf_store(dir=sgfdir):
+def sgf_store(direc=sgfdir):
     """Yield all raw strings from size 19 sgfs in sgf_store
 
     >>> sum(1 for game in sgf_store()) > 45000
     True
 
-    :param dir: string
+    :param direc: string
     :yield: string
     """
-    files_found = dt.search_tree(directory=dir, file_sig='*.sgf')
+    files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
 
     for file in files_found:
         with open(file, errors='ignore', encoding='utf-8') as sgf_file:
@@ -197,17 +197,17 @@ def sgf_store(dir=sgfdir):
             yield string
 
 
-def sgf_store_parser(dir=sgfdir):
+def sgf_store_parser(direc=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
 
     >>> for _ in sgf_store_parser():
     ...     pass
 
-    :param dir: string
+    :param direc: string
     :yield: list
     """
     bad_files = []
-    for sgf_str in sgf_store(dir):
+    for sgf_str in sgf_store(direc):
         try:
             yield sgf_main_branch(sgf_parser(sgf_str))
         except Exception as err:
@@ -222,7 +222,7 @@ class SGFError(Exception):
     pass
 
 
-def create_sgf_csv(file='pro_collection.csv', dir='sgf_store/', limit=None):
+def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
     """Create csv file of sgf_store
 
     Add sgf strings from files in sgf_store folder as single lines in the csv file.
@@ -230,18 +230,18 @@ def create_sgf_csv(file='pro_collection.csv', dir='sgf_store/', limit=None):
     >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
 
     :param file: string
-    :param dir: string
+    :param direc: string
     :param limit: int
     :return: None
     """
-    with open(dir + file, 'w', encoding='utf-8') as csv_file:
+    with open(direc + file, 'w', encoding='utf-8') as csv_file:
         for sgf_id, sgf_str in enumerate(sgf_store()):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
+def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
 
     Add sgf details from sgf files in sgf_store to a hdf5 binary.
@@ -252,17 +252,19 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
     >>> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
 
     :param file: string
-    :param dir: string
+    :param direc: string
     :return: None
     """
-    with h5py.File(dir + file, 'w') as pro_games:
+    with h5py.File(direc + file, 'w') as pro_games:
+
+        pro_games.create_group('19')
+        pro_games.create_group('13')
+        pro_games.create_group('9')
         for game_id, sgf_nodes in enumerate(sgf_store_parser()):
             if limit and game_id > abs(limit):
                 break
 
-            curr_game = 'Game' + str(game_id)
-            pro_games.create_group(curr_game)
-
+            game_attrs = {}
             move_list = []
             for node in sgf_nodes:
                 try:
@@ -273,10 +275,20 @@ def create_sgf_hdf5(file='pro_collection.hdf5', dir='sgf_store/', limit=None):
                         continue
                     if name == 'C':
                         name += str(len(move_list))     # associated comment to specific move
-                    pro_games[curr_game].attrs[name] = value
+                    game_attrs[name] = value
+            try:
+                size = str(game_attrs['SZ'])
+            except KeyError:
+                size = '19'
 
-            pro_games[curr_game].create_dataset('moves', data=np.array(move_list))
-
+            curr_game = str(game_id)
+            try:
+                pro_games[size].create_dataset(curr_game, data=np.array(move_list))
+            except:
+                print(size)
+                raise
+            for name in game_attrs:
+                pro_games[size][curr_game].attrs[name] = game_attrs[name]
 
 if __name__ == '__main__':
     create_sgf_hdf5()
