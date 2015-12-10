@@ -14,27 +14,27 @@ def make_neighbors(size=19):
     :param size: int for board size
     :yield: int, np.array  for coordinate and array of neighbors.
     """
-    for c in range(size**2):
-        if c < size:
+    for pt in range(size**2):
+        if pt < size:
             up = []
         else:
-            up = [c - 1]
-        if c >= size*(size - 1):
+            up = [pt - 1]
+        if pt >= size*(size - 1):
             down = []
         else:
-            down = [c + 1]
-        if c % size == 0:
+            down = [pt + 1]
+        if pt % size == 0:
             left = []
         else:
-            left = [c - size]
-        if (c + 1) % size == 0:
+            left = [pt - size]
+        if (pt + 1) % size == 0:
             right = []
         else:
-            right = [c + size]
+            right = [pt + size]
 
-        yield c, np.array(up+down+left+right)
+        yield pt, np.array(up+down+left+right)
 
-NEIGHBORS = {c:neigh for c, neigh in make_neighbors()}
+NEIGHBORS = {pt:neigh for pt, neigh in make_neighbors()}
 
 
 class Position():
