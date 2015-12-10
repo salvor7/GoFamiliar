@@ -67,6 +67,15 @@ class Position():
         elif self[pt] is not OPEN_POINT:
             raise MoveError('Playing on another stone.')
 
+    def neigh_groups(self, pt):
+        """Find the groups around pt
+
+        :param pt: int
+        :yield: Group
+        """
+        for qt in NEIGHBORS[pt]:
+            yield self[qt]
+
     def __iter__(self):
         """Iterator over every board point
 
