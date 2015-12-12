@@ -122,13 +122,29 @@ class Position():
             raise ValueError('Unrecognized move colour: ' + str(colour))
 
         liberty_count = 0
-        for group in self.neigh_groups(pt):
+        player_groups = []
+        dead_opp_groups = []
+        for qt, group in self.neigh_groups(pt):
             if group is OPEN_POINT:
                 liberty_count += 1
             elif group.colour == colour:
                 liberty_count += group.liberties - 1
-        if liberty_count == 0:
+                player_groups += [qt]
+            elif group.liberties == 1:
+                dead_opp_groups += [qt]
+        if liberty_count == 0 and len(dead_opp_groups) == 0:
             raise MoveError('Playing self capture.')
+        size = 0
+        for repre in player_groups:
+            self.board.union(pt, repre)
+            size += self.groups[repre].size
+            del self.groups[repre]
+        self.groups[pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
+
+        for repre in dead_opp_groups:
+            del self.groups[repre]
+
+        return self
 
     def neigh_groups(self, pt):
         """Find the groups around pt
@@ -137,10 +153,10 @@ class Position():
         :yield: Group
         >>> pt = 200
         >>> next(Position().neigh_groups(pt))
-        Group(colour=0, size=0, liberties=0)
+        (181, Group(colour=0, size=0, liberties=0))
         """
         for qt in NEIGHBORS[pt]:
-            yield self[qt]
+            yield qt, self[qt]
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
