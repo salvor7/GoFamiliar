@@ -16,7 +16,7 @@ def make_neighbors(size=19):
     Neighbor checking is the most common function in the MCTS, so we have used np.array for a
     speed boost.
 
-    Doctest creates neighbors for this grid.
+    This doctest creates the neighbors for this grid.
     0 1 2
     3 4 5
     6 7 8
@@ -64,7 +64,34 @@ Group = namedtuple('Group', 'colour size liberties')
 OPEN_POINT = Group(colour=0, size=0, liberties=0)
 
 class Position():
+    """A Go game position object
+
+    An object to track all the aspects of a go game. It uses a "thick" representation of
+    the board which stores group information.
+
+    >>> pos = Position()
+    >>> len(pos.board)
+    361
+    >>> for group in pos.groups:
+    ...     print(group.liberties)
+    >>> len(pos.groups)
+    0
+    >>> pos.ko
+    >>> pos.size
+    19
+    >>> pos.next_player
+    1
+    >>> pt = 200
+    >>> pos[pt]
+    Group(colour=0, size=0, liberties=0)
+    >>> [n for n in pos.neigh_groups(pt)] == [OPEN_POINT]*4
+    True
+    """
     def __init__(self, size=19):
+        """Initialize a Position with a board of size**2
+
+        :param size: int
+        """
         self.board = UnionFind(size_limit=size ** 2)
         self.groups = {}
         self.ko = None
