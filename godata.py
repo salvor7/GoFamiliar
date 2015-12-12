@@ -147,10 +147,14 @@ class Position():
 
         for repre in dead_opp_groups:
             del self.groups[repre]
+
         if len(dead_opp_groups) == 1 and self.groups[repre].size == 1:
             self.ko = repre
         else:
             self.ko = None
+
+        self.next_player *= -1
+
         return self
 
     def neigh_groups(self, pt):
