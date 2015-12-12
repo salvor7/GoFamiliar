@@ -125,7 +125,7 @@ class Position():
         :param pt: int
         :yield: Group
         >>> pt = 200
-        >>> next(pos.neigh_groups(pt))
+        >>> next(Position().neigh_groups(pt))
         Group(colour=0, size=0, liberties=0)
         """
         for qt in NEIGHBORS[pt]:
