@@ -24,7 +24,7 @@ class UnionFind():
         return iter(self.pointers)
 
     def __len__(self):
-        return len(self.piinters)
+        return len(self.pointers)
 
     def union(self, repre1, repre2):
         self.pointers[repre2] = repre1
@@ -33,3 +33,4 @@ class UnionFind():
         repre1 = next(repre_iter)
         for repre_n in repre_iter:
             self.union(repre1, repre_n)
+
