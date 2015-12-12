@@ -145,11 +145,13 @@ class Position():
             del self.groups[repre]
         self.groups[pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
 
+        captured = 0
         for repre in dead_opp_groups:
+            captured += self.groups[repre].size
             del self.groups[repre]
 
-        if len(dead_opp_groups) == 1 and self.groups[repre].size == 1:
-            self.ko = repre
+        if captured == 1:
+            self.ko = dead_opp_groups[0]
         else:
             self.ko = None
 
