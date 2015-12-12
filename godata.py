@@ -72,20 +72,6 @@ class Position():
     >>> pos = Position()
     >>> len(pos.board)
     361
-    >>> for group in pos.groups:
-    ...     print(group.liberties)
-    >>> len(pos.groups)
-    0
-    >>> pos.ko
-    >>> pos.size
-    19
-    >>> pos.next_player
-    1
-    >>> pt = 200
-    >>> pos[pt]
-    Group(colour=0, size=0, liberties=0)
-    >>> [n for n in pos.neigh_groups(pt)] == [OPEN_POINT]*4
-    True
     """
     def __init__(self, size=19):
         """Initialize a Position with a board of size**2
@@ -103,6 +89,9 @@ class Position():
 
         :param pt: int
         :return: Group
+        >>> pt = 200
+        >>> Position()[pt]
+        Group(colour=0, size=0, liberties=0)
         """
         repre = self.board[pt]
         try:
@@ -135,10 +124,12 @@ class Position():
 
         :param pt: int
         :yield: Group
+        >>> pt = 200
+        >>> next(pos.neigh_groups(pt))
+        Group(colour=0, size=0, liberties=0)
         """
         for qt in NEIGHBORS[pt]:
             yield self[qt]
-
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
