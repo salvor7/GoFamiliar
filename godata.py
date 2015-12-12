@@ -139,12 +139,6 @@ class Position():
         for qt in NEIGHBORS[pt]:
             yield self[qt]
 
-    def __iter__(self):
-        """Iterator over every board point
-
-        :return: iter
-        """
-        return iter(self.board)
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
