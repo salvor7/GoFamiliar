@@ -100,6 +100,17 @@ class Position():
             return OPEN_POINT
 
     def move(self, pt, colour=0):
+        """Play a move on a go board
+
+        Completes all the checks to a ensure legal move.
+        Adds the move to the position, and returns the position.
+        :param pt: int
+        :param colour: +1 or -1
+        :return: Position
+        >>> pt = 200
+        >>> Position().move(pt)[pt]
+        Group(colour=1, size=1, liberties=4)
+        """
         if self.ko is not None:
             raise MoveError('Playing on a ko point.')
         elif self[pt] is not OPEN_POINT:
