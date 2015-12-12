@@ -104,7 +104,8 @@ class Position():
     def move(self, pt, colour=0):
         """Play a move on a go board
 
-        Completes all the checks to a ensure legal move.
+        Completes all the checks to a ensure legal move, and will raise a MoveError if
+        it is an illegal move.
         Adds the move to the position, and returns the position.
         :param pt: int
         :param colour: +1 or -1
@@ -136,6 +137,7 @@ class Position():
                 dead_opp_groups += [qt]
         if liberty_count == 0 and len(dead_opp_groups) == 0:
             raise MoveError('Playing self capture.')
+        #Checks complete. Start making changes
         size = 0
         for repre in player_groups:
             self.board.union(pt, repre)
@@ -145,7 +147,10 @@ class Position():
 
         for repre in dead_opp_groups:
             del self.groups[repre]
-
+        if len(dead_opp_groups) == 1 and self.groups[repre].size == 1:
+            self.ko = repre
+        else:
+            self.ko = None
         return self
 
     def neigh_groups(self, pt):
