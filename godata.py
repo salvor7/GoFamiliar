@@ -96,7 +96,7 @@ class Position():
         self.groups = {}
         self.ko = None
         self.size = size
-        self.next_colour = BLACK
+        self.next_player = BLACK
 
     def __getitem__(self, pt):
         """Return group pt is a part of
@@ -117,7 +117,7 @@ class Position():
             raise MoveError('Playing on another stone.')
 
         if colour == 0:
-            colour = self.next_colour
+            colour = self.next_player
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))
 
