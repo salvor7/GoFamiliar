@@ -31,3 +31,14 @@ def test_Group_init():
     """
     for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
         assert gd.Group(colour=col,  size=size, liberties=lib,) == (col, size, lib)
+
+def test_Position_initial():
+    """
+    """
+    for n in range(30):
+        position = gd.Position(size=n)
+        assert position.ko is None
+        assert position.next_player is gd.BLACK
+        assert position.size is n
+        assert len(position.board) == n**2
+        assert len(position.groups) == 0
