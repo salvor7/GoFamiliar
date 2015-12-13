@@ -26,3 +26,8 @@ def test_make_neighbors():
 
         assert desired_result == neigh_counts
 
+def test_Group_init():
+    """Test Initialization of Group object
+    """
+    for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
+        assert gd.Group(colour=col,  size=size, liberties=lib,) == (col, size, lib)
