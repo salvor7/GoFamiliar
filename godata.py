@@ -69,9 +69,10 @@ class Position():
     An object to track all the aspects of a go game. It uses a "thick" representation of
     the board which stores group information.
 
-    >>> pos = Position()
-    >>> len(pos.board)
-    361
+    >>> Position().size
+    19
+    >>> Position(size=13).size
+    13
     """
     def __init__(self, size=19):
         """Initialize a Position with a board of size**2
