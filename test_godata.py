@@ -2,12 +2,14 @@ import itertools
 import pytest
 import godata as gd
 
-@pytest.fixture(params=[n for n in range(9, 26, 2)])
+fixture_params = [n for n in range(9, 26, 2)]
+
+@pytest.fixture(params=fixture_params)
 def position(request):
     return gd.Position(size=request.param)
 
-@pytest.fixture()
-def position_moves(position):
+@pytest.fixture(params=fixture_params)
+def position_moves(request):
     """Sets up two positions in the
     Upper left
     .X.Xo.
@@ -23,7 +25,7 @@ def position_moves(position):
     (X = black, o = white)
     They do not overlap as the Positions are size_limit 9 or greater.
     """
-    s = position.size
+    s = request.param
     rest_of_row = '.'*(s-5)
     first_three = rest_of_row.join([
                     '.X.Xo',
@@ -34,8 +36,8 @@ def position_moves(position):
                     'oooXX',
                     'oXXX.',])
     board = first_three + '.'*s*(s-6) + last_three
+    position = gd.Position(size=request.param)
     for pt, symbol in enumerate(board):
-        assert pt < s**2
         if symbol == 'X':
             position.move(pt=pt, colour=gd.BLACK)
         elif symbol == 'o':
