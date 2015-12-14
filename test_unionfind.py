@@ -6,8 +6,8 @@ def unionfind(request):
     return UnionFind(size_limit=request.param)
 
 def test_uf_init(unionfind):
-    assert len(unionfind.pointers) == unionfind.size_limit
-    assert len(unionfind) == len(unionfind.pointers)
+    assert len(unionfind._pointers) == unionfind.size_limit
+    assert len(unionfind) == len(unionfind._pointers)
     for pt in unionfind:
-        assert unionfind.pointers[pt] == pt
+        assert unionfind._pointers[pt] == pt
 
