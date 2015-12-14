@@ -1,7 +1,15 @@
 from godata import make_neighbors
+import pytest
 
+@pytest.fixture(scope='module', params=[n for n in range(9,25, 2)])
+def position(request):
+    return gd.Position(size=request.param)
 
 def test_make_neighbors():
+@pytest.fixture(scope='module')
+def position_moves(position):
+    size = position.size
+    black_stones = [1, size, 1+size*2]
     """Test neighbor making by counting occurrences of neighbors
 
     Corners have two neighbors; Edges points have 3, and Centre points have 4.
