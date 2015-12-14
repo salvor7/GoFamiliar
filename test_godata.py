@@ -1,4 +1,4 @@
-from godata import make_neighbors
+import godata as gd
 import pytest
 
 @pytest.fixture(scope='module', params=[n for n in range(9,25, 2)])
