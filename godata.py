@@ -98,7 +98,7 @@ class Position():
             return self.groups[repre]
         except KeyError:
             if pt is not repre:  #pointing to a dead group representative
-                self.board[pt] = pt
+                self.board._pointers[pt] = pt
             return OPEN_POINT
 
     def move(self, pt, colour=0):
