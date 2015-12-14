@@ -112,8 +112,11 @@ class Position():
         :param colour: +1 or -1
         :return: Position
         >>> pt = 200
-        >>> Position().move(pt)[pt]
+        >>> pos = Position()
+        >>> pos.move(pt, colour=BLACK)[pt]
         Group(colour=1, size=1, liberties=4)
+        >>> pos.move(pt+1, colour=BLACK)[pt+1]
+        Group(colour=1, size=2, liberties=6)
         """
         if self.ko is not None:
             raise MoveError('Playing on a ko point.')
