@@ -47,11 +47,31 @@ def test_Position_initial(position):
     assert len(position.board) == position.size**2
     assert len(position.groups) == 0
 
+def test_Position_getitem(position):
+    """Test that every board point returns correct group
+
+    Add several groups to a Position, and then test that the references all point to
+    the correct Group
+    """
+    crosses = [c for c in range(position.size, position.size, 4)]
+    for c in crosses:
+        position.board.multi_union(iter([c] + list(gd.NEIGHBORS[c])))
+        lib, size = (8, 5) if len(gd.NEIGHBORS[c]) == 4 else (5, 4)
+        position.groups[c] = gd.Group(colour=(-1)**c, size=size, liberties=lib)
+
+    for c in position.board:
+        if position.board[c] not in crosses:
+            assert position[c] == gd.OPEN_POINT
+        elif position.board[c] in crosses:
+            assert position[c] == position.groups[position.board[c]]
+        else:
+            assert False
+
 def test_Position_neigh_groups():
     """Test finding neighbor groups.
 
     """
 
-
 def test_Position_move():
     pass
+
