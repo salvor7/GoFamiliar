@@ -57,7 +57,7 @@ def make_neighbors(size=19):
 
         yield pt, np.array(up+down+left+right)
 
-NEIGHBORS = {pt:neigh for pt, neigh in make_neighbors()}
+NEIGHBORS = {n:{pt:neigh for pt, neigh in make_neighbors(size=n)}  for n in range(9, 26, 2)}
 
 Group = namedtuple('Group', 'colour size liberties')
 OPEN_POINT = Group(colour=0, size=0, liberties=0)
@@ -73,6 +73,7 @@ class Position():
     >>> Position(size=13).size
     13
     """
+
     def __init__(self, size=19):
         """Initialize a Position with a board of size**2
 
@@ -168,7 +169,7 @@ class Position():
         >>> next(Position().neigh_groups(pt))
         (181, Group(colour=0, size=0, liberties=0))
         """
-        for qt in NEIGHBORS[pt]:
+        for qt in NEIGHBORS[self.size][pt]:
             yield qt, self[qt]
 
 class MoveError(Exception):
