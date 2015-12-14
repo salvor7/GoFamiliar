@@ -48,6 +48,13 @@ def test_Position_initial(position):
     assert len(position.groups) == 0
 
 def test_Position_getitem(position):
+def test_Position_move(position_moves):
+    """Test the move function
+
+    The fixture tests the basic use of this function.
+    """
+    assert len(position_moves.groups) == 6
+
     """Test that every board point returns correct group
 
     Add several groups to a Position, and then test that the references all point to
