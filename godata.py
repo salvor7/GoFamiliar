@@ -141,16 +141,16 @@ class Position():
                 dead_opp_groups += [qt]
         if liberty_count == 0 and len(dead_opp_groups) == 0:
             raise MoveError('Playing self capture.')
-        #Checks complete. Start making changes
+        #Checks complete. Start making changes to Position
         size = 0
-        for repre in player_groups:
+        for repre in set(player_groups):
             self.board.union(pt, repre)
             size += self.groups[repre].size
             del self.groups[repre]
         self.groups[pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
 
         captured = 0
-        for repre in dead_opp_groups:
+        for repre in set(dead_opp_groups):
             captured += self.groups[repre].size
             del self.groups[repre]
 
