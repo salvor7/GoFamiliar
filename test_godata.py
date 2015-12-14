@@ -46,4 +46,8 @@ def test_Position_initial(position):
     assert position.next_player is gd.BLACK
     assert len(position.board) == position.size**2
     assert len(position.groups) == 0
+
+def test_Position_neigh_groups():
+    """Test finding neighbor groups.
+
     """
