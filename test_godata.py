@@ -51,3 +51,7 @@ def test_Position_neigh_groups():
     """Test finding neighbor groups.
 
     """
+
+
+def test_Position_move():
+    pass
