@@ -1,5 +1,4 @@
 from collections import namedtuple
-
 from unionfind import UnionFind
 import numpy as np
 
@@ -67,7 +66,7 @@ class Position():
     """A Go game position object
 
     An object to track all the aspects of a go game. It uses a "thick" representation of
-    the board which stores group information.
+    the board to store group information.
 
     >>> Position().size
     19
