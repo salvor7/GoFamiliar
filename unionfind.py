@@ -2,7 +2,7 @@ import numpy as np
 
 class UnionFind():
     def __init__(self, size_limit=0):
-        self.pointers = np.array(range(size_limit), dtype=np.int16)
+        self.pointers = np.array(range(size_limit), dtype=np.int32)
         self.size_limit = size_limit
 
     def __getitem__(self, elem):
