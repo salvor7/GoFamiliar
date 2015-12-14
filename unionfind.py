@@ -17,7 +17,7 @@ class UnionFind():
             repre = elem
         else:
             repre = self.__getitem__(self._pointers[elem])
-            self._pointers[elem] = repre
+            self._pointers[elem] = repre #update step
         return repre
 
     def __iter__(self):
@@ -26,11 +26,11 @@ class UnionFind():
     def __len__(self):
         return len(self._pointers)
 
-    def union(self, repre1, repre2):
-        self._pointers[repre2] = repre1
+    def union(self, pt1, pt2):
+        self._pointers[self[pt2]] = self[pt1]
 
-    def multi_union(self, repre_iter):
-        repre1 = next(repre_iter)
-        for repre_n in repre_iter:
-            self.union(repre1, repre_n)
+    def multi_union(self, pt_iter):
+        pt1 = next(pt_iter)
+        for pt_n in pt_iter:
+            self.union(pt1, pt_n)
 
