@@ -2,7 +2,7 @@ import itertools
 import pytest
 import godata as gd
 
-@pytest.fixture(scope='module', params=[n for n in range(9,25, 2)])
+@pytest.fixture(params=[n for n in range(9, 26, 2)])
 def position(request):
     return gd.Position(size=request.param)
 
