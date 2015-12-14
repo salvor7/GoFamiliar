@@ -1,5 +1,6 @@
-import godata as gd
+import itertools
 import pytest
+import godata as gd
 
 @pytest.fixture(scope='module', params=[n for n in range(9,25, 2)])
 def position(request):
