@@ -1,3 +1,4 @@
+import copy
 import itertools
 import pytest
 import godata as gd
@@ -34,13 +35,14 @@ def position_moves(position):
                     'oooXX',
                     'oXXX.',])
     board = first_three + '.'*s*(s-6) + last_three
+    pos = copy.deepcopy(position)
     for pt, symbol in enumerate(board):
-        assert pt < s**2
         if symbol == 'X':
-            position.move(pt=pt, colour=gd.BLACK)
+            pos.move(pt=pt, colour=gd.BLACK)
         elif symbol == 'o':
-            position.move(pt=pt, colour=gd.WHITE)
-    return position
+            pos.move(pt=pt, colour=gd.WHITE)
+
+    return pos
 
 def test_make_neighbors(position):
     """Test neighbor making by counting occurrences of neighbors
