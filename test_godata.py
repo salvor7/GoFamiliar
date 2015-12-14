@@ -65,12 +65,6 @@ def test_make_neighbors(position):
 
     assert desired_result == neigh_counts
 
-def test_Group_init():
-    """Test Initialization of Group object
-    """
-    for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
-        assert gd.Group(colour=col,  size=size, liberties=lib,) == (col, size, lib)
-
 def test_Position_initial(position):
     """Test initiliazation of Position
     """
@@ -111,6 +105,8 @@ def test_Position_neigh_groups():
 
     """
 
-def test_Position_move():
-    pass
-
+def test_Group_init():
+    """Test Initialization of Group object
+    """
+    for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
+        assert gd.Group(colour=col,  size=size, liberties=lib,) == (col, size, lib)
