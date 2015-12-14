@@ -143,14 +143,18 @@ class Position():
             raise MoveError('Playing self capture.')
         #Checks complete. Start making changes to Position
         size = 0
-        for repre in set(player_groups):
-            self.board.union(pt, repre)
+        print(player_groups)
+        for repre in player_groups:
+            if repre == pt:
+                continue
             size += self.groups[repre].size
+            self.board.union(pt, repre)
             del self.groups[repre]
         self.groups[pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
 
         captured = 0
-        for repre in set(dead_opp_groups):
+        for repre in dead_opp_groups:
+            repre = self.board[repre]
             captured += self.groups[repre].size
             del self.groups[repre]
 
@@ -164,7 +168,7 @@ class Position():
         return self
 
     def neigh_groups(self, pt):
-        """Find the groups around pt
+        """Find the groups and their representatives around pt
 
         :param pt: int
         :yield: Group
@@ -173,7 +177,7 @@ class Position():
         (181, Group(colour=0, size=0, liberties=0))
         """
         for qt in NEIGHBORS[self.size][pt]:
-            yield qt, self[qt]
+            yield self.board[qt], self[qt]
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
