@@ -143,9 +143,9 @@ class Position():
             raise MoveError('Playing self capture.')
         #Checks complete. Start making changes to Position
         size = 0
-        print(player_groups)
+
         for repre in player_groups:
-            if repre == pt:
+            if self.board[repre] == pt:
                 continue
             size += self.groups[repre].size
             self.board.union(pt, repre)
