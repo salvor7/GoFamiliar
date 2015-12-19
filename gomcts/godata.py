@@ -1,5 +1,5 @@
 from collections import namedtuple
-from unionfind import UnionFind
+from .unionfind import UnionFind
 import numpy as np
 
 BLACK = 1
