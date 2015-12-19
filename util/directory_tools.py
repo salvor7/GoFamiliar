@@ -9,9 +9,10 @@ def search_tree(directory='.', file_sig='*.*'):
     This code snippet was found at
     http://stackoverflow.com/questions/2186525/use-a-glob-to-find-files-recursively-in-python
 
-    >>> matching_files = search_tree(file_sig='directory_tools.py')
+    Working directory is assumed to be set to the containing folder of util.
+    >>> matching_files = search_tree(directory='util', file_sig='directory_tools.py')
     >>> matching_files
-    ['.\\\\directory_tools.py']
+    ['util\\\\directory_tools.py']
     >>> file_obj = open(matching_files[0])
 
     :param directory: string = root directory of search (default to working directory)
