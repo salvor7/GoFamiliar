@@ -10,7 +10,6 @@ from string import ascii_letters
 import h5py
 import numpy as np
 import util.directory_tools as dt
-
 from go_objects import GoMove
 
 sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
@@ -44,25 +43,7 @@ def sgf_parser(sgf_str):
     >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
     >>> sgf_parser(basic_branching1)
     ['SZ[19]', ['B[qd]', 'W[dd]', 'B[oc]'], ['B[do]', 'W[dq]']]
-    >>> basic_branching2 = '(;SZ[19];B[jj];W[kl](;B[dd](;W[gh])   (;W[sa]))(;B[cd]))'
-    >>> sgf_parser(basic_branching2)
-    ['SZ[19]', 'B[jj]', 'W[kl]', ['B[dd]', ['W[gh]'], ['W[sa]']], ['B[cd]']]
-    >>> complex_branching = ('(;RU[Japanese]SZ[19]KM[6.50];B[jj];W[kl]'
-    ...                 '(;B[pd](;W[pp]) (;W[dc](;B[de])(;B[dp])))'
-    ...                 '(;B[cd];W[dp])'
-    ...                 '(;B[cq](;W[pq])  (;W[pd]))'
-    ...                 '(;B[oq];W[dd]))')
-    >>> for chunk in sgf_parser(complex_branching):
-    ...    chunk
-    'RU[Japanese]'
-    'SZ[19]'
-    'KM[6.50]'
-    'B[jj]'
-    'W[kl]'
-    ['B[pd]', ['W[pp]'], ['W[dc]', ['B[de]'], ['B[dp]']]]
-    ['B[cd]', 'W[dp]']
-    ['B[cq]', ['W[pq]'], ['W[pd]']]
-    ['B[oq]', 'W[dd]']
+
     """
     bad_chars = [('\n', '')         # get rid of newline
                  , ('][', ' ')      # combine sequence (AB, AW, LB) info into one item
@@ -95,20 +76,9 @@ def sgf_main_branch(sgf_list):
     """Returns the main branch of an sgf string.
 
     Searches every branch of the sgf list, and returns the first branch at each branch.
-
-    >>> linear_sgf = '(;KM[2.75]SZ[19];B[qd];W[dd];B[oc];W[pp];B[do];W[dq])'
-    >>> sgf_parser(linear_sgf) == sgf_main_branch(sgf_parser(linear_sgf))
-    True
     >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
     >>> sgf_main_branch(sgf_parser(basic_branching1))
     ['SZ[19]', 'B[qd]', 'W[dd]', 'B[oc]']
-    >>> complex_branching = ('(;RU[Japanese]SZ[19]KM[6.50];B[jj];W[kl]'
-    ...                 '(;B[pd](;W[pp])(;W[dc](;B[de])(;B[dp])))'
-    ...                 '(;B[cd];W[dp])'
-    ...                 '(;B[cq](;W[pq])(;W[pd]))'
-    ...                 '(;B[oq];W[dd]))')
-    >>> sgf_main_branch(sgf_parser(complex_branching))
-    ['RU[Japanese]', 'SZ[19]', 'KM[6.50]', 'B[jj]', 'W[kl]', 'B[pd]', 'W[pp]']
 
     :param sgf_list: list
     :return: list
@@ -127,26 +97,21 @@ def sgf_main_branch(sgf_list):
 def node_to_move(node):
     """Return the GoMove for an SGF move node.
 
+    :param node: SGF Node eg B[ah]
+    :return: GoMove
+
     This function will also work with the alternative SGF move notation used in sgf_parser.
 
     >>> node_to_move('B[dc]')
     GoMove(player=1, x=4, y=3)
     >>> node_to_move('W[pq]')
     GoMove(player=-1, x=16, y=17)
-    >>> try:
-    ...     node_to_move('error')
-    ... except ValueError as err:
-    ...     print(err)
-    "error" is not a sgf move formatted node
-
-    :param node: SGF Node eg B[ah]
-    :return: GoMove
     """
     size = 19
     letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(1, size + 1))}
     player_assign = {'B': 1, 'W': -1}
-    # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 
+    # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
     try:
         move = re.findall(sgf_move_patt, node)[0]
     except IndexError:
@@ -161,11 +126,10 @@ def node_to_move(node):
 def sgf_info(attribute):
     """Return the sgf attribute name and value.
 
-    >>> sgf_info('SZ[19]')
-    ('SZ', '19')
-
     :param attribute: string
     :return: string, string
+    >>> sgf_info('SZ[19]')
+    ('SZ', '19')
     """
     try:
         name, value = re.findall(sgf_info_patt, attribute)[0]
@@ -178,11 +142,10 @@ def sgf_info(attribute):
 def sgf_store(direc=sgfdir):
     """Yield all raw strings from size 19 sgfs in sgf_store
 
-    >>> sum(1 for game in sgf_store()) > 45000
-    True
-
     :param direc: string
     :yield: string
+    >>> sum(1 for game in sgf_store()) > 45000
+    True
     """
     files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
 
@@ -200,11 +163,10 @@ def sgf_store(direc=sgfdir):
 def sgf_store_parser(direc=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
 
-    >>> for _ in sgf_store_parser():
-    ...     pass
-
     :param direc: string
     :yield: list
+    >>> for _ in sgf_store_parser():
+    ...     pass
     """
     bad_files = []
     for sgf_str in sgf_store(direc):
@@ -222,17 +184,18 @@ class SGFError(Exception):
     pass
 
 
-def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
+def create_sgf_csv(file='pro_collection.csv', direc='../sgf_store/', limit=None):
     """Create csv file of sgf_store
-
-    Add sgf strings from files in sgf_store folder as single lines in the csv file.
-    Limit caps the number of iterations to that integer for testing.
-    >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
 
     :param file: string
     :param direc: string
     :param limit: int
     :return: None
+
+    Add sgf strings from files in sgf_store folder as single lines in the csv file.
+    Limit caps the number of iterations to that integer for testing.
+    >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
+
     """
     with open(direc + file, 'w', encoding='utf-8') as csv_file:
         for sgf_id, sgf_str in enumerate(sgf_store()):
@@ -241,8 +204,12 @@ def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
+def create_sgf_hdf5(file='pro_collection.hdf5', direc='../sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
+
+    :param file: string
+    :param direc: string
+    :return: None
 
     Add sgf details from sgf files in sgf_store to a hdf5 binary.
     Each game is added as a group.
@@ -251,9 +218,6 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
     Limit caps the number of iterations to that integer for testing.
     >>> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
 
-    :param file: string
-    :param direc: string
-    :return: None
     """
     with h5py.File(direc + file, 'w') as pro_games:
 
@@ -274,7 +238,7 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
                     if value == '' or value == ' ':     # don't record blank info
                         continue
                     if name == 'C':
-                        name += str(len(move_list))     # associated comment to specific move
+                        name += str(len(move_list))     # associated game comment to specific move
                     game_attrs[name] = value
             try:
                 size = str(game_attrs['SZ'])
@@ -291,4 +255,4 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
                 pro_games[size][curr_game].attrs[name] = game_attrs[name]
 
 if __name__ == '__main__':
-    create_sgf_hdf5()
+    create_sgf_hdf5(limit=0)
