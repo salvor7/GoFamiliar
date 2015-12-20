@@ -189,7 +189,7 @@ class SGFError(Exception):
     pass
 
 
-def create_sgf_csv(file='pro_collection.csv', direc='../sgf_store/', limit=None):
+def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
     """Create csv file of sgf_store
 
     :param file: string
@@ -199,7 +199,7 @@ def create_sgf_csv(file='pro_collection.csv', direc='../sgf_store/', limit=None)
 
     Add sgf strings from files in sgf_store folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
+    >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
 
     """
     with open(direc + file, 'w', encoding='utf-8') as csv_file:
@@ -209,7 +209,7 @@ def create_sgf_csv(file='pro_collection.csv', direc='../sgf_store/', limit=None)
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_sgf_hdf5(file='pro_collection.hdf5', direc='../sgf_store/', limit=None):
+def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
     """Create hdf5 file of sgf_store
 
     :param file: string
@@ -221,7 +221,7 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='../sgf_store/', limit=Non
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
+    >>> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
 
     """
     with h5py.File(direc + file, 'w') as pro_games:
@@ -229,13 +229,13 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='../sgf_store/', limit=Non
         pro_games.create_group('19')
         pro_games.create_group('13')
         pro_games.create_group('9')
-        for game_id, sgf_nodes in enumerate(store_parser()):
+        for game_id, node_gen in enumerate(store_parser()):
             if limit and game_id > abs(limit):
                 break
 
             game_attrs = {}
             move_list = []
-            for node in sgf_nodes:
+            for node in node_gen:
                 try:
                     move_list.append(node_to_move(node))
                 except ValueError:
