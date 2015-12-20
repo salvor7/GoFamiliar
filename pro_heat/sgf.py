@@ -72,26 +72,24 @@ def sgf_parser(sgf_str):
         raise SGFError(message)
 
 
-def sgf_main_branch(sgf_list):
-    """Returns the main branch of an sgf string.
-
-    Searches every branch of the sgf list, and returns the first branch at each branch.
-    >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
-    >>> sgf_main_branch(sgf_parser(basic_branching1))
-    ['SZ[19]', 'B[qd]', 'W[dd]', 'B[oc]']
+def main_branch(sgf_list):
+    """Yield the nodes of the main branch of an sgf string.
 
     :param sgf_list: list
-    :return: list
+    :yield: str
+
+    Searches every branch of the sgf list, and returns each first subbranch.
+    >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
+    >>> [node for node in main_branch(parser(basic_branching1))]
+    ['SZ[19]', 'B[qd]', 'W[dd]', 'B[oc]']
     """
-    main_branch = []
     for node in sgf_list:
         if type(node) == list:
-            main_branch += sgf_main_branch(node)
+            for node in main_branch(node):
+                yield node
             break
         else:
-            main_branch.append(node)
-
-    return main_branch
+            yield node
 
 
 def node_to_move(node):
