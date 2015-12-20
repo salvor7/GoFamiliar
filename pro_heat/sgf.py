@@ -141,8 +141,12 @@ def store(direc=sgfdir):
 
     :param direc: string
     :yield: string
-    >> sum(1 for game in sgf_store()) > 45000
-    True
+    >>> for game in store(sgfdir+'/hikaru_sgfs'):
+    ...     print(len(game))
+    1686
+    1847
+    2576
+    1678
     """
     files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
 
@@ -161,9 +165,13 @@ def store_parser(direc=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
 
     :param direc: string
-    :yield: list
-    >> for _ in sgf_store_parser():
-    ...     pass
+    :yield: generator of sgf nodes
+    >>> for game in store_parser(direc=sgfdir+'/hikaru_sgfs'):
+    ...     print(next(game))
+    FF[1]
+    AP[MultiGo:3.9.4]
+    GM[1]
+    AP[MultiGo:3.9.4]
     """
     bad_files = []
     for sgf_str in store(direc):

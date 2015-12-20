@@ -28,15 +28,30 @@ def test_main_branch():
     """
 
     >>> linear_sgf = '(;KM[2.75]SZ[19];B[qd];W[dd];B[oc];W[pp];B[do];W[dq])'
-    >>> sgf.parser(linear_sgf) == sgf.main_branch(sgf.parser(linear_sgf))
-    True
+    >>> for node in sgf.main_branch(sgf.parser(linear_sgf)):
+    ...     print(node)
+    KM[2.75]
+    SZ[19]
+    B[qd]
+    W[dd]
+    B[oc]
+    W[pp]
+    B[do]
+    W[dq]
     >>> complex_branching = ('(;RU[Japanese]SZ[19]KM[6.50];B[jj];W[kl]'
     ...                 '(;B[pd](;W[pp])(;W[dc](;B[de])(;B[dp])))'
     ...                 '(;B[cd];W[dp])'
     ...                 '(;B[cq](;W[pq])(;W[pd]))'
     ...                 '(;B[oq];W[dd]))')
-    >>> sgf.main_branch(sgf.parser(complex_branching))
-    ['RU[Japanese]', 'SZ[19]', 'KM[6.50]', 'B[jj]', 'W[kl]', 'B[pd]', 'W[pp]']
+    >>> for node in sgf.main_branch(sgf.parser(complex_branching)):
+    ...     print(node)
+    RU[Japanese]
+    SZ[19]
+    KM[6.50]
+    B[jj]
+    W[kl]
+    B[pd]
+    W[pp]
     """
     pass
 
