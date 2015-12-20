@@ -25,4 +25,7 @@ def search_tree(directory='.', file_sig='*.*'):
         for filename in fnmatch.filter(filenames, file_sig):
             matches.append(path.join(root, filename))
 
-    return matches
+    if matches == []:
+        raise IOError('No files found')
+    else:
+        return matches
