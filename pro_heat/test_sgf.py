@@ -3,9 +3,6 @@ import h5py
 import os
 import numpy as np
 
-file = 'pro_collection.hdf5'
-fpath = 'sgf_store'
-
 def test_sgf_parser():
     """
     >>> basic_branching2 = '(;SZ[19];B[jj];W[kl](;B[dd](;W[gh])   (;W[sa]))(;B[cd]))'
@@ -72,10 +69,14 @@ def test_node_to_move():
     pass
 
 
-def test_hdf5_access():
+def test_pro_library_access():
+    hdf5_file = os.path.join('sgf_store', 'pro_collection.hdf5')
 
-    pro_games = h5py.File(os.path.join(fpath, file), 'r')
-
+    try:
+        pro_games = h5py.File(hdf5_file, 'r')
+    except OSError:
+        sgf.create_pro_hdf5(file=hdf5_file)
+        pro_games = h5py.File(hdf5_file, 'r')
 
     print(len(pro_games['19']))
     #access size 19 games

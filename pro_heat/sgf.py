@@ -5,6 +5,7 @@ An SGF string is formatted as described at the website.
 """
 
 import ast
+import os
 import re
 from string import ascii_letters
 import h5py
@@ -189,7 +190,7 @@ class SGFError(Exception):
     pass
 
 
-def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
+def create_pro_csv(file='pro_collection.csv', direc='sgf_store', limit=None):
     """Create csv file of sgf_store
 
     :param file: string
@@ -199,17 +200,17 @@ def create_sgf_csv(file='pro_collection.csv', direc='sgf_store/', limit=None):
 
     Add sgf strings from files in sgf_store folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_sgf_csv(file='sgfcsv_doctest.csv', limit=100)
+    >>> create_pro_csv(file='sgfcsv_doctest.csv', limit=10)
 
     """
-    with open(direc + file, 'w', encoding='utf-8') as csv_file:
+    with open(os.path.join(direc , file), 'w', encoding='utf-8') as csv_file:
         for sgf_id, sgf_str in enumerate(store()):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
+def create_pro_hdf5(file='', direc='', limit=None):
     """Create hdf5 file of sgf_store
 
     :param file: string
@@ -221,10 +222,11 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_sgf_hdf5(file='sgfhdf5_doctest.hdf5', limit=100)
+    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', limit=10)
 
     """
-    with h5py.File(direc + file, 'w') as pro_games:
+
+    with h5py.File(os.path.join(direc, file), 'w') as pro_games:
 
         pro_games.create_group('19')
         pro_games.create_group('13')
@@ -258,6 +260,3 @@ def create_sgf_hdf5(file='pro_collection.hdf5', direc='sgf_store/', limit=None):
                 raise
             for name in game_attrs:
                 pro_games[size][curr_game].attrs[name] = game_attrs[name]
-
-if __name__ == '__main__':
-    create_sgf_hdf5(limit=0)
