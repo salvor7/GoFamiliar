@@ -1,4 +1,10 @@
-import sgf
+from . import sgf
+import h5py
+import os
+import numpy as np
+
+file = 'pro_collection.hdf5'
+fpath = '../sgf_store'
 
 def test_sgf_parser():
     """
@@ -64,3 +70,19 @@ def test_node_to_move():
     "error" is not a sgf move formatted node
     """
     pass
+
+
+def test_hdf5_access():
+
+    pro_games = h5py.File(os.path.join(fpath, file), 'r')
+
+
+    print(len(pro_games['19']))
+    #access size 19 games
+    count_board = np.zeros(shape=(19,19), dtype=np.int)
+    for idx, game in enumerate(pro_games['19']):
+
+        player, x, y = pro_games['19'][game][0]
+        count_board[x-1, y-1] += 1
+
+    print(count_board)
