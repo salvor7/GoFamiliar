@@ -65,11 +65,6 @@ class GoPosition:
         >>> position.add_move(GoMove(1,4,4))
         >>> position.board[3][3]
         1
-        >>> position.add_move(GoMove(1,4,4))
-        MoveError: Stone already in position
-        >>> suicide = GoPosition(moves=[GoMove(1,1,2), GoMove(1,2,1), GoMove(1,2,3), GoMove(1,3,2)])
-        >>> suicide.add_move(GoMove(-1,2,2))
-        MoveError: Suicide move
 
         :param move: GoMove
         :return: None
