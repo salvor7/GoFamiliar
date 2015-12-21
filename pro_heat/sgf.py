@@ -10,7 +10,7 @@ from string import ascii_letters
 import h5py
 import numpy as np
 import util.directory_tools as dt
-from go_objects import GoMove
+from pro_heat.go_objects import GoMove
 
 sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 

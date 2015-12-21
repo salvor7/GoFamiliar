@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 file = 'pro_collection.hdf5'
-fpath = '../sgf_store'
+fpath = 'sgf_store'
 
 def test_sgf_parser():
     """
