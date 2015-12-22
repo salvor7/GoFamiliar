@@ -7,11 +7,11 @@ An SGF string is formatted as described at the website.
 import ast
 import os
 import re
+from collections import namedtuple
 from string import ascii_letters
 import h5py
 import numpy as np
 import util.directory_tools as dt
-from pro_heat.go_objects import GoMove
 
 sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 
@@ -260,3 +260,15 @@ def create_pro_hdf5(file='', direc='', limit=None):
                 raise
             for name in game_attrs:
                 pro_games[size][curr_game].attrs[name] = game_attrs[name]
+
+
+class GoMove(namedtuple('GoMove','player x y')):
+    """GoMove object
+    >>> black_tengen = GoMove(player=1, x=10, y=10)
+    >>> black_tengen
+    GoMove(player=1, x=10, y=10)
+    >>> white_komoku = GoMove(-1,3,4)
+    >>> white_komoku
+    GoMove(player=-1, x=3, y=4)
+    """
+    pass

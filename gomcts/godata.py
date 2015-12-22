@@ -74,7 +74,7 @@ class Position():
     13
     """
 
-    def __init__(self, size=19):
+    def __init__(self, moves=None, size=19, komi=7.5, lastmove=None, kolock=None):
         """Initialize a Position with a board of size**2
 
         :param size: int
@@ -83,9 +83,16 @@ class Position():
         """
         self.board = UnionFind(size_limit=size ** 2)
         self.groups = {}
-        self.ko = None
+        self.kolock = kolock
+        self.komi = komi
         self.size = size
         self.next_player = BLACK
+
+        try:
+            for pt in moves:
+                self.move(pt)
+        except TypeError:
+            pass
 
     def __getitem__(self, pt):
         """Return group pt is a part of
