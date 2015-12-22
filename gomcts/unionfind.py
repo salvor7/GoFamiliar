@@ -33,11 +33,26 @@ class UnionFind():
     def __len__(self):
         return len(self._pointers)
 
-    def union(self, pt1, pt2):
-        self._pointers[self[pt2]] = self[pt1]
+    def __setitem__(self, elements, target):
+        """Union of target and all elements together
 
-    def multi_union(self, pt_iter):
-        pt1 = next(pt_iter)
-        for pt_n in pt_iter:
-            self.union(pt1, pt_n)
+        This implements the union function of Union Find data structure.
+        It also exploits some of numpy.arrays advanced slicing to allow for multi unioning.
+        :param elements: [ints]
+        :param target: int
+
+        >>> uf = UnionFind()
+        >>> uf[6] = 100
+        >>> uf[6]
+        100
+
+        It also exploits some of numpy.arrays advanced slicing to allow for multi unioning.
+        >>> uf[[1,2,100]] = 101
+        >>> uf[1,2,6,100]
+        [101, 101, 101, 101]
+        """
+        element_repres = [self[elem] for elem in elements]
+        target_repre = self[target]
+        self._pointers.__setitem__(element_repres, target_repre)
+
 
