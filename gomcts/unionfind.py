@@ -3,14 +3,21 @@ import numpy as np
 class UnionFind():
     def __init__(self, size_limit=0):
         self._pointers = np.array(range(size_limit), dtype=np.int32)
+    def __init__(self, size_limit=np.infty):
         self.size_limit = size_limit
+        if size_limit is np.infty:
+            limit = 0
+        else:
+            limit = size_limit
+        self._pointers = np.array(range(limit), dtype=np.int32)
+
 
     def __getitem__(self, elem):
         try:
             self._pointers[elem]
         except KeyError:
-            if self.size_limit is not 0 and elem > self.size_limit:
-                raise KeyError(str(elem) + ' is not in domain of union')
+            if elem > self.size_limit:
+                raise KeyError(str(elem) + ' is not in range')
             new_points = range(len(self), elem + 1)
             np.append(self._pointers, new_points)
         if self._pointers[elem] == elem:
