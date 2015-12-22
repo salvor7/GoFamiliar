@@ -78,6 +78,8 @@ class Position():
         """Initialize a Position with a board of size**2
 
         :param size: int
+
+        >>> Position()
         """
         self.board = UnionFind(size_limit=size ** 2)
         self.groups = {}
@@ -105,12 +107,12 @@ class Position():
     def move(self, pt, colour=0):
         """Play a move on a go board
 
-        Completes all the checks to a ensure legal move, and will raise a MoveError if
-        it is an illegal move.
-        Adds the move to the position, and returns the position.
         :param pt: int
         :param colour: +1 or -1
         :return: Position
+
+        Completes all the checks to a ensure legal move, raising a MoveError if illegal.
+        Adds the move to the position, and returns the position.
         >>> pt = 200
         >>> pos = Position()
         >>> pos.move(pt, colour=BLACK)[pt]
@@ -172,6 +174,7 @@ class Position():
 
         :param pt: int
         :yield: Group
+
         >>> pt = 200
         >>> next(Position().neigh_groups(pt))
         (181, Group(colour=0, size=0, liberties=0))
