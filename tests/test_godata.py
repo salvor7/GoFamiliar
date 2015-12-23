@@ -1,6 +1,8 @@
 import itertools
+
 import pytest
-from . import godata as gd
+
+import godata as gd
 
 fixture_params = [n for n in range(9, 26, 2)]
 

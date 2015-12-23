@@ -1,6 +1,8 @@
 from collections import namedtuple
-from .unionfind import UnionFind
+
 import numpy as np
+
+from util.unionfind import UnionFind
 
 BLACK = 1
 WHITE = -1

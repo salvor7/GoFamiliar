@@ -1,7 +1,10 @@
-from . import sgf
-import h5py
 import os
+
+import h5py
 import numpy as np
+
+import sgf
+
 
 def test_sgf_parser():
     """
