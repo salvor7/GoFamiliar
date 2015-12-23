@@ -42,7 +42,7 @@ class UnionFind():
 
 
     def __getitem__(self, elem):
-        """Find elem group
+        """Find group representative
 
         :param elem: int
         :return: int
@@ -51,31 +51,28 @@ class UnionFind():
         Recursively follows pointers till finding an element pointing to itself, which is
         the union representative.
         A chain of pointers is updated to point directly to the representative.
-        If elem is past the end of the underlying list and there is no size_limit,
+        If the element is past the end of the underlying list and there is no size_limit,
         the list is extended with elements pointing to themselves.
 
         The find function is implemented as Pythonic object indexing.
         >>> uf = UnionFind()
         >>> uf[100]
         100
-
-        Getitem also supports some numpy.array slicing.
-        >>> uf[[1,10,100, 1000]]
-        [1,10, 100, 1000]
         """
         try:
             points_to_self = self._pointers[elem] == elem
         except IndexError:
             if elem > self.size_limit:
-                raise KeyError(str(elem) + ' is not in range')
+                raise IndexError(str(elem) + ' is not in range')
             new_points = range(len(self), elem + 1)
             self._pointers = np.append(self._pointers, new_points)
             points_to_self = (self._pointers[elem] == elem)
+
         if points_to_self:
             repre = elem
         else:
             repre = self.__getitem__(self._pointers[elem])
-            self._pointers[elem] = repre #update pointers
+            self._pointers[elem] = repre        #update pointers
         return repre
 
     def __iter__(self):
@@ -98,10 +95,10 @@ class UnionFind():
         """
         return len(self._pointers)
 
-    def __setitem__(self, elements, target):
-        """Union of target and all elements together
+    def __setitem__(self, elem, target):
+        """Create union of passed arguments
 
-        :param elements: [ints]
+        :param elem: int
         :param target: int
 
         This implements the union function of Union Find data structure.
@@ -110,14 +107,7 @@ class UnionFind():
         >>> uf[6] = 100
         >>> uf[6]
         100
-
-        numpy.arrays advanced slicing allows for multiple unions at once.
-        >>> uf[[1,2,100]] = 101
-        >>> uf[1,2,6,100]
-        [101, 101, 101, 101]
         """
-        element_repres = [self[elem] for elem in elements]
-        target_repre = self[target]
-        self._pointers.__setitem__(element_repres, target_repre)
+        self._pointers[self[elem]] = self[target]
 
 
