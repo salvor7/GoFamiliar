@@ -81,7 +81,7 @@ class Position():
 
         :param size: int
 
-        >>> Position()
+        >>> pos = Position()
         """
         self.board = UnionFind(size_limit=size ** 2)
         self.groups = {}
@@ -129,7 +129,7 @@ class Position():
         >>> pos.move(pt+1, colour=BLACK)[pt+1]
         Group(colour=1, size=2, liberties=6)
         """
-        if self.ko is not None:
+        if self.kolock is not None:
             raise MoveError('Playing on a ko point.')
         elif self[pt] is not OPEN_POINT:
             raise MoveError('Playing on another stone.')

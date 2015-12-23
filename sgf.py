@@ -190,7 +190,7 @@ class SGFError(Exception):
     pass
 
 
-def create_pro_csv(file='pro_collection.csv', direc='sgf_store', limit=None):
+def create_pro_csv(file='', direc='', limit=None):
     """Create csv file of sgf_store
 
     :param file: string
@@ -200,8 +200,7 @@ def create_pro_csv(file='pro_collection.csv', direc='sgf_store', limit=None):
 
     Add sgf strings from files in sgf_store folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_csv(file='sgfcsv_doctest.csv', limit=10)
-
+    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru')
     """
     with open(os.path.join(direc , file), 'w', encoding='utf-8') as csv_file:
         for sgf_id, sgf_str in enumerate(store()):
@@ -222,8 +221,7 @@ def create_pro_hdf5(file='', direc='', limit=None):
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', limit=10)
-
+    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc='sgf_store\\hikaru')
     """
 
     with h5py.File(os.path.join(direc, file), 'w') as pro_games:
@@ -263,7 +261,8 @@ def create_pro_hdf5(file='', direc='', limit=None):
 
 
 class GoMove(namedtuple('GoMove','player x y')):
-    """GoMove object
+    """GoMove namedtuple object
+
     >>> black_tengen = GoMove(player=1, x=10, y=10)
     >>> black_tengen
     GoMove(player=1, x=10, y=10)

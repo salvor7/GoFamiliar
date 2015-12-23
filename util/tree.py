@@ -15,7 +15,6 @@ class Node:
     'daughter'
     >>> tree.children[0].children[0].value
     'granddaughter'
-
     """
     def __init__(self, value, children = None):
         """Construct a Node.

@@ -70,7 +70,7 @@ def test_make_neighbors(position):
 def test_Position_initial(position):
     """Test initiliazation of Position
     """
-    assert position.ko is None
+    assert position.kolock is None
     assert position.next_player is gd.BLACK
     assert len(position.board) == position.size**2
     assert len(position.groups) == 0
