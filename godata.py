@@ -113,7 +113,36 @@ class Position():
                 self.board._pointers[pt] = pt
             return OPEN_POINT
 
-    def move(self, pt, colour=0):
+    def __setitem__(self, key, group):
+        """Set group object
+
+        :param key: int
+        :param value: Group
+
+        >>> pos = Position()
+        >>> pos[200] = Group(colour=1, size=1, liberties=4)
+        >>> pos[200]
+        Group(colour=1, size=1, liberties=4)
+        """
+        if type(group) is not Group:
+            raise ValueError('Not a Group object')
+        self.groups[self.board[key]] = group
+
+    def __delitem__(self, pt):
+        """Delete group at point pt
+
+        :param pt: int
+        >>> pos = Position()
+        >>> pos[100] = Group(size=1, colour=1, liberties=4)
+        >>> del pos[100]
+        """
+        repre = self.board[pt]
+        try:
+            del self.groups[repre]
+        except KeyError:
+            raise KeyError('No stones at point ' + str(pt))
+
+    def move(self, move_pt, colour=None):
         """Play a move on a go board
 
         :param pt: int
@@ -152,22 +181,32 @@ class Position():
                 dead_opp_groups += [qt]
         if liberty_count == 0 and len(dead_opp_groups) == 0:
             raise MoveError('Playing self capture.')
+
         #Checks complete. Start making changes to Position
         size = 0
-
-        for repre in player_groups:
-            if self.board[repre] == pt:
+        for group_pt in player_groups:
+            try:
+                size += self[group_pt].size
+            except KeyError:
                 continue
-            size += self.groups[repre].size
-            self.board.union(pt, repre)
-            del self.groups[repre]
-        self.groups[pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
+            self.board[move_pt] = group_pt
+            try:
+                del self[group_pt]
+            except KeyError:
+                group_merged = (self.board[group_pt] == self.board[move_pt])
+                if not group_merged:
+                    raise
+        self[move_pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
 
         captured = 0
-        for repre in dead_opp_groups:
-            repre = self.board[repre]
-            captured += self.groups[repre].size
-            del self.groups[repre]
+        for group_pt in dead_opp_groups:
+            captured += self[group_pt].size
+            try:
+                del self[group_pt]
+            except KeyError:
+                group_removed = (self.board[group_pt] == self.board[move_pt])
+                if not group_removed:
+                    raise
 
         if captured == 1:
             self.ko = dead_opp_groups[0]
