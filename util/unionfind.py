@@ -14,7 +14,7 @@ class UnionFind():
     100
 
     A union changes the pointers.
-    >>> uf.union(100, 101)
+    >>> uf[101] = 100
     >>> uf[100] == uf[101]
     True
     """

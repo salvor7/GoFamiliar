@@ -158,12 +158,12 @@ class Position():
         >>> pos.move(pt+1, colour=BLACK)[pt+1]
         Group(colour=1, size=2, liberties=6)
         """
-        if self.kolock is not None:
+        if move_pt == self.kolock:
             raise MoveError('Playing on a ko point.')
         elif self[pt] is not OPEN_POINT:
             raise MoveError('Playing on another stone.')
 
-        if colour == 0:
+        if colour is None:
             colour = self.next_player
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))

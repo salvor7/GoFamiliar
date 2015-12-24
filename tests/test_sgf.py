@@ -81,7 +81,7 @@ def test_pro_library_access():
         sgf.create_pro_hdf5(file=hdf5_file)
         pro_games = h5py.File(hdf5_file, 'r')
 
-    print(len(pro_games['19']))
+    assert len(pro_games['19']) == 51500
     #access size 19 games
     count_board = np.zeros(shape=(19,19), dtype=np.int)
     for idx, game in enumerate(pro_games['19']):
