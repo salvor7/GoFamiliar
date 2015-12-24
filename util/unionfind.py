@@ -108,6 +108,6 @@ class UnionFind():
         >>> uf[6]
         100
         """
-        self._pointers[self[elem]] = self[target]
-
-
+        old_set_repre = self[elem]
+        new_set_repre = self[target]
+        self._pointers[old_set_repre] = new_set_repre
