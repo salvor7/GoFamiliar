@@ -7,7 +7,6 @@ class UnionFind():
     positions in the list. A graphical forest results, where each union is a tree.
     https://en.wikipedia.org/wiki/Disjoint-set_data_structure
 
-
     Initially, every points is a graph tree pointing to itself:
     >>> uf = UnionFind()
     >>> uf[100]
@@ -39,7 +38,6 @@ class UnionFind():
         else:
             limit = size_limit
         self._pointers = np.array(range(limit), dtype=np.int32)
-
 
     def __getitem__(self, elem):
         """Find group representative
@@ -102,7 +100,7 @@ class UnionFind():
         :param target: int
 
         This implements the union function of Union Find data structure.
-        Setting the element determines the group.
+        Setting the element (eg 6) determines the group (eg 100).
         >>> uf = UnionFind()
         >>> uf[6] = 100
         >>> uf[6]

@@ -71,7 +71,6 @@ def test_node_to_move():
     """
     pass
 
-
 def test_pro_library_access():
     hdf5_file = os.path.join('sgf_store', 'pro_collection.hdf5')
 

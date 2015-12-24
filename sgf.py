@@ -19,7 +19,6 @@ sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
 
-
 def parser(sgf_str):
     """Return a recursive list of lists representing an SGF string.
 
@@ -71,7 +70,6 @@ def parser(sgf_str):
         message = str(err) + '\n' + sgf_str
         raise SGFError(message)
 
-
 def main_branch(sgf_list):
     """Yield the nodes of the main branch of an sgf string.
 
@@ -90,7 +88,6 @@ def main_branch(sgf_list):
             break
         else:
             yield node
-
 
 def node_to_move(node):
     """Return the GoMove for an SGF move node.
@@ -120,7 +117,6 @@ def node_to_move(node):
 
     return GoMove(player, x_coord, y_coord)
 
-
 def info(attribute):
     """Return the sgf attribute name and value.
 
@@ -135,7 +131,6 @@ def info(attribute):
         message = '"' + attribute + '" ' + 'is not a sgf info formatted node.'
         raise ValueError(message)
     return name, value
-
 
 def store(direc=sgfdir):
     """Yield all raw strings from size 19 sgfs in sgf_store
@@ -161,7 +156,6 @@ def store(direc=sgfdir):
 
             yield string
 
-
 def store_parser(direc=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
 
@@ -185,10 +179,8 @@ def store_parser(direc=sgfdir):
     for msg in bad_files:
         print(msg)
 
-
 class SGFError(Exception):
     pass
-
 
 def create_pro_csv(file='', direc='', limit=None):
     """Create csv file of sgf_store
@@ -207,7 +199,6 @@ def create_pro_csv(file='', direc='', limit=None):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
-
 
 def create_pro_hdf5(file='', direc='', limit=None):
     """Create hdf5 file of sgf_store
@@ -258,7 +249,6 @@ def create_pro_hdf5(file='', direc='', limit=None):
                 raise
             for name in game_attrs:
                 pro_games[size][curr_game].attrs[name] = game_attrs[name]
-
 
 class GoMove(namedtuple('GoMove','player x y')):
     """GoMove namedtuple object

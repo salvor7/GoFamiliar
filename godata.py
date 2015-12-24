@@ -69,7 +69,6 @@ class Position():
 
     An object to track all the aspects of a go game. It uses a "thick" representation of
     the board to store group information.
-
     >>> Position().size
     19
     >>> Position(size=13).size
@@ -80,7 +79,6 @@ class Position():
         """Initialize a Position with a board of size**2
 
         :param size: int
-
         >>> pos = Position()
         """
         self.board = UnionFind(size_limit=size ** 2)
@@ -99,6 +97,7 @@ class Position():
     def __getitem__(self, pt):
         """Return group pt is a part of
 
+        If point have bi group, returns an OPEN_POINT group object.
         :param pt: int
         :return: Group
         >>> Position()[200]
