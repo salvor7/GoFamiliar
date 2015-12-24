@@ -41,9 +41,9 @@ def position_moves(request):
     position = gd.Position(size=request.param)
     for pt, symbol in enumerate(board):
         if symbol == 'X':
-            position.move(pt=pt, colour=gd.BLACK)
+            position.move(move_pt=pt, colour=gd.BLACK)
         elif symbol == 'o':
-            position.move(pt=pt, colour=gd.WHITE)
+            position.move(move_pt=pt, colour=gd.WHITE)
     return position
 
 def test_make_neighbors(position):

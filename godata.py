@@ -101,15 +101,14 @@ class Position():
 
         :param pt: int
         :return: Group
-        >>> pt = 200
-        >>> Position()[pt]
+        >>> Position()[200]
         Group(colour=0, size=0, liberties=0)
         """
         repre = self.board[pt]
         try:
             return self.groups[repre]
         except KeyError:
-            if pt is not repre:  #pointing to a dead group representative
+            if pt != repre:  #pointing to a removed-group representative
                 self.board._pointers[pt] = pt
             return OPEN_POINT
 
@@ -151,16 +150,16 @@ class Position():
 
         Completes all the checks to a ensure legal move, raising a MoveError if illegal.
         Adds the move to the position, and returns the position.
-        >>> pt = 200
+        >>> move_pt = 200
         >>> pos = Position()
-        >>> pos.move(pt, colour=BLACK)[pt]
+        >>> pos.move(move_pt, colour=BLACK)[move_pt]
         Group(colour=1, size=1, liberties=4)
-        >>> pos.move(pt+1, colour=BLACK)[pt+1]
+        >>> pos.move(move_pt+1, colour=BLACK)[move_pt+1]
         Group(colour=1, size=2, liberties=6)
         """
         if move_pt == self.kolock:
             raise MoveError('Playing on a ko point.')
-        elif self[pt] is not OPEN_POINT:
+        elif self[move_pt] is not OPEN_POINT:
             raise MoveError('Playing on another stone.')
 
         if colour is None:
@@ -171,14 +170,14 @@ class Position():
         liberty_count = 0
         player_groups = []
         dead_opp_groups = []
-        for qt, group in self.neigh_groups(pt):
+        for group_pt, group in self.neigh_groups(move_pt):
             if group is OPEN_POINT:
                 liberty_count += 1
             elif group.colour == colour:
                 liberty_count += group.liberties - 1
-                player_groups += [qt]
+                player_groups += [group_pt]
             elif group.liberties == 1:
-                dead_opp_groups += [qt]
+                dead_opp_groups += [group_pt]
         if liberty_count == 0 and len(dead_opp_groups) == 0:
             raise MoveError('Playing self capture.')
 
@@ -209,9 +208,9 @@ class Position():
                     raise
 
         if captured == 1:
-            self.ko = dead_opp_groups[0]
+            self.kolock = dead_opp_groups[0]
         else:
-            self.ko = None
+            self.kolock = None
 
         self.next_player *= -1
 
