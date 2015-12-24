@@ -200,10 +200,10 @@ def create_pro_csv(file='', direc='', limit=None):
 
     Add sgf strings from files in sgf_store folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru')
+    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru_sgfs')
     """
     with open(os.path.join(direc , file), 'w', encoding='utf-8') as csv_file:
-        for sgf_id, sgf_str in enumerate(store()):
+        for sgf_id, sgf_str in enumerate(store(direc=direc)):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
@@ -221,7 +221,7 @@ def create_pro_hdf5(file='', direc='', limit=None):
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc='sgf_store\\hikaru')
+    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc='sgf_store\\hikaru_sgfs')
     """
 
     with h5py.File(os.path.join(direc, file), 'w') as pro_games:
@@ -229,7 +229,7 @@ def create_pro_hdf5(file='', direc='', limit=None):
         pro_games.create_group('19')
         pro_games.create_group('13')
         pro_games.create_group('9')
-        for game_id, node_gen in enumerate(store_parser()):
+        for game_id, node_gen in enumerate(store_parser(direc=direc)):
             if limit and game_id > abs(limit):
                 break
 
