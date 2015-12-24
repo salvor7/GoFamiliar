@@ -88,5 +88,5 @@ def test_pro_library_access():
 
         player, x, y = pro_games['19'][game][0]
         count_board[x-1, y-1] += 1
-
-    print(count_board)
+        if idx > 100:
+            break
