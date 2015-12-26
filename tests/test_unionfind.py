@@ -16,3 +16,11 @@ def test_uf_init(unionfind):
     for pt in unionfind:
         assert unionfind._pointers[pt] == pt
 
+def test_uf_union(unionfind):
+    assert False
+
+def test_uf_find(unionfind):
+    assert False
+
+def test_uf_exceptions(unionfind):
+    assert False

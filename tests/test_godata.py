@@ -74,6 +74,7 @@ def test_Position_initial(position):
     assert position.next_player is gd.BLACK
     assert len(position.board) == position.size**2
     assert len(position.groups) == 0
+    assert False
 
 def test_Position_move(position_moves):
     """Test the move function
@@ -82,19 +83,27 @@ def test_Position_move(position_moves):
     """
     assert len(position_moves.groups) == 6
 
+def test_move_exceptoins():
+    assert 'ko' is None
+
 def test_Position_getitem(position_moves):
     """Test that every board point returns correct group
 
     Add several groups to a Position, and then test that the references all point to
     the correct Group
     """
-    pass
+    assert False
 
-def test_Position_neigh_groups():
+def test_Position_delitem(position_moves):
+    assert False
+
+def test_Position_setitem(position_moves):
+    assert False
+
+def test_Position_neigh_groups(position_moves):
     """Test finding neighbor groups.
-
     """
-    pass
+    assert False
 
 def test_Group_init():
     """Test Initialization of Group object

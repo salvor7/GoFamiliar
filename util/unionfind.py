@@ -1,3 +1,8 @@
+"""Implementation of UnionFind data structure.
+
+Created for the GoFamiliar project, this module should be general enough for other uses.
+"""
+
 import numpy as np
 
 class UnionFind():
@@ -48,7 +53,10 @@ class UnionFind():
         This is the implementation of the find function of the Union Find data structure.
         Recursively follows pointers till finding an element pointing to itself, which is
         the union representative.
+
         A chain of pointers is updated to point directly to the representative.
+        This flattens the pointer tree to keep the time complexity of Find low.
+
         If the element is past the end of the underlying list and there is no size_limit,
         the list is extended with elements pointing to themselves.
 
