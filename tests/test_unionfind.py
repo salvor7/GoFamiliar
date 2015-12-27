@@ -61,13 +61,16 @@ def test_uf_exceptions(fixture_unions):
 
     bad_keys = [-8.1, 7.4, 'l']
     if fixture_unions.size_limit is not infty:
-        bad_keys += [fixture_unions.size_limit*2, -fixture_unions.size_limit*2]
+        too_large_keys = [fixture_unions.size_limit*2, -fixture_unions.size_limit*2]
+    else:
+        too_large_keys = []
 
-    for key, statement in itertools.product(bad_keys, [key_find, assign_key, assign_to_key]):
+    for key, statement in itertools.product(bad_keys + too_large_keys,
+                                            [key_find, assign_key, assign_to_key]):
         try:
             statement(key)
         except TypeError:
-            assert key in [-8.1, 7.4, 'l']
+            assert key in bad_keys
         except IndexError:
             assert abs(key) >= fixture_unions.size_limit
         else:
