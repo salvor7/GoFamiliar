@@ -2,7 +2,6 @@
 
 Created for the GoFamiliar project, this module should be general enough for other uses.
 """
-
 import numpy as np
 
 class UnionFind():
@@ -42,7 +41,7 @@ class UnionFind():
             limit = 0
         else:
             limit = size_limit
-        self._pointers = np.array(range(limit), dtype=np.int32)
+        self._pointers = list(range(limit)) #np.array(range(limit), dtype=np.uint8)
 
     def __getitem__(self, elem):
         """Find group representative
@@ -66,12 +65,14 @@ class UnionFind():
         100
         """
         try:
-            points_to_self = self._pointers[elem] == elem
+            points_to_self = (self._pointers[elem] == elem)
         except IndexError:
             if elem > self.size_limit:
                 raise IndexError(str(elem) + ' is not in range')
             new_points = range(len(self), elem + 1)
             self._pointers = np.append(self._pointers, new_points)
+            new_points = list(range(len(self), elem + 1))
+            self._pointers += new_points #= np.append(self._pointers, new_points)
             points_to_self = (self._pointers[elem] == elem)
 
         if points_to_self:
