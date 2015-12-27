@@ -83,14 +83,14 @@ class UnionFind():
         return repre
 
     def __iter__(self):
-        """Iterator over the underlying pointer list
+        """Iterator over the point indices
 
         :return: iter
 
         >>> for elem in UnionFind(size_limit=100):
         ...     pass
         """
-        return iter(self._pointers)
+        return iter(range(len(self)))
 
     def __len__(self):
         """Returns len of underlying pointer list
