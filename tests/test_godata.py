@@ -194,10 +194,14 @@ def test_move_exceptions(position_moves):
 def test_Position_neigh_groups(position_moves):
     position, moves = position_moves
 
-    for pt in moves:
-        for idx, neigh_pt, neigh_group in enumerate(position.neigh_groups(pt)):
-            assert (neigh_group == gd.OPEN_POINT or position[pt] == position[neigh_pt])
-        assert 4 >= idx
+    for pt in position.board:
+        groups = [(repre, group) for repre, group in position.neigh_groups(pt)]
+        assert len(groups) == len(set(groups))      #no repeat groups
+
+        the_expected_groups = [position[neigh_pt] for neigh_pt in gd.NEIGHBORS[position.size][pt]]
+        for repre, group in groups:
+            assert position[repre] is group
+            assert group in the_expected_groups
 
 def test_Group_init():
     for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):

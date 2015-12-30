@@ -225,8 +225,11 @@ class Position():
         >>> next(Position().neigh_groups(pt))
         (181, Group(colour=0, size=0, liberties=0))
         """
+        sent_already = []
         for qt in NEIGHBORS[self.size][pt]:
-            yield self.board[qt], self[qt]
+            if self.board[qt] not in sent_already:
+                yield self.board[qt], self[qt]
+                sent_already.append(self.board[qt])
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
