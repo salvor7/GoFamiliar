@@ -105,7 +105,7 @@ def test_Position_getsetdel(position_moves):
 
     s = position.size
     def group_already():
-        position[s] = gd.Group(size=5, colour=1, liberties=7)
+        position[s] = gd.Group(size=5, colour=1, liberties=frozenset({66, 75, 50, 51, 52, 53, 58}))
     exception_test(group_already, gd.MoveError, 'Group already at ' + str(s))
 
     #test deleting and setting groups
@@ -135,12 +135,16 @@ def test_Position_move(position_moves):
     .oXXX.
     """
     position, moves = position_moves
-    groups = [gd.Group(size=1, colour=1, liberties=3),
-                gd.Group(size=1, colour=1, liberties=1),
-                gd.Group(size=5, colour=1, liberties=7),
-                gd.Group(size=5, colour=1, liberties=1),
-                gd.Group(size=3, colour=-1, liberties=4),
-                gd.Group(size=8, colour=-1, liberties=7),
+    s = position.size
+    groups = [gd.Group(size=1, colour=1, liberties=frozenset({0, s+1, 2})),
+                gd.Group(size=1, colour=1, liberties=frozenset({2})),
+                gd.Group(size=5, colour=1,
+                         liberties=frozenset({0, 2, s+1, 2*s + 3, 3*s, 3*s + 1, 3*s + 2})),
+                gd.Group(size=5, colour=1, liberties=frozenset({s**2 - 1})),
+                gd.Group(size=3, colour=-1,
+                         liberties=frozenset({s+5, 5, 2*s + 3, 2*s + 4})),
+                gd.Group(size=8, colour=-1,
+                         liberties=frozenset({7*s + 3, 8*s + 3, 5*s + 5, 5*s + 6, 5*s + 7, 5*s + 8, 6*s + 4})),
                 ]
     representatives = defaultdict(list)
     for pt in moves:
@@ -155,15 +159,11 @@ def test_Position_move(position_moves):
         assert position[repre].colour == moves[repre]
         assert position[repre] in groups
 
-    #test exploits player colour as +/-1
-    assert sum([group.color for group in position_moves.groups]) == position_moves.next_player
-
     position.move(2, gd.BLACK)
-    assert position[1] == gd.Group(size=8, colour=gd.BLACK, liberties=6)
-    s = position.size
+    assert position[1] == gd.Group(size=8, colour=gd.BLACK, liberties=frozenset({0, 10, 21, 27, 28, 29}))
     position.move(s**2-1, gd.WHITE)         #capture corner
-    assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=2)
-    assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE, liberties=11)
+    assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=frozenset({79, 71}))
+    assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE, liberties=frozenset({66, 75, 50, 51, 52, 53, 58}))
 
 def test_move_exceptions(position_moves):
     position, moves = position_moves

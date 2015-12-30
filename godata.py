@@ -61,8 +61,12 @@ def make_neighbors(size=19):
 
 NEIGHBORS = {n:{pt:neigh for pt, neigh in make_neighbors(size=n)}  for n in range(9, 26, 2)}
 
-Group = namedtuple('Group', 'colour size liberties')
-OPEN_POINT = Group(colour=0, size=0, liberties=0)
+class Group(namedtuple('Group', 'colour size liberties')):
+    @property
+    def libs(self):
+        return len(self.liberties)
+
+OPEN_POINT = Group(colour=0, size=0, liberties=frozenset())
 
 class Position():
     """A Go game position object
@@ -101,7 +105,7 @@ class Position():
         :param pt: int
         :return: Group
         >>> Position()[200]
-        Group(colour=0, size=0, liberties=0)
+        Group(colour=0, size=0, liberties=frozenset())
         """
         repre = self.board[pt]
         try:
@@ -133,7 +137,7 @@ class Position():
 
         :param pt: int
         >>> pos = Position()
-        >>> pos[100] = Group(size=1, colour=1, liberties=4)
+        >>> pos[100] = Group(size=1, colour=1, liberties=frozenset(NEIGHBORS[19][100]))
         >>> del pos[100]
         """
         repre = self.board[pt]
@@ -154,9 +158,9 @@ class Position():
         >>> move_pt = 200
         >>> pos = Position()
         >>> pos.move(move_pt, colour=BLACK)[move_pt]
-        Group(colour=1, size=1, liberties=4)
+        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
         >>> pos.move(move_pt+1, colour=BLACK)[move_pt+1]
-        Group(colour=1, size=2, liberties=6)
+        Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
         """
         if move_pt == self.kolock:
             raise MoveError('Playing on a ko point.')
@@ -168,42 +172,42 @@ class Position():
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))
 
-        group_tracking = defaultdict(list)
+        list_tracking = defaultdict(list)
         count_tracking = defaultdict(int)
         for group_pt, group in self.neigh_groups(move_pt):
             if group is OPEN_POINT:
-                liberty_count += 1
+                list_tracking['liberties'] += [group_pt]
             elif group.colour == colour:
-                group_tracking['liberty count'] += group.liberties - 1
+                list_tracking['liberties'] += list(group.liberties - {move_pt})
+                list_tracking['player'] += [(group_pt, group)]
                 count_tracking['size'] += group.size
-                group_tracking['player'] += [(group_pt, group)]
             else: #group.colour == -colour
-                if group.liberties == 1:
-                    group_tracking['dead opponent'] += [group_pt]
+                if group.libs == 1:
+                    list_tracking['dead opponent'] += [group_pt]
                     count_tracking['captures'] += group.size
                     del self[group_pt]
                 else:
-                    group_tracking['alive opponent'] += [(group_pt, group)]
+                    list_tracking['alive opponent'] += [(group_pt, group)]
 
-        if count_tracking['liberty count'] == 0 and 'captures' not in count_tracking:
+        if list_tracking['liberties'] == [] and 'captures' not in count_tracking:
             raise MoveError('Playing self capture.')
 
-        for opp_pt, opp_group in group_tracking['alive opponent']:
+        for opp_pt, opp_group in list_tracking['alive opponent']:
             del self[opp_pt]
             self[opp_pt] = Group(colour=opp_group.colour,
                                  size=opp_group.size,
-                                 liberties=opp_group.liberties-1)
+                                 liberties=opp_group.liberties-{move_pt})
 
-        for group_pt, group in group_tracking['player']:
+        for group_pt, group in list_tracking['player']:
             self.board[move_pt] = self.board[group_pt]
             del self[group_pt]
 
         self[move_pt] = Group(colour=colour,
                               size=count_tracking['size']+1,
-                              liberties=count_tracking['liberty count'])
+                              liberties=frozenset(list_tracking['liberties']))
 
         if count_tracking['captures'] == 1:
-            self.kolock = group_tracking['dead opponent'][0]
+            self.kolock = list_tracking['dead opponent'][0]
         else:
             self.kolock = None
 
@@ -219,7 +223,7 @@ class Position():
 
         >>> pt = 200
         >>> next(Position().neigh_groups(pt))
-        (181, Group(colour=0, size=0, liberties=0))
+        (181, Group(colour=0, size=0, liberties=frozenset()))
         """
         sent_already = []
         for qt in NEIGHBORS[self.size][pt]:
