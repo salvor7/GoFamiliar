@@ -160,11 +160,10 @@ def test_Position_move(position_moves):
 
     position.move(2, gd.BLACK)
     assert position[1] == gd.Group(size=8, colour=gd.BLACK, liberties=6)
-
-    position.move(position.size**2-1, gd.WHITE)
-    assert position[position.size**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=2)
-    position.move(position.size**2-2, gd.WHITE)
-    assert position[position.size**2-2] == gd.Group(size=2, colour=gd.WHITE, liberties=3)
+    s = position.size
+    position.move(s**2-1, gd.WHITE)         #capture corner
+    assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=2)
+    assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE, liberties=11)
 
 def test_move_exceptions(position_moves):
     position, moves = position_moves
