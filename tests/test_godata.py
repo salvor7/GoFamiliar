@@ -88,6 +88,7 @@ def exception_test(func, err, message):
 def test_Position_getsetdel(position_moves):
 
     position, moves = position_moves
+    s = position.size
     #test moves made in fixture
     for pt in position.board:
         group = position[pt]
@@ -102,11 +103,6 @@ def test_Position_getsetdel(position_moves):
     def set_bad_group():
         position[0] = 1
     exception_test(set_bad_group, ValueError, 'Not a Group object')
-
-    s = position.size
-    def group_already():
-        position[s] = gd.Group(size=5, colour=1, liberties=frozenset({66, 75, 50, 51, 52, 53, 58}))
-    exception_test(group_already, gd.MoveError, 'Group already at ' + str(s))
 
     #test deleting and setting groups
     for pt in moves:

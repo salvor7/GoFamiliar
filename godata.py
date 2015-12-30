@@ -128,8 +128,6 @@ class Position():
         """
         if type(group) is not Group:
             raise ValueError('Not a Group object')
-        elif self.board[key] in self.groups:
-            raise MoveError('Group already at ' + str(key))
         self.groups[self.board[key]] = group
 
     def __delitem__(self, pt):
@@ -193,7 +191,6 @@ class Position():
             raise MoveError('Playing self capture.')
 
         for opp_pt, opp_group in list_tracking['alive opponent']:
-            del self[opp_pt]
             self[opp_pt] = Group(colour=opp_group.colour,
                                  size=opp_group.size,
                                  liberties=opp_group.liberties-{move_pt})
