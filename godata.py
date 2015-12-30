@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 import numpy as np
 
@@ -168,48 +168,42 @@ class Position():
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))
 
-        liberty_count = 0
-        player_groups = []
-        dead_opp_groups = []
+        group_tracking = defaultdict(list)
+        count_tracking = defaultdict(int)
         for group_pt, group in self.neigh_groups(move_pt):
             if group is OPEN_POINT:
                 liberty_count += 1
             elif group.colour == colour:
-                liberty_count += group.liberties - 1
-                player_groups += [group_pt]
-            elif group.liberties == 1:
-                dead_opp_groups += [group_pt]
-        if liberty_count == 0 and len(dead_opp_groups) == 0:
+                group_tracking['liberty count'] += group.liberties - 1
+                count_tracking['size'] += group.size
+                group_tracking['player'] += [(group_pt, group)]
+            else: #group.colour == -colour
+                if group.liberties == 1:
+                    group_tracking['dead opponent'] += [group_pt]
+                    count_tracking['captures'] += group.size
+                    del self[group_pt]
+                else:
+                    group_tracking['alive opponent'] += [(group_pt, group)]
+
+        if count_tracking['liberty count'] == 0 and 'captures' not in count_tracking:
             raise MoveError('Playing self capture.')
 
-        #Checks complete. Start making changes to Position
-        size = 0
-        for group_pt in player_groups:
-            try:
-                size += self[group_pt].size
-            except KeyError:
-                continue
-            self.board[move_pt] = group_pt
-            try:
-                del self[group_pt]
-            except KeyError:
-                group_merged = (self.board[group_pt] == self.board[move_pt])
-                if not group_merged:
-                    raise
-        self[move_pt] = Group(colour=colour, size=size+1, liberties=liberty_count)
+        for opp_pt, opp_group in group_tracking['alive opponent']:
+            del self[opp_pt]
+            self[opp_pt] = Group(colour=opp_group.colour,
+                                 size=opp_group.size,
+                                 liberties=opp_group.liberties-1)
 
-        captured = 0
-        for group_pt in dead_opp_groups:
-            captured += self[group_pt].size
-            try:
-                del self[group_pt]
-            except KeyError:
-                group_removed = (self.board[group_pt] == self.board[move_pt])
-                if not group_removed:
-                    raise
+        for group_pt, group in group_tracking['player']:
+            self.board[move_pt] = self.board[group_pt]
+            del self[group_pt]
 
-        if captured == 1:
-            self.kolock = dead_opp_groups[0]
+        self[move_pt] = Group(colour=colour,
+                              size=count_tracking['size']+1,
+                              liberties=count_tracking['liberty count'])
+
+        if count_tracking['captures'] == 1:
+            self.kolock = group_tracking['dead opponent'][0]
         else:
             self.kolock = None
 
