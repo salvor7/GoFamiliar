@@ -122,9 +122,9 @@ class Position():
         :param value: Group
 
         >>> pos = Position()
-        >>> pos[200] = Group(colour=1, size=1, liberties=4)
+        >>> pos[200] = Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))
         >>> pos[200]
-        Group(colour=1, size=1, liberties=4)
+        Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))
         """
         if type(group) is not Group:
             raise ValueError('Not a Group object')
@@ -211,7 +211,7 @@ class Position():
         else:
             self.kolock = None
 
-        self.next_player *= -1
+        self.next_player = -colour
 
         return self
 
