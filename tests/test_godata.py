@@ -157,6 +157,18 @@ def test_Position_move(position_moves):
 
     position.move(2, gd.BLACK)
     assert position[1] == gd.Group(size=8, colour=gd.BLACK, liberties=frozenset({0, 10, 21, 27, 28, 29}))
+
+def test_move_capture(position_moves):
+    position, moves = position_moves
+    s = position.size
+
+    def kolock_point():
+        position.move(2, gd.WHITE)
+        position.move(3, gd.BLACK)
+    exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
+
+    assert position[2] == gd.Group(colour=gd.WHITE, size=1, liberties=frozenset({3}))
+
     position.move(s**2-1, gd.WHITE)         #capture corner
     assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=frozenset({79, 71}))
     assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE, liberties=frozenset({66, 75, 50, 51, 52, 53, 58}))
@@ -171,11 +183,6 @@ def test_move_exceptions(position_moves):
     def suicide_moveII():
         position.move(0, gd.WHITE)
     exception_test(suicide_moveII, gd.MoveError, 'Playing self capture.')
-
-    def kolock_point():
-        position.move(2, gd.WHITE)
-        position.move(3, gd.BLACK)
-    exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
 
     for pt in moves:
         def existing_stone():
