@@ -124,6 +124,8 @@ class Position():
         """
         if type(group) is not Group:
             raise ValueError('Not a Group object')
+        elif self.board[key] in self.groups:
+            raise MoveError('Group already at ' + str(key))
         self.groups[self.board[key]] = group
 
     def __delitem__(self, pt):

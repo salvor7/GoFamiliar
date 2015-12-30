@@ -106,7 +106,7 @@ def test_Position_getsetdel(position_moves):
     s = position.size
     def group_already():
         position[s] = gd.Group(size=5, colour=1, liberties=7)
-    exception_test(group_already, KeyError, 'Group already at ' + str(s))
+    exception_test(group_already, gd.MoveError, 'Group already at ' + str(s))
 
     #test deleting and setting groups
     for pt in moves:
