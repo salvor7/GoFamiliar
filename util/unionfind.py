@@ -101,7 +101,7 @@ class UnionFind():
         return len(self._pointers)
 
     def __setitem__(self, elem, target):
-        """Create union of passed arguments
+        """Add elem's union to target's union
 
         :param elem: int
         :param target: int
