@@ -144,6 +144,26 @@ class Position():
         except KeyError:
             raise KeyError('No stones at point ' + str(pt))
 
+    def capture(self, dead_pt):
+        tracking = defaultdict(list)
+        tracking['to_remove'] = [dead_pt]
+        while len(tracking['to remove']) > 0:
+            remove_pt = tracking['to remove'].pop()
+            for group_pt, group in self.neigh_groups(remove_pt):
+                if group.colour == -self[dead_pt]:
+                    self[group_pt] = Group(colour=group.colour, size=group.size,
+                                           liberties=group.liberties | {remove_pt})
+            for neigh_pt in NEIGHBORS[self.size][remove_pt]:
+                not_removed = neigh_pt not in tracking['removed']
+                in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
+                if not_removed and in_dead_group:
+                    tracking['to_remove'] += [neigh_pt]
+
+            tracking['removed'] += [remove_pt]
+        del self[dead_pt]
+        for removed_pt in tracking['removed']:
+            _ = self[removed_pt]
+
     def move(self, move_pt, colour=None):
         """Play a move on a go board
 
@@ -181,9 +201,8 @@ class Position():
                 count_tracking['size'] += group.size
             else: #group.colour == -colour
                 if group.libs == 1:
-                    list_tracking['dead opponent'] += [group_pt]
+                    list_tracking['dead opponent'] += [(group_pt, group)]
                     count_tracking['captures'] += group.size
-                    del self[group_pt]
                 else:
                     list_tracking['alive opponent'] += [(group_pt, group)]
 
@@ -202,6 +221,9 @@ class Position():
         self[move_pt] = Group(colour=colour,
                               size=count_tracking['size']+1,
                               liberties=frozenset(list_tracking['liberties']))
+
+        for dead_pt, _ in list_tracking['dead opponent']:
+            self.capture(dead_pt)
 
         if count_tracking['captures'] == 1:
             self.kolock = list_tracking['dead opponent'][0]
