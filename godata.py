@@ -145,19 +145,23 @@ class Position():
             raise KeyError('No stones at point ' + str(pt))
 
     def capture(self, dead_pt):
+        """Remove captures and update surroundings
+
+        :param dead_pt:
+        """
         tracking = defaultdict(list)
-        tracking['to_remove'] = [dead_pt]
+        tracking['to remove'] = [dead_pt]
         while len(tracking['to remove']) > 0:
             remove_pt = tracking['to remove'].pop()
             for group_pt, group in self.neigh_groups(remove_pt):
-                if group.colour == -self[dead_pt]:
+                if group.colour == -self[dead_pt].colour:
                     self[group_pt] = Group(colour=group.colour, size=group.size,
                                            liberties=group.liberties | {remove_pt})
             for neigh_pt in NEIGHBORS[self.size][remove_pt]:
                 not_removed = neigh_pt not in tracking['removed']
                 in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
                 if not_removed and in_dead_group:
-                    tracking['to_remove'] += [neigh_pt]
+                    tracking['to remove'] += [neigh_pt]
 
             tracking['removed'] += [remove_pt]
         del self[dead_pt]
@@ -199,12 +203,11 @@ class Position():
                 list_tracking['liberties'] += list(group.liberties - {move_pt})
                 list_tracking['player'] += [(group_pt, group)]
                 count_tracking['size'] += group.size
-            else: #group.colour == -colour
-                if group.libs == 1:
-                    list_tracking['dead opponent'] += [(group_pt, group)]
-                    count_tracking['captures'] += group.size
-                else:
-                    list_tracking['alive opponent'] += [(group_pt, group)]
+            elif group.libs == 1:     #group.colour == -colour
+                list_tracking['dead opponent'] += [(group_pt, group)]
+                count_tracking['captures'] += group.size
+            else:
+                list_tracking['alive opponent'] += [(group_pt, group)]
 
         if list_tracking['liberties'] == [] and 'captures' not in count_tracking:
             raise MoveError('Playing self capture.')
@@ -226,7 +229,7 @@ class Position():
             self.capture(dead_pt)
 
         if count_tracking['captures'] == 1:
-            self.kolock = list_tracking['dead opponent'][0]
+            self.kolock = list_tracking['dead opponent'][0][0]
         else:
             self.kolock = None
 

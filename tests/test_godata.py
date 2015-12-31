@@ -166,16 +166,25 @@ def test_move_capture(position_moves):
     position, moves = position_moves
     s = position.size
 
+    position.move(s**2-1, gd.WHITE)         #capture corner
+    assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE,
+                                        liberties=frozenset({(s-1)*s - 1, s**2 - 2}))
+    assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE,
+                                        liberties=frozenset(
+                                            {(s-1)*s - 6, (s)*s - 6, (s-3)*s - 4,
+                                              (s-3)*s - 3, (s-3)*s - 2, (s-3)*s - 1,
+                                              (s-2)*s - 5, (s-1)*s - 2, (s-1)*s - 1,
+                                             s**2 - 4, s**2 - 3}
+                                            )
+                                        )
+    for lib in position[s**2-5].liberties | position[s**2-1].liberties:
+        assert position[lib] is gd.OPEN_POINT
+
     def kolock_point():
         position.move(2, gd.WHITE)
         position.move(3, gd.BLACK)
     exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
-
     assert position[2] == gd.Group(colour=gd.WHITE, size=1, liberties=frozenset({3}))
-
-    position.move(s**2-1, gd.WHITE)         #capture corner
-    assert position[s**2-1] == gd.Group(size=1, colour=gd.WHITE, liberties=frozenset({79, 71}))
-    assert position[s**2-5] == gd.Group(size=8, colour=gd.WHITE, liberties=frozenset({66, 75, 50, 51, 52, 53, 58}))
 
 def test_move_exceptions(position_moves):
     position, moves = position_moves
