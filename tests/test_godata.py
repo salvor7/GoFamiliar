@@ -140,7 +140,10 @@ def test_Position_move(position_moves):
                 gd.Group(size=3, colour=-1,
                          liberties=frozenset({s+5, 5, 2*s + 3, 2*s + 4})),
                 gd.Group(size=8, colour=-1,
-                         liberties=frozenset({7*s + 3, 8*s + 3, 5*s + 5, 5*s + 6, 5*s + 7, 5*s + 8, 6*s + 4})),
+                         liberties=frozenset({(s-1)*s - 6, (s)*s - 6, (s-3)*s - 4,
+                                              (s-3)*s - 3, (s-3)*s - 2, (s-3)*s - 1,
+                                              (s-2)*s - 5})
+                         ),
                 ]
     representatives = defaultdict(list)
     for pt in moves:
@@ -156,7 +159,8 @@ def test_Position_move(position_moves):
         assert position[repre] in groups
 
     position.move(2, gd.BLACK)
-    assert position[1] == gd.Group(size=8, colour=gd.BLACK, liberties=frozenset({0, 10, 21, 27, 28, 29}))
+    assert position[1] == gd.Group(size=8, colour=gd.BLACK,
+                                   liberties=frozenset({0, s+1, 2*s + 3, 3*s, 3*s + 1, 3*s + 2}))
 
 def test_move_capture(position_moves):
     position, moves = position_moves
@@ -190,7 +194,7 @@ def test_move_exceptions(position_moves):
         exception_test(existing_stone, gd.MoveError, 'Playing on another stone.')
 
     def bad_colour():
-        position.move(25, 't')
+        position.move(4*position.size, 't')
     exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
 
 def test_Position_neigh_groups(position_moves):
