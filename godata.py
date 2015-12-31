@@ -124,7 +124,7 @@ class Position():
         >>> pos = Position()
         >>> pos[200] = Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))
         >>> pos[200]
-        Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))
+        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
         """
         if type(group) is not Group:
             raise ValueError('Not a Group object')
