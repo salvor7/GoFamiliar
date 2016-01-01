@@ -144,10 +144,45 @@ class Position():
         except KeyError:
             raise KeyError('No stones at point ' + str(pt))
 
+    def check_move(self, test_pt, colour):
+        """Check test move is legal
+
+        :raise: MoveError
+        :raise: ValueError
+        :param test_pt: int
+        :return: dict
+        """
+        if test_pt == self.kolock:
+            raise MoveError('Playing on a ko point.')
+        elif self[test_pt] is not OPEN_POINT:
+            raise MoveError('Playing on another stone.')
+
+        group_lists = defaultdict(list)
+        group_counts = defaultdict(int)
+        for group_pt, group in self.neigh_groups(test_pt):
+            if group is OPEN_POINT:
+                group_lists['groups liberties'] += [group_pt]
+            elif group.colour == colour:
+                group_lists['groups liberties'] += list(group.liberties - {test_pt})
+                group_lists['my groups'] += [(group_pt, group)]
+                group_counts['groups size'] += group.size
+            elif group.libs == 1:     #group.colour == -colour
+                group_lists['dead opponent'] += [(group_pt, group)]
+                group_counts['captures'] += group.size
+            else:
+                group_lists['alive opponent'] += [(group_pt, group)]
+
+        if group_lists['groups liberties'] == [] and 'dead opponent' not in group_lists:
+            raise MoveError('Playing self capture.')
+
+        group_counts['test point'] = test_pt
+        group_lists['test point'] = test_pt
+        return group_lists, group_counts
+
     def capture(self, dead_pt):
         """Remove captures and update surroundings
 
-        :param dead_pt:
+        :param dead_pt: int
         """
         tracking = defaultdict(list)
         tracking['to remove'] = [dead_pt]
@@ -168,7 +203,7 @@ class Position():
         for removed_pt in tracking['removed']:
             _ = self[removed_pt]
 
-    def move(self, move_pt, colour=None):
+    def move(self, move_pt, colour=None, test_lists=None, test_counts=None):
         """Play a move on a go board
 
         :param pt: int
@@ -184,52 +219,34 @@ class Position():
         >>> pos.move(move_pt+1, colour=BLACK)[move_pt+1]
         Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
         """
-        if move_pt == self.kolock:
-            raise MoveError('Playing on a ko point.')
-        elif self[move_pt] is not OPEN_POINT:
-            raise MoveError('Playing on another stone.')
-
         if colour is None:
             colour = self.next_player
         elif colour not in [BLACK, WHITE]:
             raise ValueError('Unrecognized move colour: ' + str(colour))
 
-        list_tracking = defaultdict(list)
-        count_tracking = defaultdict(int)
-        for group_pt, group in self.neigh_groups(move_pt):
-            if group is OPEN_POINT:
-                list_tracking['liberties'] += [group_pt]
-            elif group.colour == colour:
-                list_tracking['liberties'] += list(group.liberties - {move_pt})
-                list_tracking['player'] += [(group_pt, group)]
-                count_tracking['size'] += group.size
-            elif group.libs == 1:     #group.colour == -colour
-                list_tracking['dead opponent'] += [(group_pt, group)]
-                count_tracking['captures'] += group.size
-            else:
-                list_tracking['alive opponent'] += [(group_pt, group)]
+        if test_lists is None or test_counts is None:
+            test_lists, test_counts = self.check_move(test_pt=move_pt, colour=colour)
+        elif test_lists['test point'] != move_pt or test_counts['test point'] != move_pt:
+            raise ValueError('Tested point and move point not equal')
 
-        if list_tracking['liberties'] == [] and 'captures' not in count_tracking:
-            raise MoveError('Playing self capture.')
-
-        for opp_pt, opp_group in list_tracking['alive opponent']:
+        for opp_pt, opp_group in test_lists['alive opponent']:
             self[opp_pt] = Group(colour=opp_group.colour,
                                  size=opp_group.size,
                                  liberties=opp_group.liberties-{move_pt})
 
-        for group_pt, group in list_tracking['player']:
+        for group_pt, group in test_lists['my groups']:
             self.board[move_pt] = self.board[group_pt]
             del self[group_pt]
 
         self[move_pt] = Group(colour=colour,
-                              size=count_tracking['size']+1,
-                              liberties=frozenset(list_tracking['liberties']))
+                              size=test_counts['groups size'] + 1,
+                              liberties=frozenset(test_lists['groups liberties']))
 
-        for dead_pt, _ in list_tracking['dead opponent']:
+        for dead_pt, _ in test_lists['dead opponent']:
             self.capture(dead_pt)
 
-        if count_tracking['captures'] == 1:
-            self.kolock = list_tracking['dead opponent'][0][0]
+        if test_counts['captures'] == 1:
+            self.kolock = test_lists['dead opponent'][0][0]
         else:
             self.kolock = None
 

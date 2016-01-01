@@ -1,5 +1,6 @@
 import itertools
 from collections import defaultdict
+from copy import deepcopy
 
 import pytest
 
@@ -158,9 +159,45 @@ def test_Position_move(position_moves):
         assert position[repre].colour == moves[repre]
         assert position[repre] in groups
 
-    position.move(2, gd.BLACK)
+    position.move(move_pt=s-1, colour=gd.BLACK)
+    assert position[s-1] == gd.Group(size=1, colour=gd.BLACK,
+                                     liberties=frozenset({s-2, 2*s-1}))
+    position.move(move_pt=2, colour=gd.BLACK)
     assert position[1] == gd.Group(size=8, colour=gd.BLACK,
                                    liberties=frozenset({0, s+1, 2*s + 3, 3*s, 3*s + 1, 3*s + 2}))
+
+def test_check_moves(position_moves):
+    position, moves = position_moves
+    s = position.size
+
+    test_lists, test_counts = position.check_move(test_pt=2, colour=gd.BLACK)
+    assert type(test_lists) is defaultdict
+    assert len(test_lists) == 3
+    assert test_lists['test point'] == 2
+    assert len(test_lists['my groups']) == 3
+    assert set(test_lists['groups liberties']) == {0, s+1, 2*s + 3, 3*s, 3*s + 1, 3*s + 2}
+
+    assert type(test_counts) is defaultdict
+    assert len(test_counts) == 2
+    assert test_counts['test point'] == 2
+    assert test_counts['groups size'] == 7
+
+    positionII = deepcopy(position)
+    def mismatch_test_and_move():
+        position.move(move_pt=0, colour=gd.BLACK, test_lists=test_lists, test_counts=test_counts)
+    exception_test(mismatch_test_and_move, ValueError, 'Tested point and move point not equal')
+    position.move(move_pt=2, colour=gd.BLACK, test_lists=test_lists)
+
+    test_lists, test_counts = positionII.check_move(test_pt=2, colour=gd.WHITE)
+    assert len(test_lists) == 4
+    assert test_lists['test point'] == 2
+    assert test_lists['groups liberties'] == []
+    assert len(test_lists['alive opponent']) == 2
+    assert len(test_lists['dead opponent']) == 1
+
+    assert len(test_counts) == 2
+    assert test_counts['test point'] == 2
+    assert test_counts['captures'] == 1
 
 def test_move_capture(position_moves):
     position, moves = position_moves
