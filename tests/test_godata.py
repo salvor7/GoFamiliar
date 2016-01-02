@@ -5,17 +5,17 @@ from copy import deepcopy
 import pytest
 
 import godata as gd
-from tests.test_fixtures import exception_test, first_position
+import tests.test_fixtures as fixt
 
 fixture_params = [n for n in range(9, 26, 2)]
 
 @pytest.fixture(params=fixture_params)
 def position(request):
-    return gd.Position(size=request.param)
+    return fixt.open_position()(size=request.param)
 
 @pytest.fixture(params=fixture_params)
 def position_moves(request):
-    return first_position()(s=request.param)
+    return fixt.first_position()(s=request.param)
 
 def test_make_neighbors(position):
     """Corners have two neighbors; Edges points have 3, and Centre points have 4.
@@ -57,11 +57,11 @@ def test_Position_getsetdel(position_moves):
     #test exceptions
     def del_no_stone():
         del position[0]
-    exception_test(del_no_stone, KeyError, "'No stones at point 0'")
+    fixt.exception_test(del_no_stone, KeyError, "'No stones at point 0'")
 
     def set_bad_group():
         position[0] = 1
-    exception_test(set_bad_group, ValueError, 'Not a Group object')
+    fixt.exception_test(set_bad_group, ValueError, 'Not a Group object')
 
     #test deleting and setting groups
     for pt in moves:
@@ -143,7 +143,7 @@ def test_check_moves(position_moves):
     positionII = deepcopy(position)
     def mismatch_test_and_move():
         position.move(move_pt=0, colour=gd.BLACK, test_lists=test_lists, test_counts=test_counts)
-    exception_test(mismatch_test_and_move, ValueError, 'Tested point and move point not equal')
+    fixt.exception_test(mismatch_test_and_move, ValueError, 'Tested point and move point not equal')
     position.move(move_pt=2, colour=gd.BLACK, test_lists=test_lists)
 
     test_lists, test_counts = positionII.check_move(test_pt=2, colour=gd.WHITE)
@@ -178,7 +178,7 @@ def test_move_capture(position_moves):
     def kolock_point():
         position.move(2, gd.WHITE)
         position.move(3, gd.BLACK)
-    exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
+    fixt.exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
     assert position[2] == gd.Group(colour=gd.WHITE, size=1, liberties=frozenset({3}))
 
 def test_move_exceptions(position_moves):
@@ -186,20 +186,20 @@ def test_move_exceptions(position_moves):
 
     def suicide_move():
         position.move((position.size**2)-1, gd.BLACK)
-    exception_test(suicide_move, gd.MoveError, 'Playing self capture.')
+    fixt.exception_test(suicide_move, gd.MoveError, 'Playing self capture.')
 
     def suicide_moveII():
         position.move(0, gd.WHITE)
-    exception_test(suicide_moveII, gd.MoveError, 'Playing self capture.')
+    fixt.exception_test(suicide_moveII, gd.MoveError, 'Playing self capture.')
 
     for pt in moves:
         def existing_stone():
             position.move(pt, gd.WHITE)
-        exception_test(existing_stone, gd.MoveError, 'Playing on another stone.')
+        fixt.exception_test(existing_stone, gd.MoveError, 'Playing on another stone.')
 
     def bad_colour():
         position.move(4*position.size, 't')
-    exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
+    fixt.exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
 
 def test_Position_neigh_groups(position_moves):
     position, moves = position_moves

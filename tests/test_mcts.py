@@ -2,10 +2,11 @@ import pytest
 
 import godata as gd
 import mcts
+import tests.test_fixtures as fixt
 
 @pytest.fixture
 def position():
-    return gd.Position()
+    return fixt.open_position()()
 
 def test_search(position):
     move_pt = None

@@ -2,6 +2,9 @@ from collections import defaultdict
 
 import godata as gd
 
+def open_position():
+    return gd.Position
+
 def first_position():
     """Sets up two positions in the
     Upper left
