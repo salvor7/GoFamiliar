@@ -5,12 +5,17 @@ from copy import deepcopy
 import pytest
 
 import godata as gd
+from tests.test_fixtures import exception_test, first_position
 
 fixture_params = [n for n in range(9, 26, 2)]
 
 @pytest.fixture(params=fixture_params)
 def position(request):
     return gd.Position(size=request.param)
+
+@pytest.fixture(params=fixture_params)
+def position_moves(request):
+    return first_position()(s=request.param)
 
 def test_make_neighbors(position):
     """Corners have two neighbors; Edges points have 3, and Centre points have 4.
@@ -38,53 +43,6 @@ def test_Position_initial(position):
     assert len(position.board) == position.size**2
     assert len(position.groups) == 0
     assert position.komi == 7.5
-
-@pytest.fixture(params=fixture_params)
-def position_moves(request):
-    """Sets up two positions in the
-    Upper left
-    .X.Xo.
-    X.Xoo.
-    XXX...
-    ......
-    Lower right
-    ......
-    ..oooo
-    .oooXX
-    .oXXX.
-
-    (X = black, o = white)
-    They do not overlap as the Positions are size_limit 9 or greater.
-    """
-    s = request.param
-    rest_of_row = '.'*(s-5)
-    first_three = rest_of_row.join([
-                    '.X.Xo',
-                    'X.Xoo',
-                    'XXX..',''])
-    last_three = rest_of_row.join(['',
-                    '.oooo',
-                    'oooXX',
-                    'oXXX.',])
-    board = first_three + '.'*s*(s-6) + last_three
-    position = gd.Position(size=request.param)
-    stones_counts = defaultdict()
-    for pt, symbol in enumerate(board):
-        if symbol == 'X':
-            position.move(move_pt=pt, colour=gd.BLACK)
-            stones_counts[pt] = gd.BLACK
-        elif symbol == 'o':
-            position.move(move_pt=pt, colour=gd.WHITE)
-            stones_counts[pt] = gd.WHITE
-    return position, stones_counts
-
-def exception_test(func, err, message):
-    try:
-        func()
-    except err as err:
-        assert message == str(err)
-    else:
-        assert False
 
 def test_Position_getsetdel(position_moves):
 
