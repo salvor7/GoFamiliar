@@ -1,11 +1,72 @@
 from collections import namedtuple, defaultdict
-
 import numpy as np
-
 from util.unionfind import UnionFind
 
+#"colours" of the pieces which might be on the board
 BLACK = 1
 WHITE = -1
+OPEN = 0
+
+def make_boxes(size=19):
+    """Generator of box coordinates
+
+    Neighbor checking is the most common function in the MCTS, so we have used np.array for a
+    speed boost.
+
+    This doctest creates the boxes for this grid.
+    0 1 2
+    3 4 5
+    6 7 8
+    >>> for c, neigh, diag in make_boxes(size=3):
+    ...     print(c, neigh, diag)
+    0 [3 1] [4]
+    1 [4 0 2] [5 3]
+    2 [5 1] [4]
+    3 [0 6 4] [1 7]
+    4 [1 7 3 5] [0 2 8 6]
+    5 [2 8 4] [1 7]
+    6 [3 7] [4]
+    7 [4 6 8] [3 5]
+    8 [5 7] [4]
+
+    :param size: int for board size
+    :yield: int, np.array  for coordinate and array of neighbors.
+    """
+    for pt in range(size ** 2):
+        if pt < size:
+            up = None
+            up_left = None
+            up_right = None
+        else:
+            up = pt - size
+            up_left = pt - size - 1
+            up_right = pt - size + 1
+
+        if pt >= size * (size - 1):
+            down = None
+            down_left = None
+            down_right = None
+        else:
+            down = pt + size
+            down_left = pt + size - 1
+            down_right = pt + size + 1
+
+        if pt % size == 0:
+            left = None
+            up_left = None
+            down_left = None
+        else:
+            left = pt - 1
+
+        if (pt + 1) % size == 0:
+            right = None
+            up_right = None
+            down_right = None
+        else:
+            right = pt + 1
+        neighbors = [pt for pt in (up, down, left, right) if pt is not None]
+        diagonals = [pt for pt in (up_left, up_right, down_right, down_left) if pt is not None]
+        yield pt, np.array(neighbors), np.array(diagonals)
 
 
 def make_neighbors(size=19):
@@ -36,37 +97,23 @@ def make_neighbors(size=19):
     :param size: int for board size
     :yield: int, np.array  for coordinate and array of neighbors.
     """
-    for pt in range(size**2):
-        if pt < size:
-            up = []
-        else:
-            up = [pt - size]
+    for pt, neighbors, _ in make_boxes(size=size):
+        yield pt, neighbors
 
-        if pt >= size*(size - 1):
-            down = []
-        else:
-            down = [pt + size]
 
-        if pt % size == 0:
-            left = []
-        else:
-            left = [pt - 1]
-
-        if (pt + 1) % size == 0:
-            right = []
-        else:
-            right = [pt + 1]
-
-        yield pt, np.array(up+down+left+right)
-
-NEIGHBORS = {n:{pt:neigh for pt, neigh in make_neighbors(size=n)}  for n in range(9, 26, 2)}
+NEIGHBORS = {n: {pt: neigh for pt, neigh in make_neighbors(size=n)} for n in
+             range(9, 26, 2)}
+BOXES = {n: {pt: (neigh, diag) for pt, neigh, diag in make_boxes(size=n)} for n in
+             range(9, 26, 2)}
 
 class Group(namedtuple('Group', 'colour size liberties')):
     @property
     def libs(self):
         return len(self.liberties)
 
-OPEN_POINT = Group(colour=0, size=0, liberties=frozenset())
+
+OPEN_POINT = Group(colour=OPEN, size=0, liberties=frozenset())
+
 
 class Position():
     """A Go game position object
@@ -111,7 +158,7 @@ class Position():
         try:
             return self.groups[repre]
         except KeyError:
-            if pt != repre:  #pointing to a removed-group representative
+            if pt != repre:  # pointing to a removed-group representative
                 self.board._pointers[pt] = pt
             return OPEN_POINT
 
@@ -166,7 +213,7 @@ class Position():
                 group_lists['groups liberties'] += list(group.liberties - {test_pt})
                 group_lists['my groups'] += [(group_pt, group)]
                 group_counts['groups size'] += group.size
-            elif group.libs == 1:     #group.colour == -colour
+            elif group.libs == 1:  # group.colour == -colour
                 group_lists['dead opponent'] += [(group_pt, group)]
                 group_counts['captures'] += group.size
             else:
@@ -232,7 +279,7 @@ class Position():
         for opp_pt, opp_group in test_lists['alive opponent']:
             self[opp_pt] = Group(colour=opp_group.colour,
                                  size=opp_group.size,
-                                 liberties=opp_group.liberties-{move_pt})
+                                 liberties=opp_group.liberties - {move_pt})
 
         for group_pt, group in test_lists['my groups']:
             self.board[move_pt] = self.board[group_pt]
@@ -269,6 +316,7 @@ class Position():
             if self.board[qt] not in sent_already:
                 yield self.board[qt], self[qt]
                 sent_already.append(self.board[qt])
+
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
