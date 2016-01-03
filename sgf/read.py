@@ -19,6 +19,7 @@ sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
 sgf_info_patt = re.compile(r'([A-Z][A-Z]?)\[(.+?)\]')
 
+
 def parser(sgf_str):
     """Return a recursive list of lists representing an SGF string.
 
@@ -44,20 +45,21 @@ def parser(sgf_str):
     >>> parser(basic_branching1)
     ['SZ[19]', ['B[qd]', 'W[dd]', 'B[oc]'], ['B[do]', 'W[dq]']]
     """
-    bad_chars = [('\n', '')         # get rid of newline
-                 , ('][', ' ')      # combine sequence (AB, AW, LB) info into one item
-                 , ('"', '')        # double quotes used below
-                ]
-    for bad, fix in bad_chars:      # clear all round braces in sgf info nodes
+    bad_chars = [('\n', '')  # get rid of newline
+        , ('][', ' ')  # combine sequence (AB, AW, LB) info into one item
+        , ('"', '')  # double quotes used below
+                 ]
+    for bad, fix in bad_chars:  # clear all round braces in sgf info nodes
         sgf_str = sgf_str.replace(bad, fix)
 
     # regex replacement format found at
     # https://docs.python.org/2/howto/regex.html#modifying-strings
-    sgf_str = sgf_info_patt.sub(r'r"\1[\2]",', sgf_str)     # add double quotes and raw string r
+    sgf_str = sgf_info_patt.sub(r'r"\1[\2]",',
+                                sgf_str)  # add double quotes and raw string r
 
-    new_chars = [(';', ''),         # get rid of colons
-                 ('(', '['),        # change tuple braces to list braces
-                 (')', ']'),]
+    new_chars = [(';', ''),  # get rid of colons
+                 ('(', '['),  # change tuple braces to list braces
+                 (')', ']'), ]
 
     for char, new in new_chars:
         sgf_str = sgf_str.replace(char, new)
@@ -69,6 +71,7 @@ def parser(sgf_str):
     except Exception as err:
         message = str(err) + '\n' + sgf_str
         raise SGFError(message)
+
 
 def main_branch(sgf_list):
     """Yield the nodes of the main branch of an sgf string.
@@ -89,7 +92,8 @@ def main_branch(sgf_list):
         else:
             yield node
 
-def node_to_move(node):
+
+def node_to_gomove(node):
     """Return the GoMove for an SGF move node.
 
     :param node: SGF Node eg B[ah]
@@ -97,13 +101,14 @@ def node_to_move(node):
 
     This function will also work with the alternative SGF move notation used in sgf_parser.
 
-    >>> node_to_move('B[dc]')
+    >>> node_to_gomove('B[dc]')
     GoMove(player=1, x=4, y=3)
-    >>> node_to_move('W[pq]')
+    >>> node_to_gomove('W[pq]')
     GoMove(player=-1, x=16, y=17)
     """
     size = 19
-    letter_coord_id = {letter: coord for letter, coord in zip(ascii_letters, range(1, size + 1))}
+    letter_coord_id = {letter: coord for letter, coord in
+                       zip(ascii_letters, range(1, size + 1))}
     player_assign = {'B': 1, 'W': -1}
 
     # found regex patterns at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
@@ -116,6 +121,7 @@ def node_to_move(node):
     x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
 
     return GoMove(player, x_coord, y_coord)
+
 
 def info(attribute):
     """Return the sgf attribute name and value.
@@ -131,6 +137,7 @@ def info(attribute):
         message = '"' + attribute + '" ' + 'is not a sgf info formatted node.'
         raise ValueError(message)
     return name, value
+
 
 def store(direc=sgfdir):
     """Yield all raw strings from size 19 sgfs in sgf_store
@@ -149,12 +156,13 @@ def store(direc=sgfdir):
     for file in files_found:
         with open(file, errors='ignore', encoding='utf-8') as sgf_file:
             try:
-                string = sgf_file.read()
+                sgf_str = sgf_file.read()
             except Exception as err:
-                message = str(err) + '\n' + file + '\n' + string + '\n'*2
+                message = str(err) + '\n' + file
                 raise SGFError(message)
 
-            yield string
+            yield sgf_str
+
 
 def store_parser(direc=sgfdir):
     """Generator of parsed main branches of all sgf files in sgf_store
@@ -173,14 +181,17 @@ def store_parser(direc=sgfdir):
         try:
             yield main_branch(parser(sgf_str))
         except Exception as err:
-            message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii', errors='ignore')
+            message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii',
+                                                                       errors='ignore')
             bad_files.append(message)
 
     for msg in bad_files:
         print(msg)
 
+
 class SGFError(Exception):
     pass
+
 
 def create_pro_csv(file='', direc='', limit=None):
     """Create csv file of sgf_store
@@ -194,11 +205,12 @@ def create_pro_csv(file='', direc='', limit=None):
     Limit caps the number of iterations to that integer for testing.
     >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru_sgfs')
     """
-    with open(os.path.join(direc , file), 'w', encoding='utf-8') as csv_file:
+    with open(os.path.join(direc, file), 'w', encoding='utf-8') as csv_file:
         for sgf_id, sgf_str in enumerate(store(direc=direc)):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
+
 
 def create_pro_hdf5(file='', direc='', limit=None):
     """Create hdf5 file of sgf_store
@@ -221,20 +233,21 @@ def create_pro_hdf5(file='', direc='', limit=None):
         pro_games.create_group('13')
         pro_games.create_group('9')
         for game_id, node_gen in enumerate(store_parser(direc=direc)):
-            if limit and game_id > abs(limit):
+            if limit is not None and game_id > abs(limit):
                 break
 
             game_attrs = {}
             move_list = []
             for node in node_gen:
                 try:
-                    move_list.append(node_to_move(node))
+                    move_list.append(node_to_gomove(node))
                 except ValueError:
                     name, value = info(node)
-                    if value == '' or value == ' ':     # don't record blank info
+                    if value == '' or value == ' ':  # don't record blank info
                         continue
                     if name == 'C':
-                        name += str(len(move_list))     # associated game comment to specific move
+                        name += str(
+                            len(move_list))  # associated game comment to specific move
                     game_attrs[name] = value
             try:
                 size = str(game_attrs['SZ'])
@@ -250,7 +263,8 @@ def create_pro_hdf5(file='', direc='', limit=None):
             for name in game_attrs:
                 pro_games[size][curr_game].attrs[name] = game_attrs[name]
 
-class GoMove(namedtuple('GoMove','player x y')):
+
+class GoMove(namedtuple('GoMove', 'player x y')):
     """GoMove namedtuple object
 
     >>> black_tengen = GoMove(player=1, x=10, y=10)
