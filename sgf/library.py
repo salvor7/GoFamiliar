@@ -2,6 +2,7 @@ import os
 import h5py
 import numpy as np
 
+import godata
 import sgf.read
 
 doctest_dir = r'sgf_store\hikaru_sgfs'
@@ -56,31 +57,30 @@ class Library():
         """Return the dictionary of sgf attributes
 
         :param sgf_name: str
-        :return: dict
+        :return: h5py.attributes
         >>> l = Library(doctest_dir, doctest_file).sgf_attributes('chap116.sgf')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
         ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.50', 'W+0.50')
         """
-        return dict(self[sgf_name].attrs)
+        return self[sgf_name].attrs
 
-    def sgf_moves(self, sgf_name):
-        """Generate the moves of a given game
+    def sgf_position(self, sgf_name):
+        """Return a Position object of sgf
 
+        The returned position is the final state of the sgf.
         :param sgf_name: str
-        :return: int
-        >>> for idx, move in enumerate(Library(doctest_dir, doctest_file).sgf_moves('chap075.sgf')):
-        ...     if idx < 10:
-        ...         print(move)
-        72
-        288
-        300
-        42
-        59
-        97
-        61
-        62
-        80
-        41
+        :return: godata.Position
+        >>> type(Library(doctest_dir, doctest_file).sgf_position('chap075.sgf'))
+        <class 'godata.Position'>
         """
-        for move in list(self[sgf_name]):
-            yield move
+        sgf_data = self[sgf_name]
+        try:
+            size = int(sgf_data.attrs['SZ'])
+        except KeyError:
+            size = 19
+        try:
+            komi = float(sgf_data.attrs['KM'])
+        except KeyError:
+            komi = 6.5
+
+        return godata.Position(moves=sgf_data, size=size, komi=komi)
