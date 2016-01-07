@@ -22,15 +22,15 @@ class Library():
             except OSError:
                 sgf.read.create_pro_hdf5(direc=direc, file=file)
 
-    def __getitem__(self, item):
-        """
+    def __getitem__(self, sgf_name):
+        """Return the sgf dataset
 
         :param item: str
         :return: h5py.dataset
         >>> Library(doctest_dir, doctest_file)['chap116.sgf']
         <HDF5 dataset "chap116.sgf": shape (262,), type "<i4">
         """
-        return self._library_file[item]
+        return self._library_file[sgf_name]
 
     def __len__(self):
         """Return number of stored sgfs

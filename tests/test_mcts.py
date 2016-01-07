@@ -2,6 +2,7 @@ import pytest
 import godata as gd
 import mcts
 import tests.test_fixtures as fixt
+from sgf.library import Library
 
 
 @pytest.fixture()
@@ -53,3 +54,15 @@ def test_search_avoid_eyes(position_moves):
         assert 'it is an' == 'infinite loop'
     assert idx > 200
 
+
+@pytest.fixture()
+def library():
+    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
+
+
+def test_tsumego_solving(library):
+    assert len(library) > 0
+    for tsumego_name in library:
+        correct_move = int(tsumego_name[7:10])
+        found_move = mcts.search(library.sgf_position(tsumego_name))
+        assert correct_move == found_move
