@@ -2,7 +2,7 @@ import os
 import h5py
 import numpy as np
 
-import sgf
+import sgf.read as sgf
 
 
 def test_sgf_parser():
@@ -63,7 +63,7 @@ def test_main_branch():
 def test_node_to_move():
     """
     >>> try:
-    ...     sgf.node_to_move('error')
+    ...     sgf.node_to_gomove('error')
     ... except ValueError as err:
     ...     print(err)
     "error" is not a sgf move formatted node

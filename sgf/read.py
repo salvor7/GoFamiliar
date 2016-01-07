@@ -123,6 +123,18 @@ def node_to_gomove(node):
     return GoMove(player, x_coord, y_coord)
 
 
+def intmove(gomove, size=19):
+    """Return integer position of a GoMove
+
+    :param gomove: GoMove
+    :param size: int
+    :return: int
+    >>> intmove(GoMove(player=-1, x=16, y=17))
+    319
+    """
+    return gomove.x - 1 + (gomove.y - 1)*19
+
+
 def info(attribute):
     """Return the sgf attribute name and value.
 
@@ -144,24 +156,24 @@ def store(direc=sgfdir):
 
     :param direc: string
     :yield: string
-    >>> for game in store(sgfdir+'/hikaru_sgfs'):
+    >>> for file_path, game in store(sgfdir+'/hikaru_sgfs'):
     ...     print(len(game))
-    1686
     1847
     2576
     1678
+    1686
     """
     files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
 
-    for file in files_found:
-        with open(file, errors='ignore', encoding='utf-8') as sgf_file:
+    for file_path in files_found:
+        with open(file_path, errors='ignore', encoding='utf-8') as sgf_file:
             try:
                 sgf_str = sgf_file.read()
             except Exception as err:
-                message = str(err) + '\n' + file
+                message = str(err) + '\n' + file_path
                 raise SGFError(message)
 
-            yield sgf_str
+            yield file_path, sgf_str
 
 
 def store_parser(direc=sgfdir):
@@ -169,17 +181,17 @@ def store_parser(direc=sgfdir):
 
     :param direc: string
     :yield: generator of sgf nodes
-    >>> for game in store_parser(direc=sgfdir+'/hikaru_sgfs'):
+    >>> for file_path, game in store_parser(direc=sgfdir+'/hikaru_sgfs'):
     ...     print(next(game))
-    FF[1]
     AP[MultiGo:3.9.4]
     GM[1]
     AP[MultiGo:3.9.4]
+    FF[1]
     """
     bad_files = []
-    for sgf_str in store(direc):
+    for file_path, sgf_str in store(direc):
         try:
-            yield main_branch(parser(sgf_str))
+            yield file_path, main_branch(parser(sgf_str))
         except Exception as err:
             message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii',
                                                                        errors='ignore')
@@ -206,13 +218,13 @@ def create_pro_csv(file='', direc='', limit=None):
     >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru_sgfs')
     """
     with open(os.path.join(direc, file), 'w', encoding='utf-8') as csv_file:
-        for sgf_id, sgf_str in enumerate(store(direc=direc)):
+        for sgf_id, (sgf_path, sgf_str) in enumerate(store(direc=direc)):
             if limit and sgf_id > abs(limit):
                 break
-            csv_file.writelines(str(sgf_id) + ', ' + sgf_str.replace('\n', '') + '\n')
+            csv_file.writelines(sgf_path + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_pro_hdf5(file='', direc='', limit=None):
+def create_pro_hdf5(file='', direc='', limit=np.inf):
     """Create hdf5 file of sgf_store
 
     :param file: string
@@ -226,21 +238,17 @@ def create_pro_hdf5(file='', direc='', limit=None):
     Limit caps the number of iterations to that integer for testing.
     >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc='sgf_store\\hikaru_sgfs')
     """
-
     with h5py.File(os.path.join(direc, file), 'w') as pro_games:
 
-        pro_games.create_group('19')
-        pro_games.create_group('13')
-        pro_games.create_group('9')
-        for game_id, node_gen in enumerate(store_parser(direc=direc)):
-            if limit is not None and game_id > abs(limit):
+        for game_id, (sgf_path, node_gen) in enumerate(store_parser(direc=direc)):
+            if game_id > abs(limit):
                 break
 
             game_attrs = {}
             move_list = []
             for node in node_gen:
                 try:
-                    move_list.append(node_to_gomove(node))
+                    move_list.append(intmove(node_to_gomove(node)))
                 except ValueError:
                     name, value = info(node)
                     if value == '' or value == ' ':  # don't record blank info
@@ -249,19 +257,12 @@ def create_pro_hdf5(file='', direc='', limit=None):
                         name += str(
                             len(move_list))  # associated game comment to specific move
                     game_attrs[name] = value
-            try:
-                size = str(game_attrs['SZ'])
-            except KeyError:
-                size = '19'
 
-            curr_game = str(game_id)
-            try:
-                pro_games[size].create_dataset(curr_game, data=np.array(move_list))
-            except:
-                print(size)
-                raise
+            sgf_name = sgf_path.split('\\')[-1]
+            pro_games.create_dataset(sgf_name, data=np.array(move_list))
+
             for name in game_attrs:
-                pro_games[size][curr_game].attrs[name] = game_attrs[name]
+                pro_games[sgf_name].attrs[name] = game_attrs[name]
 
 
 class GoMove(namedtuple('GoMove', 'player x y')):
