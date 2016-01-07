@@ -6,5 +6,8 @@ def test_sgf_position():
     assert position.komi == 5.5
     assert position.size == 19
     assert len(position.groups) == 46
-    for group in position.groups:
-        print(position[group])
+
+
+def test_9by9_sgflibrary():
+    _ = Library(direc='sgf_store\\sgf_tests',
+                       file='sgf_tests.hdf5').sgf_position('tsumego013.sgf')

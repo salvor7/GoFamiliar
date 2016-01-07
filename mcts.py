@@ -21,7 +21,7 @@ def is_eye(position, pt, colour):
 
 
 def search(position):
-    intersections = list(range(0, 19 ** 2 - 1))
+    intersections = list(range(0, position.size ** 2 - 1))
     random.shuffle(intersections)
 
     for move in intersections:

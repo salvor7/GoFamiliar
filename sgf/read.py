@@ -132,7 +132,7 @@ def intmove(gomove, size=19):
     >>> intmove(GoMove(player=-1, x=16, y=17))
     319
     """
-    return gomove.x - 1 + (gomove.y - 1)*19
+    return gomove.x - 1 + (gomove.y - 1)*size
 
 
 def info(attribute):
@@ -248,7 +248,7 @@ def create_pro_hdf5(file='', direc='', limit=np.inf):
             move_list = []
             for node in node_gen:
                 try:
-                    size = game_attrs['SZ']
+                    size = int(game_attrs['SZ'])
                 except KeyError:
                     size = 19
                 try:
