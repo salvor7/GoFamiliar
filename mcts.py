@@ -9,7 +9,7 @@ def is_eye(position, pt, colour):
     :param pt: int
     :return: boolean
     """
-    neighbors, diagonals = gd.BOXES[19][pt]
+    neighbors, diagonals = gd.BOXES[position.size][pt]
     neigh_colours = [position[pt].colour for pt in neighbors]
 
     if gd.OPEN in neigh_colours or -colour in neigh_colours:

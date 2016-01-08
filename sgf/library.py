@@ -74,10 +74,11 @@ class Library():
         <class 'godata.Position'>
         """
         sgf_data = self[sgf_name]
+        d = dict(sgf_data.attrs)
         try:
-            size = int(sgf_data.attrs['SZ'])
+            size = int(d['SZ'])
         except KeyError:
-            size = 19
+            raise KeyError('SGF ' + sgf_name + ' has no size attribute')
         try:
             komi = float(sgf_data.attrs['KM'])
         except KeyError:

@@ -55,14 +55,17 @@ def test_search_avoid_eyes(position_moves):
     assert idx > 200
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def library():
     return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
 
+@pytest.fixture(params=list(library()))
+def tsumego(request):
+    tsumego_name = request.param
+    correct_move = int(tsumego_name[7:10])
+    return library().sgf_position(tsumego_name), correct_move
 
-def test_tsumego_solving(library):
-    assert len(library) > 0
-    for tsumego_name in library:
-        correct_move = int(tsumego_name[7:10])
-        found_move = mcts.search(library.sgf_position(tsumego_name))
-        assert correct_move == found_move
+def test_tsumego_solving(tsumego):
+    position, correct_move = tsumego
+    found_move = mcts.search(position)
+    assert correct_move == found_move

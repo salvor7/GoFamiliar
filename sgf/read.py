@@ -262,7 +262,7 @@ def create_pro_hdf5(file='', direc='', limit=np.inf):
                             len(move_list))  # associated game comment to specific move
                     game_attrs[name] = value
 
-            sgf_name = sgf_path.split('\\')[-1]
+            sgf_name = (sgf_path.split('\\')[-1]).split('.')[0]
             pro_games.create_dataset(sgf_name, data=np.array(move_list))
 
             for name in game_attrs:
