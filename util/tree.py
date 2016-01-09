@@ -24,15 +24,25 @@ class Node:
         :param value: Node value
         :param children: iterable over Node objects
         """
-
-        if not children:
+        if children is None:
             children = []
 
         try:
             for node in children:
-                assert type(node) == Node
+                try:
+                    assert type(node) == Node
+                except AssertionError:
+                    raise TypeError('Node expected. ' + str(type(node)) + ' received.')
         except TypeError:
             raise TypeError(str(children) + 'is not iterable')
 
         self.value = value
-        self.children = children
+        self.children = list(children)
+
+    def add(self, child):
+        try:
+            assert type(child) == Node
+        except AssertionError:
+            raise TypeError('Node expected. ' + str(type(child)) + ' received.')
+        self.children.append(child)
+

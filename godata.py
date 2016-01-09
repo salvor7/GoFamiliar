@@ -317,6 +317,17 @@ class Position():
                 yield self.board[qt], self[qt]
                 sent_already.append(self.board[qt])
 
+    def actions(self):
+        for action in actions:
+            if state[action] is gd.OPEN_POINT and not is_eye(state, action, colour=state.next_player):
+                try:
+                    state.check_move(test_pt=action, colour=state.next_player)
+                except gd.MoveError:
+                    pass
+                else:
+                    return action
+        raise gd.MoveError('Terminal Position')
+
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
@@ -324,3 +335,22 @@ class MoveError(Exception):
     ie repeat play, suicide or on a ko
     """
     pass
+
+
+def is_eye(position, pt, colour):
+    """Determines if pt is an eye of colour
+
+    :param position: gd.Position
+    :param pt: int
+    :return: boolean
+    """
+    neighbors, diagonals = gd.BOXES[position.size][pt]
+    neigh_colours = [position[pt].colour for pt in neighbors]
+
+    if gd.OPEN in neigh_colours or -colour in neigh_colours:
+        return False
+
+    diag_colours = [position[pt].colour for pt in diagonals]
+
+    return diag_colours.count(-colour) <= max(0, len(diag_colours) - 3)
+
