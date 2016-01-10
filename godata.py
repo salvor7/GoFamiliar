@@ -166,7 +166,7 @@ class Position():
         """Set group object
 
         :param key: int
-        :param value: Group
+        :param data: Group
 
         >>> pos = Position()
         >>> pos[200] = Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))

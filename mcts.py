@@ -1,3 +1,10 @@
+"""General Monte Carlo Tree Search algorithm
+
+This module is a general implementation of an MCTS algorithm.
+It is not intended to be specialized for go, though that is the first and only use anticipated.
+It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search Methods".
+"""
+
 import random
 
 from math import sqrt, log
@@ -15,7 +22,7 @@ def search(state):
                  'parent':None,}
     root = tree.Node(value=node_data)
     node = root
-    while root.value['sims'] < 100:
+    while root.data['sims'] < sim_limit:
         node = treepolicy(node)
         reward = defaultpolicy(node.value['state'].deepcopy())
         backup(node, reward)
@@ -36,13 +43,13 @@ def expand(node):
     action = node.value['actions'].pop()
     state = node.value['state'].deepcopy()
     state.move(action)
-    node_data = {'name':action,
-            'state':state,
-             'actions':[a for a in state.actions],
-             'wins':0,
-             'sims':0,
-             'parent':node,}
-    child = tree.Node(value=node_data)
+    node_data = {'name': action,
+                 'state': state,
+                 'actions': [a for a in state.actions],
+                 'wins': 0,
+                 'sims': 0,
+                 'parent': node,}
+    child = tree.Node(node_data=node_data)
     node.children.add(child)
 
 
@@ -52,7 +59,8 @@ def bestchild(node):
         sims = node.value['sims']
         c = node.value['state'].mcts_const
         par_sims = node.value['parent'].value['sims']
-        return wins/sims + c * sqrt(2*log(par_sims)/sims)
+        return wins / sims + c * sqrt(2 * log(par_sims) / sims)
+
     conf = [(conf_score(v), v) for v in node.children]
     conf.sort()
     return conf[0][1]
@@ -71,4 +79,3 @@ def backup(node, reward):
         node['wins'] += reward
         reward = -reward
         node = node.value['parent']
-

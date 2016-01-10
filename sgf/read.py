@@ -136,7 +136,7 @@ def intmove(gomove, size=19):
 
 
 def info(attribute):
-    """Return the sgf attribute name and value.
+    """Return the sgf attribute name and data.
 
     :param attribute: string
     :return: string, string

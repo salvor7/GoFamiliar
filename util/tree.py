@@ -9,19 +9,19 @@ class Node:
     ...                             Node('daughter', [ Node('granddaughter'), Node('grandson')]),
     ...                             Node('son', [ Node('granddaughter'), Node('grandson')])
     ...                             ])
-    >>> tree.value
+    >>> tree.data
     'grandmother'
-    >>> tree.children[0].value
+    >>> tree.children[0].data
     'daughter'
-    >>> tree.children[0].children[0].value
+    >>> tree.children[0].children[0].data
     'granddaughter'
     """
-    def __init__(self, value, children = None):
+    def __init__(self, node_data, children = None):
         """Construct a Node.
 
         Error checks the children parameter ensuring it iterates over Node objects.
 
-        :param value: Node value
+        :param node_data: Node node_data
         :param children: iterable over Node objects
         """
         if children is None:
@@ -36,7 +36,7 @@ class Node:
         except TypeError:
             raise TypeError(str(children) + 'is not iterable')
 
-        self.value = value
+        self.data = node_data
         self.children = list(children)
 
     def add(self, child):
