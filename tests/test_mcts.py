@@ -31,14 +31,6 @@ def test_search_open_board(position, position_moves):
     assert idx > 200
 
 
-def test_is_eye(position_moves):
-    position, moves = position_moves
-    group_eyes = [0, 20, 19 ** 2 - 1]
-    for pt in position.board:
-        pt_is_eye = (pt in group_eyes)
-        assert mcts.is_eye(position=position, pt=pt, colour=gd.BLACK) == pt_is_eye
-
-
 def test_search_avoid_eyes(position_moves):
     position, moves = position_moves
     move_pt = None

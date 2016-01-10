@@ -216,3 +216,12 @@ def test_Position_neigh_groups(position_moves):
 def test_Group_init():
     for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
         assert gd.Group(colour=col,  size=size, liberties=lib,) == (col, size, lib)
+
+
+def test_is_eye(position_moves):
+    position, moves = position_moves
+    group_eyes = [0, 20, 19 ** 2 - 1]
+    for pt in position.board:
+        pt_is_eye = (pt in group_eyes)
+        assert position.is_eye(position=position, pt=pt, colour=gd.BLACK) == pt_is_eye
+

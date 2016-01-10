@@ -1,4 +1,6 @@
 from collections import namedtuple, defaultdict
+import random
+
 import numpy as np
 from util.unionfind import UnionFind
 
@@ -191,11 +193,27 @@ class Position():
         except KeyError:
             raise KeyError('No stones at point ' + str(pt))
 
+    def is_eye(self, pt, colour):
+        """Determines if pt is an eye of colour
+
+        :param self: gd.Position
+        :param pt: int
+        :return: boolean
+        """
+        neighbors, diagonals = BOXES[self.size][pt]
+        neigh_colours = [self[pt].colour for pt in neighbors]
+
+        if OPEN in neigh_colours or -colour in neigh_colours:
+            return False
+
+        diag_colours = [self[pt].colour for pt in diagonals]
+
+        return diag_colours.count(-colour) <= max(0, len(diag_colours) - 3)
+
     def check_move(self, test_pt, colour):
-        """Check test move is legal
+        """Check test move is legal and not on a friendly eye
 
         :raise: MoveError
-        :raise: ValueError
         :param test_pt: int
         :return: dict
         """
@@ -219,8 +237,11 @@ class Position():
             else:
                 group_lists['alive opponent'] += [(group_pt, group)]
 
-        if group_lists['groups liberties'] == [] and 'dead opponent' not in group_lists:
+        if 'dead opponent' not in group_lists and group_lists['groups liberties'] == []:
             raise MoveError('Playing self capture.')
+
+        if self.is_eye(pt=test_pt, colour=colour):
+            raise MoveError('Playing on friendly eye')
 
         group_counts['test point'] = test_pt
         group_lists['test point'] = test_pt
@@ -255,6 +276,7 @@ class Position():
 
         :param pt: int
         :param colour: +1 or -1
+        :raise: ValueError
         :return: Position
 
         Completes all the checks to a ensure legal move, raising a MoveError if illegal.
@@ -299,8 +321,6 @@ class Position():
 
         self.next_player = -colour
 
-        return self
-
     def neigh_groups(self, pt):
         """Find the groups and their representatives around pt
 
@@ -317,16 +337,32 @@ class Position():
                 yield self.board[qt], self[qt]
                 sent_already.append(self.board[qt])
 
+    def random_move(self):
+        """Play a random move
+
+        :return: int
+        >>> Position().random_move()
+        """
+        try:
+            self.move(*next(self.actions()))
+        except StopIteration:
+            raise MoveError('Terminal Position')
+
     def actions(self):
-        for action in actions:
-            if state[action] is gd.OPEN_POINT and not is_eye(state, action, colour=state.next_player):
-                try:
-                    state.check_move(test_pt=action, colour=state.next_player)
-                except gd.MoveError:
-                    pass
-                else:
-                    return action
-        raise gd.MoveError('Terminal Position')
+        """Generate all legal actions
+
+        :raise: MoveError
+        :yield: int
+        """
+        all_points = [pt for pt in self.board]
+        random.shuffle(all_points)
+        for pt in all_points:
+            try:
+                nei_groups, nei_lists = self.check_move(test_pt=pt, colour=self.next_player)
+            except MoveError:
+                pass
+            else:
+                yield pt, self.next_player, nei_groups, nei_lists
 
 
 class MoveError(Exception):
@@ -335,22 +371,4 @@ class MoveError(Exception):
     ie repeat play, suicide or on a ko
     """
     pass
-
-
-def is_eye(position, pt, colour):
-    """Determines if pt is an eye of colour
-
-    :param position: gd.Position
-    :param pt: int
-    :return: boolean
-    """
-    neighbors, diagonals = gd.BOXES[position.size][pt]
-    neigh_colours = [position[pt].colour for pt in neighbors]
-
-    if gd.OPEN in neigh_colours or -colour in neigh_colours:
-        return False
-
-    diag_colours = [position[pt].colour for pt in diagonals]
-
-    return diag_colours.count(-colour) <= max(0, len(diag_colours) - 3)
 
