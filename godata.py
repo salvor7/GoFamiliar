@@ -4,10 +4,12 @@ import random
 import numpy as np
 from util.unionfind import UnionFind
 
+
 #"colours" of the pieces which might be on the board
 BLACK = 1
 WHITE = -1
 OPEN = 0
+
 
 def make_boxes(size=19):
     """Generator of box coordinates
@@ -105,8 +107,11 @@ def make_neighbors(size=19):
 
 NEIGHBORS = {n: {pt: neigh for pt, neigh in make_neighbors(size=n)} for n in
              range(9, 26, 2)}
+
+
 BOXES = {n: {pt: (neigh, diag) for pt, neigh, diag in make_boxes(size=n)} for n in
              range(9, 26, 2)}
+
 
 class Group(namedtuple('Group', 'colour size liberties')):
     @property
@@ -346,7 +351,7 @@ class Position():
         try:
             self.move(*next(self.actions()))
         except StopIteration:
-            raise MoveError('Terminal Position')
+            raise TerminalPosition
 
     def actions(self):
         """Generate all legal actions
@@ -364,6 +369,8 @@ class Position():
             else:
                 yield pt, self.next_player, nei_groups, nei_lists
 
+    def winner(self):
+        return random.choice([-1,1])
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.
@@ -372,3 +379,8 @@ class MoveError(Exception):
     """
     pass
 
+
+class TerminalPosition(StopIteration):
+    """Exception raised when a position is terminal and a move is attempted.
+    """
+    pass

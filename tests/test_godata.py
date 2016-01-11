@@ -225,3 +225,6 @@ def test_is_eye(position_moves):
         pt_is_eye = (pt in group_eyes)
         assert position.is_eye(position=position, pt=pt, colour=gd.BLACK) == pt_is_eye
 
+
+def test_winner():
+    assert False

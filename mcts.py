@@ -4,78 +4,124 @@ This module is a general implementation of an MCTS algorithm.
 It is not intended to be specialized for go, though that is the first and only use anticipated.
 It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search Methods".
 """
-
-import random
-
+from copy import deepcopy
 from math import sqrt, log
 
 import godata as gd
 from util import tree
 
 
-def search(state):
+def search(state, sim_limit=100, const=0, TerminalPosition=gd.TerminalPosition):
+    """Find a good action
+
+    This is the main function of the MCTS algorithm.
+    All other module methods are used by it.
+    sim_limit limits the total number of terminal playouts can occur before a move is returned/
+    const is a constant value used in bestchild as part of move evaluation
+
+    :param state: state object
+    :param sim_limit: int
+    :param const: float
+    :return: action
+    """
     node_data = {'name':None,
                 'state':state,
-                 'actions':[a for a in state.actions],
+                 'actions':state.actions(),
                  'wins':0,
                  'sims':0,
                  'parent':None,}
-    root = tree.Node(value=node_data)
+    root = tree.Node(node_data=node_data)
     node = root
     while root.data['sims'] < sim_limit:
-        node = treepolicy(node)
-        reward = defaultpolicy(node.value['state'].deepcopy())
+        node = treepolicy(node, const=const)
+        reward = defaultpolicy(deepcopy(node.data['state']), TerminalPosition)
         backup(node, reward)
 
-    return bestchild(root, 0)['name']
+    return bestchild(root, c=0)['name']
 
 
-def treepolicy(node):
-    while len(node.value['state'].actions) > 0 and len(node.children) > 0: # non-terminal
-        if len(node.value['state'].actions) > 0: # not fully expanded
-            return expand(node)
+def treepolicy(node, const=0):
+    """Find a node to simulate a game for.
+
+    :param node: tree.Node
+    :param const: float
+    :return: tree.Node
+    """
+    while True:
+        try:
+            action = next(node.data['actions'])
+        except StopIteration:
+            try:
+                node = bestchild(node, c=const)
+            except IndexError:
+                break
         else:
-            node = bestchild(node)
+            return expand(node, action)
     return node
 
 
-def expand(node):
-    action = node.value['actions'].pop()
-    state = node.value['state'].deepcopy()
-    state.move(action)
-    node_data = {'name': action,
+def expand(node, action):
+    """Add new node in MC tree corresponding to taking action.
+
+    "Expanding" is adding a child node with the associated state data to a non-terminal node.
+    :param node: tree.Node
+    :param action: action
+    :return: tree.Node
+    """
+    state = deepcopy(node.data['state'])
+    state.move(*action)
+    node_data = {'name': action[0],
                  'state': state,
-                 'actions': [a for a in state.actions],
+                 'actions': state.actions(),
                  'wins': 0,
                  'sims': 0,
                  'parent': node,}
     child = tree.Node(node_data=node_data)
-    node.children.add(child)
+    node.add(child)
+    return child
 
 
-def bestchild(node):
+def bestchild(node, c=0):
+    """Find the child with the highest upper confidence bound
+
+    :param node: tree.Node
+    :param c: float
+    :return: tree.Node
+    """
     def conf_score(node):
-        wins = node.value['wins']
-        sims = node.value['sims']
-        c = node.value['state'].mcts_const
-        par_sims = node.value['parent'].value['sims']
-        return wins / sims + c * sqrt(2 * log(par_sims) / sims)
+        wins = node.data['wins']
+        sims = node.data['sims']
+        player = -node.data['state'].next_player
+        par_sims = node.data['parent'].data['sims']
+        return player * wins / sims + c * sqrt(2 * log(par_sims) / sims)
 
-    conf = [(conf_score(v), v) for v in node.children]
-    conf.sort()
-    return conf[0][1]
+    return max(node.children, key=conf_score)
 
 
-def defaultpolicy(state, MoveError):
-    while len(state.actions) > 0:
-        action = state.action[0]
-        state.move(action)
-    return state.score()
+def defaultpolicy(state, TerminalPosition):
+    """The random game simulator
+
+    :param state: game state
+    :param TerminalPoistion: Exception
+    :return: float
+    """
+    # while True:
+    #     try:
+    #         state.random_move()
+    #     except TerminalPosition:
+    #         break
+
+    return state.winner()
 
 
 def backup(node, reward):
+    """Record details of a sim backup the MC tree
+
+    :param node: tree.Node
+    :param reward: float
+    """
     while node is not None:
-        node['sims'] += 1
-        node['wins'] += reward
+        node.data['sims'] += 1
+        node.data['wins'] += reward
         reward = -reward
-        node = node.value['parent']
+        node = node.data['parent']
