@@ -246,7 +246,7 @@ class Position():
             raise MoveError('Playing self capture.')
 
         if self.is_eye(pt=test_pt, colour=colour):
-            raise MoveError('Playing on friendly eye')
+            raise MoveError('Playing in friendly eye')
 
         group_counts['test point'] = test_pt
         group_lists['test point'] = test_pt
@@ -355,24 +355,25 @@ class Position():
         except StopIteration:
             raise TerminalPosition
 
-    def actions(self):
-        """Generate all legal actions
+    def score(self):
+        """Return the score
 
-        :raise: MoveError
-        :yield: int
+        Well defined on any position, but quite inaccurate for non-terminal positions.
+        :return: int
+        >>> Position().score()
+        0
         """
-        all_points = [pt for pt in self.board]
-        random.shuffle(all_points)
-        for pt in all_points:
-            try:
-                nei_groups, nei_lists = self.check_move(test_pt=pt, colour=self.next_player)
-            except MoveError:
-                pass
+        black_stones, white_stones = 0, 0
+        black_liberties, white_liberties = set(), set()
+        for group in self.groups.values():
+            if group.colour == 1:
+                black_stones += group.size
+                black_liberties |= group.liberties
             else:
-                yield pt, self.next_player, nei_groups, nei_lists
+                white_stones += group.size
+                white_liberties |= group.liberties
+        return black_stones + len(black_liberties) - white_stones - len(white_liberties)
 
-    def winner(self):
-        return random.choice([-1,1])
 
 class MoveError(Exception):
     """The exception throw when an illegal move is made.

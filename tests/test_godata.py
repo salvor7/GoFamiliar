@@ -215,23 +215,19 @@ def test_move_exceptions(position_moves):
 
     def suicide_move():
         position.move((position.size ** 2) - 1, gd.BLACK)
-
     fixt.exception_test(suicide_move, gd.MoveError, 'Playing self capture.')
 
     def suicide_moveII():
         position.move(0, gd.WHITE)
-
     fixt.exception_test(suicide_moveII, gd.MoveError, 'Playing self capture.')
 
     for pt in moves:
         def existing_stone():
             position.move(pt, gd.WHITE)
-
         fixt.exception_test(existing_stone, gd.MoveError, 'Playing on another stone.')
 
     def bad_colour():
         position.move(4 * position.size, 't')
-
     fixt.exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
 
     test_lists, test_counts = position.check_move(test_pt=2, colour=gd.BLACK)
@@ -266,8 +262,24 @@ def test_is_eye(position_moves):
         assert position.is_eye(pt=pt, colour=gd.BLACK) == pt_is_eye
 
 
-def test_winner():
-    assert False
+def test_score(position_moves):
+    position, moves = position_moves
+    black_stones, black_liberties = 12, 8
+    white_stones, white_liberties = 11, 11
+    assert position.score() == black_stones + black_liberties - white_stones - white_liberties
+
+    term_position = position.random_playout()
+    assert term_position is not position
+    black_stones, white_stones = 0, 0
+    black_liberties, white_liberties = set(), set()
+    for group in term_position.groups.values():
+        if group.colour == 1:
+            black_stones += group.size
+            black_liberties |= group.liberties
+        else:
+            white_stones += group.size
+            white_liberties |= group.liberties
+    assert black_stones + len(black_liberties) - white_stones - len(white_liberties)
 
 
 def test_Group_init():
