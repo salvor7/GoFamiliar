@@ -25,7 +25,7 @@ def unexpanded_root(position_moves):
     position, moves = position_moves
     node_data = {'name': list(moves.keys())[-1],
              'state': position,
-             'actions': position.actions(),
+             'actions': position.random_playout,
              'wins': 0,
              'sims': 0,
              'parent': None,}
@@ -36,7 +36,7 @@ def unexpanded_root(position_moves):
 def expanded_root(unexpanded_root):
     for action in unexpanded_root.data['actions']:
         child = mcts.expand(node=unexpanded_root, action=action)
-        reward = mcts.defaultpolicy(child.data['state'], gd.TerminalPosition)
+        reward = mcts.defaultpolicy(child)
         mcts.backup(node=child, reward=reward)
     return unexpanded_root
 

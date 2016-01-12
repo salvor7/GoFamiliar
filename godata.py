@@ -1,5 +1,6 @@
 from collections import namedtuple, defaultdict
 import random
+from copy import deepcopy
 
 import numpy as np
 from util.unionfind import UnionFind
@@ -145,6 +146,7 @@ class Position():
         self.komi = komi
         self.size = size
         self.next_player = BLACK
+        self.actions = set(range(size ** 2))
 
         try:
             for pt in moves:
@@ -263,18 +265,23 @@ class Position():
             remove_pt = tracking['to remove'].pop()
             for group_pt, group in self.neigh_groups(remove_pt):
                 if group.colour == -self[dead_pt].colour:
+                    # add liberties back
                     self[group_pt] = Group(colour=group.colour, size=group.size,
                                            liberties=group.liberties | {remove_pt})
             for neigh_pt in NEIGHBORS[self.size][remove_pt]:
+                # spread out search
                 not_removed = neigh_pt not in tracking['removed']
                 in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
                 if not_removed and in_dead_group:
                     tracking['to remove'] += [neigh_pt]
 
             tracking['removed'] += [remove_pt]
+            self.actions |= {remove_pt}
+
         del self[dead_pt]
         for removed_pt in tracking['removed']:
-            _ = self[removed_pt]
+            _ = self[removed_pt]    # update unionfind in getitem
+
 
     def move(self, move_pt, colour=None, test_lists=None, test_counts=None):
         """Play a move on a go board
@@ -327,6 +334,13 @@ class Position():
             self.kolock = None
 
         self.next_player = -colour
+        self.actions -= {move_pt}
+
+    def pass_move(self):
+        """Execute a passing move
+        """
+        self.kolock = None
+        self.next_player *= -1
 
     def neigh_groups(self, pt):
         """Find the groups and their representatives around pt
@@ -344,16 +358,30 @@ class Position():
                 yield self.board[qt], self[qt]
                 sent_already.append(self.board[qt])
 
-    def random_move(self):
+    def random_playout(self):
         """Play a random move
 
         :return: int
-        >>> Position().random_move()
+        >>> type(Position().random_playout())
+        <class 'godata.Position'>
         """
-        try:
-            self.move(*next(self.actions()))
-        except StopIteration:
-            raise TerminalPosition
+        position = deepcopy(self)
+        passes = 0
+        while passes < 2:
+            tried = set()
+            while tried != position.actions:
+                move_pt = random.sample(position.actions, k=1)[0]
+                try:
+                    position.move(move_pt)
+                except MoveError:
+                    tried |= {move_pt}
+                    continue
+                passes = 0
+                tried = set()   # a move resets tried
+            position.pass_move()
+            passes +=1
+
+        return position
 
     def score(self):
         """Return the score

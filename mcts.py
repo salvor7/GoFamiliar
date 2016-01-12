@@ -34,10 +34,10 @@ def search(state, sim_limit=100, const=0, TerminalPosition=gd.TerminalPosition):
     node = root
     while root.data['sims'] < sim_limit:
         node = treepolicy(node, const=const)
-        reward = defaultpolicy(deepcopy(node.data['state']), TerminalPosition)
+        reward = defaultpolicy(node)
         backup(node, reward)
 
-    return bestchild(root, c=0)['name']
+    return bestchild(root, c=0).data['name']
 
 
 def treepolicy(node, const=0):
@@ -72,7 +72,7 @@ def expand(node, action):
     state.move(*action)
     node_data = {'name': action[0],
                  'state': state,
-                 'actions': state.actions(),
+                 'defaultpolicy': state.random_playout,
                  'wins': 0,
                  'sims': 0,
                  'parent': node,}
@@ -98,20 +98,15 @@ def bestchild(node, c=0):
     return max(node.children, key=conf_score)
 
 
-def defaultpolicy(state, TerminalPosition):
+def defaultpolicy(node):
     """The random game simulator
 
     :param state: game state
-    :param TerminalPoistion: Exception
     :return: float
     """
-    # while True:
-    #     try:
-    #         state.random_move()
-    #     except TerminalPosition:
-    #         break
+    state = node.data['defaultpolicy']()
 
-    return state.winner()
+    return state/abs(state)
 
 
 def backup(node, reward):

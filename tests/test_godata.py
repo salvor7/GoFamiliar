@@ -262,6 +262,33 @@ def test_is_eye(position_moves):
         assert position.is_eye(pt=pt, colour=gd.BLACK) == pt_is_eye
 
 
+def test_Position_actions(position_moves):
+    position, moves = position_moves
+    s = position.size
+    assert (set(range(s ** 2)) - position.actions) - set(moves.keys()) == set()
+
+    assert 2 in position.actions
+    assert 3 not in position.actions
+    position.move(move_pt=2, colour=gd.WHITE)
+    assert 2 not in position.actions
+    assert 3 in position.actions    # added after capture
+
+    term_position = position.random_playout()
+    for action in term_position.actions:
+        try:
+            term_position.move(action, colour=gd.BLACK)
+        except gd.MoveError:
+            pass
+        else:
+            assert False
+        try:
+            term_position.move(action, colour=gd.WHITE)
+        except gd.MoveError:
+            pass
+        else:
+            assert False
+
+
 def test_score(position_moves):
     position, moves = position_moves
     black_stones, black_liberties = 12, 8
