@@ -11,7 +11,7 @@ doctest_file = 'sgfhdf5_doctest.hdf5'
 class Library():
     """SGF Library object
 
-    >>> Library(doctest_dir, doctest_file)['chap075.sgf'][:10]
+    >>> Library(doctest_dir, doctest_file)['chap075'][:10]
     array([ 72, 288, 300,  42,  59,  97,  61,  62,  80,  41])
     """
     def __init__(self, direc, file):
@@ -27,8 +27,8 @@ class Library():
 
         :param item: str
         :return: h5py.dataset
-        >>> Library(doctest_dir, doctest_file)['chap116.sgf']
-        <HDF5 dataset "chap116.sgf": shape (262,), type "<i4">
+        >>> Library(doctest_dir, doctest_file)['chap116']
+        <HDF5 dataset "chap116": shape (262,), type "<i4">
         """
         return self._library_file[sgf_name]
 
@@ -47,9 +47,9 @@ class Library():
         :return: iter
         >>> for sgf_name in Library(doctest_dir, doctest_file):
         ...     print(sgf_name)
-        chap075.sgf
-        chap116.sgf
-        chap170a.sgf
+        chap075
+        chap116
+        chap170a
         """
         return iter(self._library_file)
 
@@ -58,7 +58,7 @@ class Library():
 
         :param sgf_name: str
         :return: h5py.attributes
-        >>> l = Library(doctest_dir, doctest_file).sgf_attributes('chap116.sgf')
+        >>> l = Library(doctest_dir, doctest_file).sgf_attributes('chap116')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
         ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.50', 'W+0.50')
         """
@@ -70,7 +70,7 @@ class Library():
         The returned position is the final state of the sgf.
         :param sgf_name: str
         :return: godata.Position
-        >>> type(Library(doctest_dir, doctest_file).sgf_position('chap075.sgf'))
+        >>> type(Library(doctest_dir, doctest_file).sgf_position('chap075'))
         <class 'godata.Position'>
         """
         sgf_data = self[sgf_name]

@@ -161,7 +161,6 @@ def store(direc=sgfdir):
     1847
     2576
     1678
-    1686
     """
     files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
 
@@ -186,7 +185,6 @@ def store_parser(direc=sgfdir):
     AP[MultiGo:3.9.4]
     GM[1]
     AP[MultiGo:3.9.4]
-    FF[1]
     """
     bad_files = []
     for file_path, sgf_str in store(direc):
