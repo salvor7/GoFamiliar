@@ -174,7 +174,7 @@ def test_check_advance_ko(position_moves):
     assert test_lists['groups liberties'] == []
     assert len(test_lists['alive opponent']) == 2
     assert len(test_lists['dead opponent']) == 1
-    assert len(test_counts) == 4    # only 4
+    assert len(test_lists) == 4    # only 4
 
     assert test_counts['test point'] == 2
     assert test_counts['captures'] == 1
@@ -258,7 +258,9 @@ def test_Position_neigh_groups(position_moves):
 
 def test_is_eye(position_moves):
     position, _ = position_moves
-    group_eyes = [0, 20, 19 ** 2 - 1]
+    s = position.size
+
+    group_eyes = [0, s + 1, s ** 2 - 1]
     for pt in position.board:
         pt_is_eye = (pt in group_eyes)
         assert position.is_eye(pt=pt, colour=gd.BLACK) == pt_is_eye

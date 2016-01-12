@@ -288,9 +288,11 @@ class Position():
         Adds the move to the position, and returns the position.
         >>> move_pt = 200
         >>> pos = Position()
-        >>> pos.move(move_pt, colour=BLACK)[move_pt]
+        >>> pos.move(move_pt, colour=BLACK)
+        >>> pos[move_pt]
         Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
-        >>> pos.move(move_pt+1, colour=BLACK)[move_pt+1]
+        >>> pos.move(move_pt+1, colour=BLACK)
+        >>> pos[move_pt+1]
         Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
         """
         if colour is None:
