@@ -370,7 +370,7 @@ class Position():
         while passes < 2:
             tried = set()
             while tried != position.actions:
-                move_pt = random.sample(position.actions, k=1)[0]
+                move_pt = random.sample(position.actions - tried, k=1)[0]
                 try:
                     position.move(move_pt)
                 except MoveError:
