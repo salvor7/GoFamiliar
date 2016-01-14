@@ -6,7 +6,7 @@ from util.unionfind import UnionFind
 
 TESTING_PRIME = 13
 
-@fixture(params=[1, 10, 100, 1000, 10000, 100000, infty])
+@fixture(params=[10, 100, 1000, 10000, 100000, infty])
 def fixture_uf(request):
     return UnionFind(size_limit=request.param)
 
@@ -74,7 +74,7 @@ def test_uf_exceptions(fixture_unions):
         except IndexError:
             assert abs(key) >= fixture_unions.size_limit
         else:
-            assert key == 0
+            assert False
 
     try:
         del fixture_unions[0]
