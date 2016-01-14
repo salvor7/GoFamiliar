@@ -1,4 +1,4 @@
-import random
+import cProfile
 import itertools
 
 import pytest
@@ -150,3 +150,5 @@ def test_tsumego_solving(tsumego):
     found_move = mcts.search(position)
     assert correct_move == found_move
 
+if __name__ == '__main__':
+    cProfile.run('expanded_root(unexpanded_root(position_moves()))', filename='mcts.cprof')

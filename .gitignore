@@ -2,6 +2,7 @@ sgf_store/*
 *.hdf5
 *.csv
 *.sgf
+*.cprof
 
 ### Python template
 # Byte-compiled / optimized / DLL files
