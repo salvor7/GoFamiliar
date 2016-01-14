@@ -67,11 +67,12 @@ class UnionFind():
         try:
             points_to_self = (self._pointers[elem] == elem)
         except IndexError:
-            if abs(elem) >= self.size_limit:
+            if self.size_limit is np.infty and elem > 0:
+                new_points = list(range(len(self), elem + 1))
+                self._pointers += new_points
+                points_to_self = (self._pointers[elem] == elem)
+            else:
                 raise IndexError(str(elem) + ' is not a point')
-            new_points = list(range(len(self), elem + 1))
-            self._pointers += new_points #= np.append(self._pointers, new_points)
-            points_to_self = (self._pointers[elem] == elem)
 
         if points_to_self:
             repre = elem
