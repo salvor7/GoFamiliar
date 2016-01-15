@@ -1,4 +1,3 @@
-import cProfile
 import itertools
 
 import pytest
@@ -25,7 +24,7 @@ def unexpanded_root(position_moves):
     position, moves = position_moves
     node_data = {'name': list(moves.keys())[-1],
              'state': position,
-             'actions': position.random_playout,
+             'defaultpolicy': position.random_playout,
              'wins': 0,
              'sims': 0,
              'parent': None,}
@@ -34,27 +33,30 @@ def unexpanded_root(position_moves):
 
 @pytest.fixture()
 def expanded_root(unexpanded_root):
-    for action in unexpanded_root.data['actions']:
-        child = mcts.expand(node=unexpanded_root, action=action)
+    for action in unexpanded_root.data['state'].actions:
+        try:
+            child = mcts.expand(node=unexpanded_root, action=action)
+        except gd.MoveError:
+            continue
         reward = mcts.defaultpolicy(child)
         mcts.backup(node=child, reward=reward)
     return unexpanded_root
 
 
 def test_root(unexpanded_root):
-    action = next(unexpanded_root.data['actions'])
+    action = next(unexpanded_root.data['defaultpolicy'])
     child = mcts.expand(node=unexpanded_root, action=action)
     assert type(child) == tree.Node
     assert child in unexpanded_root.children
 
     assert child.data['name'] == action[0]
     assert type(child.data['state']) == type(unexpanded_root.data['state'])
-    assert type(child.data['actions']) == type(unexpanded_root.data['actions'])
+    assert type(child.data['defaultpolicy']) == type(unexpanded_root.data['defaultpolicy'])
     assert child.data['wins'] == 0
     assert child.data['sims'] == 0
     assert child.data['parent'] == unexpanded_root
 
-    reward = mcts.defaultpolicy(child.data['state'], gd.TerminalPosition)
+    reward = mcts.defaultpolicy(child)
     mcts.backup(child, reward)
     assert child.data['sims'] == 1
     assert unexpanded_root.data['sims'] == 1
@@ -62,10 +64,12 @@ def test_root(unexpanded_root):
 
 
 def test_children(expanded_root):
+    assert len(expanded_root.children) == 361 - 23 - 2
+
     testing_lambdas = [lambda x: x.data['state'],
                        lambda x: x.data['state'].board,
                        lambda x: x.data['state'].groups,
-                       lambda x: x.data['actions'],
+                       lambda x: x.data['defaultpolicy'],
                        lambda x: x.data['name'],]
 
     mutable_objects = [[func(node) for node in expanded_root.children + [expanded_root]]
@@ -91,7 +95,7 @@ def test_children(expanded_root):
     assert type(child) == tree.Node
     assert child in best.children
 
-    reward = mcts.defaultpolicy(child.data['state'], gd.TerminalPosition)
+    reward = mcts.defaultpolicy(child)
     mcts.backup(node=child, reward=reward)
     assert best.data['sims'] == 2
     assert best.data['wins'] == 1 + reward
@@ -151,4 +155,6 @@ def test_tsumego_solving(tsumego):
     assert correct_move == found_move
 
 if __name__ == '__main__':
+    import cProfile
     cProfile.run('expanded_root(unexpanded_root(position_moves()))', filename='mcts.cprof')
+

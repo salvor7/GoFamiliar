@@ -26,7 +26,7 @@ def search(state, sim_limit=100, const=0, TerminalPosition=gd.TerminalPosition):
     """
     node_data = {'name':None,
                 'state':state,
-                 'actions':state.actions(),
+                 'defaultpolicy':state.random_playout,
                  'wins':0,
                  'sims':0,
                  'parent':None,}
@@ -69,8 +69,8 @@ def expand(node, action):
     :return: tree.Node
     """
     state = deepcopy(node.data['state'])
-    state.move(*action)
-    node_data = {'name': action[0],
+    state.move(action)
+    node_data = {'name': action,
                  'state': state,
                  'defaultpolicy': state.random_playout,
                  'wins': 0,
@@ -105,8 +105,8 @@ def defaultpolicy(node):
     :return: float
     """
     state = node.data['defaultpolicy']()
-
-    return state/abs(state)
+    score = state.score()
+    return score/abs(score)
 
 
 def backup(node, reward):
