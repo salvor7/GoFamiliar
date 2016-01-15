@@ -39,9 +39,13 @@ class UnionFind():
         self.size_limit = size_limit
         if size_limit is np.infty:
             limit = 0
+            self._pointers = list(range(limit))
         else:
             limit = size_limit
-        self._pointers = list(range(limit)) #np.array(range(limit), dtype=np.uint8)
+
+            pow2 = int(np.ceil(np.log2(np.log2(limit))))
+            dtypes = [np.uint8,]*4 + [np.uint16, np.uint32, np.uint64]
+            self._pointers = list(range(limit)) #np.array(range(limit), dtype=dtypes[pow2]) #
 
     def __getitem__(self, elem):
         """Find group representative
