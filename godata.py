@@ -114,6 +114,14 @@ BOXES = {n: {pt: (neigh, diag) for pt, neigh, diag in make_boxes(size=n)} for n 
              range(9, 26, 2)}
 
 
+EyeCorners = namedtuple('EyeCorners', 'opp_count corner_count')
+IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
+             EyeCorners(opp_count=0, corner_count=2),
+             EyeCorners(opp_count=0, corner_count=4),
+             EyeCorners(opp_count=1, corner_count=4),
+             }
+
+
 class Group(namedtuple('Group', 'colour size liberties')):
     @property
     def libs(self):
@@ -300,14 +308,22 @@ class Position():
             :return: dict
             """
             neighbors, diagonals = BOXES[self.size][move_pt]
-            neigh_groups = {self.board[neigh_pt]:self[neigh_pt] for neigh_pt in neighbors}
+            neigh_groups = {}
+            might_be_friendly_eye = True
+            for neigh_pt in neighbors:
+                group_pt = self.board[neigh_pt]
+                group = self[neigh_pt]
+                neigh_groups[group_pt] = group
+                if group.colour is not colour:
+                    might_be_friendly_eye = False
 
-            if OPEN_POINT not in neigh_groups.values():
-                neigh_colours = [group.colour for group in neigh_groups.values()]
-                if -colour not in neigh_colours:
-                    diag_colours = [self[pt].colour for pt in diagonals]
-                    if diag_colours.count(-colour) <= max(0, len(diag_colours) - 3):
-                        raise MoveError('Playing in a friendly eye')
+            if might_be_friendly_eye:
+                opp_count = 0
+                for pt in diagonals:
+                    if self[pt].colour == -colour:
+                        opp_count += 1
+                if EyeCorners(opp_count, corner_count=len(diagonals)) in IS_AN_EYE:
+                    raise MoveError('Playing in a friendly eye')
 
             return neigh_groups
 
