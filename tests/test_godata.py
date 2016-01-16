@@ -147,40 +147,6 @@ def test_Position_group_handling(position_moves):
                                             3 * s + 2}))
 
 
-def test_check_fix_ko(position_moves):
-    position, moves = position_moves
-    s = position.size
-
-    test_lists, test_counts = position.check_move(test_pt=2, colour=gd.BLACK)
-    assert type(test_lists) is defaultdict
-    assert test_lists['test point'] == 2
-    assert len(test_lists['my groups']) == 3
-    assert set(test_lists['groups liberties']) == {0, s + 1, 2 * s + 3, 3 * s, 3 * s + 1, 3 * s + 2}
-    assert len(test_lists) == 3  # only 3
-
-    assert type(test_counts) is defaultdict
-    assert test_counts['test point'] == 2
-    assert test_counts['groups size'] == 7
-    assert len(test_counts) == 2    # only 2
-
-    position.move(move_pt=2, colour=gd.BLACK, test_lists=test_lists)
-
-
-def test_check_advance_ko(position_moves):
-    position, _ = position_moves
-    test_lists, test_counts = position.check_move(test_pt=2, colour=gd.WHITE)
-
-    assert test_lists['test point'] == 2
-    assert test_lists['groups liberties'] == []
-    assert len(test_lists['alive opponent']) == 2
-    assert len(test_lists['dead opponent']) == 1
-    assert len(test_lists) == 4    # only 4
-
-    assert test_counts['test point'] == 2
-    assert test_counts['captures'] == 1
-    assert len(test_counts) == 2    # only 2
-
-
 def test_move_capture(position_moves):
     position, moves = position_moves
     s = position.size
@@ -204,7 +170,7 @@ def test_move_capture(position_moves):
 
     def kolock_point():
         position.move(2, gd.WHITE)
-        position.move(3, gd.BLACK)
+        position.move(3, gd.BLACK) # the play on a ko
 
     fixt.exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
     assert position[2] == gd.Group(colour=gd.WHITE, size=1, liberties=frozenset({3}))
@@ -215,7 +181,7 @@ def test_move_exceptions(position_moves):
 
     def suicide_move():
         position.move((position.size ** 2) - 1, gd.BLACK)
-    fixt.exception_test(suicide_move, gd.MoveError, 'Playing self capture.')
+    fixt.exception_test(suicide_move, gd.MoveError, 'Playing in a friendly eye')
 
     def suicide_moveII():
         position.move(0, gd.WHITE)
@@ -229,37 +195,6 @@ def test_move_exceptions(position_moves):
     def bad_colour():
         position.move(4 * position.size, 't')
     fixt.exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
-
-    test_lists, test_counts = position.check_move(test_pt=2, colour=gd.BLACK)
-    def mismatched_test_and_move():
-        position.move(move_pt=0, colour=gd.BLACK, test_lists=test_lists,
-                      test_counts=test_counts)
-    fixt.exception_test(mismatched_test_and_move, ValueError,
-                        'Tested point and move point not equal')
-
-
-def test_Position_neigh_groups(position_moves):
-    position, moves = position_moves
-
-    for pt in position.board:
-        groups = [(repre, group) for repre, group in position.neigh_groups(pt)]
-        assert len(groups) == len(set(groups))  # no repeat groups
-
-        the_expected_groups = [position[neigh_pt] for neigh_pt in
-                               gd.NEIGHBORS[position.size][pt]]
-        for repre, group in groups:
-            assert position[repre] is group
-            assert group in the_expected_groups
-
-
-def test_is_eye(position_moves):
-    position, _ = position_moves
-    s = position.size
-
-    group_eyes = [0, s + 1, s ** 2 - 1]
-    for pt in position.board:
-        pt_is_eye = (pt in group_eyes)
-        assert position.is_eye(pt=pt, colour=gd.BLACK) == pt_is_eye
 
 
 def test_Position_actions(position_moves):
