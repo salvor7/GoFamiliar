@@ -38,14 +38,9 @@ class UnionFind():
         """
         self.size_limit = size_limit
         if size_limit is np.infty:
-            limit = 0
-            self._pointers = list(range(limit))
+            self._pointers = list(range(0))
         else:
-            limit = size_limit
-
-            pow2 = int(np.ceil(np.log2(np.log2(limit))))
-            dtypes = [np.uint8,]*4 + [np.uint16, np.uint32, np.uint64]
-            self._pointers = list(range(limit)) #np.array(range(limit), dtype=dtypes[pow2]) #
+            self._pointers = list(range(size_limit))
 
     def __getitem__(self, elem):
         """Find group representative
@@ -69,27 +64,26 @@ class UnionFind():
         100
         """
         try:
-            points_to_self = (self._pointers[elem] == elem)
+            repre = self._pointers[elem]
         except IndexError:
             if self.size_limit is np.infty and elem > 0:
                 new_points = list(range(len(self), elem + 1))
                 self._pointers += new_points
-                points_to_self = (self._pointers[elem] == elem)
+                repre = self._pointers[elem]
             else:
                 raise IndexError(str(elem) + ' is not a point')
 
-        if points_to_self:
-            repre = elem
-        else:
-            repre = self.__getitem__(self._pointers[elem])
-            self._pointers[elem] = repre        #update pointers
+        while not elem == repre:
+            last_elem, elem, repre = elem, repre, self._pointers[repre]
+            self._pointers[last_elem] = repre  #update pointers one level
+
         return repre
 
     def __iter__(self):
         """Iterator over the point indices
 
+        Not the elements pointed to.
         :return: iter
-
         >>> for elem in UnionFind(size_limit=100):
         ...     pass
         """
