@@ -71,7 +71,7 @@ def make_boxes(size=19):
             right = pt + 1
         neighbors = [pt for pt in (up, down, left, right) if pt is not None]
         diagonals = [pt for pt in (up_left, up_right, down_right, down_left) if pt is not None]
-        yield pt, np.array(neighbors), np.array(diagonals)
+        yield pt, np.array(neighbors, dtype=np.int16), np.array(diagonals, dtype=np.int16)
 
 
 def make_neighbors(size=19):
@@ -200,163 +200,11 @@ class Position():
         except KeyError:
             raise KeyError('No stones at point ' + str(pt))
 
-    def is_eye(self, pt, colour):
-        """Determines if pt is an eye of colour
-
-        :param self: gd.Position
-        :param pt: int
-        :return: boolean
-        """
-        neighbors, diagonals = BOXES[self.size][pt]
-        neigh_colours = [self[pt].colour for pt in neighbors]
-
-        if OPEN in neigh_colours or -colour in neigh_colours:
-            return False
-
-        diag_colours = [self[pt].colour for pt in diagonals]
-
-        return diag_colours.count(-colour) <= max(0, len(diag_colours) - 3)
-
-    def check_move(self, test_pt, colour):
-        """Check test move is legal and not on a friendly eye
-
-        :raise: MoveError
-        :param test_pt: int
-        :return: dict
-        """
-        if test_pt == self.kolock:
-            raise MoveError('Playing on a ko point.')
-        elif self[test_pt] is not OPEN_POINT:
-            raise MoveError('Playing on another stone.')
-
-        group_lists = defaultdict(list)
-        group_counts = defaultdict(int)
-        for group_pt, group in self.neigh_groups(test_pt):
-            if group is OPEN_POINT:
-                group_lists['groups liberties'] += [group_pt]
-            elif group.colour == colour:
-                group_lists['groups liberties'] += list(group.liberties - {test_pt})
-                group_lists['my groups'] += [(group_pt, group)]
-                group_counts['groups size'] += group.size
-            elif group.libs == 1:  # group.colour == -colour
-                group_lists['dead opponent'] += [(group_pt, group)]
-                group_counts['captures'] += group.size
-            else:
-                group_lists['alive opponent'] += [(group_pt, group)]
-
-        if 'dead opponent' not in group_lists and group_lists['groups liberties'] == []:
-            raise MoveError('Playing self capture.')
-
-        if self.is_eye(pt=test_pt, colour=colour):
-            raise MoveError('Playing in friendly eye')
-
-        group_counts['test point'] = test_pt
-        group_lists['test point'] = test_pt
-        return group_lists, group_counts
-
-    def capture(self, dead_pt):
-        """Remove captures and update surroundings
-
-        :param dead_pt: int
-        """
-        tracking = defaultdict(list)
-        tracking['to remove'] = [dead_pt]
-        while len(tracking['to remove']) > 0:
-            remove_pt = tracking['to remove'].pop()
-            for group_pt, group in self.neigh_groups(remove_pt):
-                if group.colour == -self[dead_pt].colour:
-                    # add liberties back
-                    self[group_pt] = Group(colour=group.colour, size=group.size,
-                                           liberties=group.liberties | {remove_pt})
-            for neigh_pt in NEIGHBORS[self.size][remove_pt]:
-                # spread out search
-                not_removed = neigh_pt not in tracking['removed']
-                in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
-                if not_removed and in_dead_group:
-                    tracking['to remove'] += [neigh_pt]
-
-            tracking['removed'] += [remove_pt]
-            self.actions |= {remove_pt}
-
-        del self[dead_pt]
-        for removed_pt in tracking['removed']:
-            _ = self[removed_pt]    # update unionfind in getitem
-
-
-    def move(self, move_pt, colour=None, test_lists=None, test_counts=None):
-        """Play a move on a go board
-
-        :param pt: int
-        :param colour: +1 or -1
-        :raise: ValueError
-        :return: Position
-
-        Completes all the checks to a ensure legal move, raising a MoveError if illegal.
-        Adds the move to the position, and returns the position.
-        >>> move_pt = 200
-        >>> pos = Position()
-        >>> pos.move(move_pt, colour=BLACK)
-        >>> pos[move_pt]
-        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
-        >>> pos.move(move_pt+1, colour=BLACK)
-        >>> pos[move_pt+1]
-        Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
-        """
-        if colour is None:
-            colour = self.next_player
-        elif colour not in [BLACK, WHITE]:
-            raise ValueError('Unrecognized move colour: ' + str(colour))
-
-        if test_lists is None or test_counts is None:
-            test_lists, test_counts = self.check_move(test_pt=move_pt, colour=colour)
-        elif test_lists['test point'] != move_pt or test_counts['test point'] != move_pt:
-            raise ValueError('Tested point and move point not equal')
-
-        for opp_pt, opp_group in test_lists['alive opponent']:
-            self[opp_pt] = Group(colour=opp_group.colour,
-                                 size=opp_group.size,
-                                 liberties=opp_group.liberties - {move_pt})
-
-        for group_pt, group in test_lists['my groups']:
-            self.board[move_pt] = self.board[group_pt]
-            del self[group_pt]
-
-        self[move_pt] = Group(colour=colour,
-                              size=test_counts['groups size'] + 1,
-                              liberties=frozenset(test_lists['groups liberties']))
-
-        for dead_pt, _ in test_lists['dead opponent']:
-            self.capture(dead_pt)
-
-        if test_counts['captures'] == 1:
-            self.kolock = test_lists['dead opponent'][0][0]
-        else:
-            self.kolock = None
-
-        self.next_player = -colour
-        self.actions -= {move_pt}
-
     def pass_move(self):
         """Execute a passing move
         """
         self.kolock = None
         self.next_player *= -1
-
-    def neigh_groups(self, pt):
-        """Find the groups and their representatives around pt
-
-        :param pt: int
-        :yield: Group
-
-        >>> pt = 200
-        >>> next(Position().neigh_groups(pt))
-        (181, Group(colour=0, size=0, liberties=frozenset()))
-        """
-        sent_already = []
-        for qt in NEIGHBORS[self.size][pt]:
-            if self.board[qt] not in sent_already:
-                yield self.board[qt], self[qt]
-                sent_already.append(self.board[qt])
 
     def random_playout(self):
         """Play a random move
@@ -401,6 +249,165 @@ class Position():
                 white_stones += group.size
                 white_liberties |= group.liberties
         return black_stones + len(black_liberties) - white_stones - len(white_liberties)
+
+    def move(self, move_pt, colour=None):
+        """Play a move on a go board
+
+        :param pt: int
+        :param colour: +1 or -1
+        :raise: ValueError
+        :raise: MoveError
+        :return: Position
+
+        Completes all the checks to a ensure legal move, raising a MoveError if illegal.
+        Adds the move to the position, and returns the position.
+        >>> move_pt = 200
+        >>> pos = Position()
+        >>> pos.move(move_pt, colour=BLACK)
+        >>> pos[move_pt]
+        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
+        >>> pos.move(move_pt+1, colour=BLACK)
+        >>> pos[move_pt+1]
+        Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
+        """
+        def basic_checks():
+            """Check move can be played
+
+            :nonlocal param: self
+            :nonlocal param: move_pt
+            :nonlocal assigned param: colour
+            """
+            nonlocal colour
+
+            if colour is None:
+                colour = self.next_player
+            elif colour not in [BLACK, WHITE]:
+                raise ValueError('Unrecognized move colour: ' + str(colour))
+            if move_pt == self.kolock:
+                raise MoveError('Playing on a ko point.')
+            elif self[move_pt] is not OPEN_POINT:
+                raise MoveError('Playing on another stone.')
+
+        def no_friendly_eye():
+            """Do not play in a friendly eye space
+
+            :nonlocal param: self
+            :nonlocal param: move_pt
+            :nonlocal param: colour
+            :return: dict
+            """
+            neighbors, diagonals = BOXES[self.size][move_pt]
+            neigh_groups = {self.board[neigh_pt]:self[neigh_pt] for neigh_pt in neighbors}
+
+            if OPEN_POINT not in neigh_groups.values():
+                neigh_colours = [group.colour for group in neigh_groups.values()]
+                if -colour not in neigh_colours:
+                    diag_colours = [self[pt].colour for pt in diagonals]
+                    if diag_colours.count(-colour) <= max(0, len(diag_colours) - 3):
+                        raise MoveError('Playing in a friendly eye')
+
+            return neigh_groups
+
+        def no_self_capture():
+            """Reducing your own liberties to zero is an illegal move
+
+            :nonlocal param: move_pt
+            :nonlocal param: colour
+            :nonlocal param: neigh_groups
+            :return: dict
+            """
+            neigh_details = defaultdict(list)
+            for group_pt, group in neigh_groups.items():
+                if group is OPEN_POINT:
+                    neigh_details['my liberties'] += [group_pt]
+                elif group.colour == colour:
+                    neigh_details['my liberties'] += list(group.liberties - {move_pt})
+                    neigh_details['my groups'] += [(group_pt, group)]
+                    neigh_details['my size'] += [group.size]
+                elif group.libs == 1:
+                    neigh_details['dead opponent'] += [(group_pt, group)]
+                else:
+                    neigh_details['alive opponent'] += [(group_pt, group)]
+
+            if 'dead opponent' not in neigh_details and neigh_details['my liberties'] == []:
+                raise MoveError('Playing self capture.')
+
+            return neigh_details
+
+        def capture(dead_pt):
+            """Remove captures and update surroundings
+
+            :nonlocal param: neigh_groups
+            """
+            def neigh_groups_dict(pt):
+                """Return the groups around pt
+
+                :param pt: int
+                :return: dict
+                """
+                neighbors = NEIGHBORS[self.size][dead_pt]
+                return {self.board[neigh_pt]:self[neigh_pt] for neigh_pt in neighbors}
+
+            tracking = defaultdict(list)
+            tracking['to remove'] = [dead_pt]
+            while len(tracking['to remove']) > 0:
+                remove_pt = tracking['to remove'].pop()
+                for group_pt, group in neigh_groups_dict(remove_pt).items():
+                    if group.colour == -self[dead_pt].colour:
+                        # add liberties back
+                        self[group_pt] = Group(colour=group.colour, size=group.size,
+                                               liberties=group.liberties | {remove_pt})
+                for neigh_pt in NEIGHBORS[self.size][remove_pt]:
+                    # spread out search
+                    not_removed = neigh_pt not in tracking['removed']
+                    in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
+                    if not_removed and in_dead_group:
+                        tracking['to remove'] += [neigh_pt]
+
+                tracking['removed'] += [remove_pt]
+                self.actions |= {remove_pt}
+
+            del self[dead_pt]
+            for removed_pt in tracking['removed']:
+                _ = self[removed_pt]    # update unionfind in getitem
+
+        def update_groups():
+            """Update and/or remove opponent groups
+
+            :nonlocal param: move_pt
+            :nonlocal param: colour
+            :nonlocal param: neigh_details
+            """
+            for opp_pt, opp_group in neigh_details['alive opponent']:
+                self[opp_pt] = Group(colour=opp_group.colour,
+                                 size=opp_group.size,
+                                 liberties=opp_group.liberties - {move_pt})
+
+            captured = 0
+            for dead_pt, dead_group in neigh_details['dead opponent']:
+                captured += dead_group.size
+                capture(dead_pt)
+
+            if captured == 1:
+                self.kolock = neigh_details['dead opponent'][0][0]
+            else:
+                self.kolock = None
+
+            for group_pt, group in neigh_details['my groups']:
+                self.board[move_pt] = self.board[group_pt]
+                del self[group_pt]
+
+            self[move_pt] = Group(colour=colour,
+                                  size=sum(neigh_details['my size']) + 1,
+                                  liberties=frozenset(neigh_details['my liberties']))
+        #---------Main steps----------
+        basic_checks()
+        neigh_groups = no_friendly_eye()
+        neigh_details = no_self_capture()
+        update_groups()
+
+        self.next_player = -colour
+        self.actions -= {move_pt}
 
 
 class MoveError(Exception):
