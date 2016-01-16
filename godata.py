@@ -163,13 +163,16 @@ class Position():
         >>> Position()[200]
         Group(colour=0, size=0, liberties=frozenset())
         """
-        repre = self.board[pt]
         try:
-            return self.groups[repre]
+            return self.groups[pt]
         except KeyError:
-            if pt != repre:  # pointing to a removed-group representative
-                self.board._pointers[pt] = pt
-            return OPEN_POINT
+            repre = self.board[pt]
+            try:
+                return self.groups[repre]
+            except KeyError:
+                if pt != repre:  # pointing to a removed-group representative
+                    self.board._pointers[pt] = pt
+                return OPEN_POINT
 
     def __setitem__(self, key, group):
         """Set group object
