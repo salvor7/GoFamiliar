@@ -311,6 +311,7 @@ class Position():
         def no_self_capture():
             """Reducing your own liberties to zero is an illegal move
 
+            :nonlocal param: self
             :nonlocal param: move_pt
             :nonlocal param: colour
             :nonlocal param: neigh_groups
@@ -334,50 +335,65 @@ class Position():
 
             return neigh_details
 
-        def capture(dead_pt):
-            """Remove captures and update surroundings
-
-            :nonlocal param: neigh_groups
-            """
-            def neigh_groups_dict(pt):
-                """Return the groups around pt
-
-                :param pt: int
-                :return: dict
-                """
-                neighbors = NEIGHBORS[self.size][dead_pt]
-                return {self.board[neigh_pt]:self[neigh_pt] for neigh_pt in neighbors}
-
-            tracking = defaultdict(list)
-            tracking['to remove'] = [dead_pt]
-            while len(tracking['to remove']) > 0:
-                remove_pt = tracking['to remove'].pop()
-                for group_pt, group in neigh_groups_dict(remove_pt).items():
-                    if group.colour == -self[dead_pt].colour:
-                        # add liberties back
-                        self[group_pt] = Group(colour=group.colour, size=group.size,
-                                               liberties=group.liberties | {remove_pt})
-                for neigh_pt in NEIGHBORS[self.size][remove_pt]:
-                    # spread out search
-                    not_removed = neigh_pt not in tracking['removed']
-                    in_dead_group = (self[neigh_pt].colour == self[dead_pt].colour)
-                    if not_removed and in_dead_group:
-                        tracking['to remove'] += [neigh_pt]
-
-                tracking['removed'] += [remove_pt]
-                self.actions |= {remove_pt}
-
-            del self[dead_pt]
-            for removed_pt in tracking['removed']:
-                _ = self[removed_pt]    # update unionfind in getitem
-
         def update_groups():
             """Update and/or remove opponent groups
 
+            :nonlocal param: self
             :nonlocal param: move_pt
             :nonlocal param: colour
             :nonlocal param: neigh_details
             """
+
+            def capture(dead_pt):
+                """Remove captures and update surroundings
+
+                :nonlocal param: self
+                :nonlocal param: colour
+                """
+                def neigh_groups_set(pt):
+                    """Return the groups around pt
+
+                    :param pt: int
+                    :return: dict
+                    """
+                    for neigh_pt in NEIGHBORS[self.size][pt]:
+                        yield neigh_pt, self[neigh_pt]
+
+                nonlocal self
+
+                tracking = defaultdict(list)
+                tracking['to remove'] = [dead_pt]
+                while len(tracking['to remove']) > 0:
+                    remove_pt = tracking['to remove'].pop()
+                    for group_pt, group in neigh_groups_set(remove_pt):
+                        if group.colour == colour:
+                            # add liberties back to friendly stones
+                            self[group_pt] = Group(colour=group.colour, size=group.size,
+                                                   liberties=group.liberties.union({remove_pt}))
+                        else:
+                            # spread out search to remove other dead stones
+                            not_removed = group_pt not in tracking['removed']
+                            in_dead_group = (group.colour == -colour)
+                            if not_removed and in_dead_group:
+                                tracking['to remove'] += [group_pt]
+
+                    tracking['removed'] += [remove_pt]
+                    self.actions |= {remove_pt}
+
+                del self[dead_pt]
+                for removed_pt in tracking['removed']:
+                    _ = self[removed_pt]    # update unionfind in getitem
+
+            nonlocal self
+
+            for group_pt, group in neigh_details['my groups']:
+                self.board[move_pt] = self.board[group_pt]
+                del self[group_pt]
+
+            self[move_pt] = Group(colour=colour,
+                                  size=sum(neigh_details['my size']) + 1,
+                                  liberties=frozenset(neigh_details['my liberties']))
+
             for opp_pt, opp_group in neigh_details['alive opponent']:
                 self[opp_pt] = Group(colour=opp_group.colour,
                                  size=opp_group.size,
@@ -393,13 +409,6 @@ class Position():
             else:
                 self.kolock = None
 
-            for group_pt, group in neigh_details['my groups']:
-                self.board[move_pt] = self.board[group_pt]
-                del self[group_pt]
-
-            self[move_pt] = Group(colour=colour,
-                                  size=sum(neigh_details['my size']) + 1,
-                                  liberties=frozenset(neigh_details['my liberties']))
         #---------Main steps----------
         basic_checks()
         neigh_groups = no_friendly_eye()
