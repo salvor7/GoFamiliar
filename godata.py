@@ -1,3 +1,4 @@
+from collections import deque, Counter
 from collections import namedtuple, defaultdict
 import random
 from copy import deepcopy
@@ -122,13 +123,334 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
              }
 
 
-class Group(namedtuple('Group', 'colour size liberties')):
+class Group(namedtuple('Group','colour stones liberties')):
+    """Union Find algorithm for Go board stone groups
+    >>> Group(colour=1, stones=(123,124), liberties=frozenset({102, 103}))
+    Group(colour=1, size=2, liberties=2)
+    """
     @property
-    def libs(self):
+    def lib_count(self):
+        """:return: number of group liberties
+        >>> Group(colour=1, stones=(123,124), liberties=frozenset({102, 103})).lib_count
+        2
+        """
         return len(self.liberties)
 
+    @property
+    def size(self):
+        """:return: number of stones in group
+        >>> Group(colour=1, stones=(123,124), liberties=frozenset({102, 103})).size
+        2
+        """
+        return len(self.stones)
 
-OPEN_POINT = Group(colour=OPEN, size=0, liberties=frozenset())
+    def __repr__(self):
+        """:return: representation of Group object
+        """
+        return 'Group(colour={0}, size={1}, liberties={2})'.format(self.colour, self.size, self.lib_count)
+
+
+OPEN_POINT = Group(colour=OPEN, stones=tuple(), liberties=frozenset(), )
+
+
+class GroupUnionFind():
+    """Manage, union and find all the Groups
+
+    "node"s are either a Group or an int representation of a board position.
+    """
+    def __init__(self, size=19):
+        """Initialize a union find structure for Groups
+
+        >>> type(GroupUnionFind())
+        <class 'godata.GroupUnionFind'>
+        """
+        self._pointers = {idx:OPEN_POINT for idx in range(size**2)}
+        self._boxes = BOXES[size]
+        self._neighbors = NEIGHBORS[size]
+
+    def __getitem__(self, elem):
+        """:return: Immediate parent Group of elem
+
+        >>> GroupUnionFind()[100]
+        Group(colour=0, size=0, liberties=0)
+        """
+        return self._pointers[elem]
+
+    def __setitem__(self, elem, group):
+        """Set group as parent of elem
+
+        :param elem: int or Group
+        :param group: Group
+        >>> GroupUnionFind()[200] = Group(*(1,[1,2],[4,5],))
+        """
+        if type(group) is not Group:
+            raise TypeError('Value is not a Group')
+        self._pointers[elem] = group
+
+    def colour(self, pt):
+        """:return: colour of intersection
+
+        >>> guf = GroupUnionFind()
+        >>> guf[60] = Group(colour=BLACK, stones=(1,), liberties={61})
+        >>> guf.colour(pt=60) is BLACK
+        True
+        >>> guf.colour(pt=61) is OPEN
+        True
+        """
+        try:
+            return self[pt].colour
+        except KeyError:
+            if type(pt) is int:
+                return OPEN
+            else:
+                raise
+
+    def find(self, node):
+        """:return: root parent Group
+
+        This implements the find part of the unionfind algorithm.
+        >>> guf = GroupUnionFind()
+        >>> guf[200] = Group(*(1, (1,2), frozenset((4,5)),))
+        >>> guf[guf[200]] = Group(*(1, (1,2,3), frozenset((4,5,6))))
+        >>> guf[200], guf.find(200)
+        (Group(colour=1, size=2, liberties=2), Group(colour=1, size=3, liberties=3))
+        """
+        try:
+            parent = self[node]
+        except KeyError:
+            if type(node) is int:
+                return OPEN_POINT
+            else:
+                raise
+        while True:
+            try:
+                parent = self[parent]
+            except KeyError:
+                break
+        self[node] = parent    # point node to parent
+        return parent
+
+    def add_lib(self, node, lib):
+        """Return group with lib added
+
+        :param node: int or Group
+        :param lib: int
+        """
+        group = self.find(node)
+
+        if lib not in group.liberties:
+            colour, size, liberties = group
+            new_group = Group(colour=colour, size=size, liberties=liberties|{lib})
+            self[group] = new_group
+
+    def _yield_new_stone(self, pt, colour):
+        """Yield a new group representing a newly played stone
+
+        Created as a coroutine so the Group can be created and used in calculations, but
+        the the pointers will only be updated if the stone can be played.
+
+        Takes in liberties until a non-int is passed, and then the Group is yieled.
+        :param pt: int
+        :param colour: +/-1
+        int :yield: 1 None
+                    2 new Group
+        """
+        if self[pt].colour is not 0:
+            raise MoveError('Playing on another stone.')
+        libs = set()
+        while True:
+            new_lib = yield
+            if type(new_lib) is int:
+                libs &= libs
+            else:
+                yield   # forces a next to be called before yielding the group
+                break
+        new_stone = Group(colour=colour, stones=(pt,), liberties=frozenset(libs))
+        yield new_stone
+        self[pt] = new_stone
+
+    def _yield_remove_lib(self, node, lost_lib):
+        """Yield a new Group, then update self
+
+        Groups are immutable, so removing a lib requires creating a new Group object, and
+        adding that new object into the pointers.
+        The liberty count is generally needed before knowing if the pointers will
+        change, so this is implemented as coroutine which yields the prospective group
+        first, then on next() updated the pointers.
+        :param node: Group or int
+        :yield: 1 root Group
+                2 new Group
+                3 StopIteration
+        """
+        group = self.find(node=node)
+        yield group
+        colour, size, liberties = group
+        new_group = Group(colour=colour, size=size, liberties=liberties-{lost_lib})
+        yield new_group
+        self[group] = new_group
+
+    def _yield_union(self, *args):
+        """Yield the group, then complete the union
+
+        A coroutine used to break up the computation of forming a combined group, and
+        updating the union pointers.
+        The properties of the combined group need to be tested before knowing the pointers will
+        be updated.
+        :param args: nodes
+        :yield: Group
+        """
+        if len(args) > 1:
+            root_groups = [self.find(node) for node in args]
+            group_colours = Counter(group.colour for group in root_groups)
+            if len(group_colours) is not 1:
+                raise ValueError("Can't union different coloured groups")
+
+            colour=next(iter(group_colours))
+            stones=sum([group.stones for group in root_groups], ())
+            liberties=frozenset.union(*[group.liberties for group in root_groups]) - set(stones)
+            parent_group = Group(colour=colour, stones=stones, liberties=liberties,)
+
+            yield parent_group
+
+            for group in root_groups:
+                self[group] = parent_group
+        else:
+            raise ValueError('Expected at least two arguments')
+
+    def union(self, *args):
+        """Union two groups together
+
+        :param args: nodes
+        :return: GroupUnionFind
+        >>> guf = GroupUnionFind()
+        >>> guf[1] = Group(*(1, (1,2), frozenset((0, 20,21)),))
+        >>> guf[3] = Group(*(1, (3,22), frozenset((4,21,23,41))))
+        >>> guf.union(1,3)
+        >>> guf.find(1)
+        Group(colour=1, size=4, liberties=6)
+        """
+        gen = self._yield_union(*args)
+
+        next(gen)   # create group
+        try:
+            next(gen)   # complete update of UnionFind structure
+        except StopIteration:
+            pass
+
+    def add_stone(self, stone_pt, colour):
+        """Add a stone to a go board according to the rules
+
+        :raise: ValueError
+                MoveError
+        """
+        def find_local_group_gens():
+            """fills up the local group generators dictionary
+
+            :nonlocal param: self
+            :nonlocal param: colour
+            :nonlocal param: local_geners
+            :raises: MoveError
+            """
+            def friendly_eye_check():
+                """don't play in your own eyes
+
+                :raises: MoveError
+                """
+                if len(local_geners[colour]) == len(neighbors): # all four same colour as stone_pt
+                    opp_count = 0
+                    for diag_pt in diagonals:
+                        if self[diag_pt].colour == -colour:
+                            opp_count += 1
+                    if EyeCorners(opp_count, corner_count=len(diagonals)) in IS_AN_EYE:
+                        raise MoveError('Playing in a friendly eye')
+
+            new_stone_gen = self._yield_new_stone(pt=stone_pt, colour=colour)
+            next(new_stone_gen) # prime the coroutine
+
+            neighbors, diagonals = self._boxes[stone_pt]
+
+            for neigh_pt in neighbors:
+                if self[neigh_pt].colour is OPEN:
+                    new_stone_gen.send(neigh_pt)
+                else:
+                    group_gen = self._yield_remove_lib(node=neigh_pt, lost_lib=stone_pt)
+                    root_group = next(group_gen)
+                    if root_group not in local_geners:  # no repeat groups
+                        local_geners[root_group] &= {}
+                        local_geners[self[neigh_pt].colour] = group_gen
+
+            friendly_eye_check()
+
+            new_stone_gen.send(None)
+            local_geners[colour] |= new_stone_gen
+
+        def capture_stones(dead_group):
+            """Remove captures and update surroundings
+
+            :nonlocal param: self
+            :nonlocal param: colour
+            """
+            dead_group = dead_group.find()
+            for dead_stone in dead_group.stones():
+                self[dead_stone] = OPEN_POINT
+
+                for neigh_pt in self._neighbors[dead_stone]:
+                    if self.colour(neigh_pt) is -colour:
+                        self.add_lib(node=neigh_pt, lib=dead_stone)
+
+        def no_self_capture():
+            """Reducing your own liberties to zero is an illegal move
+
+            :nonlocal param: self
+            :nonlocal param: colour
+            :nonlocal param: local_geners
+            :raises: MoveError
+            """
+            captured = ()
+            for opp_group_gen in local_geners[-colour]:
+                opp_group = next(opp_group_gen)
+                if opp_group.lib_count == 0:
+                    captured += opp_group.stones
+                    capture_stones(dead_group=opp_group)
+            else:
+                if len(captured) == 1:
+                    kolock_pt = opp_group.stones[0]
+                else:
+                    kolock_pt = None
+
+            new_groups = [next(group_gen) for group_gen in local_geners[colour]]
+            comb_group_gen = self._yield_union(*new_groups)
+            comb_group = next(comb_group_gen)
+            local_geners[colour] |= {comb_group_gen}
+
+            if len(captured) == 0 and comb_group.lib_count == 0:
+                raise MoveError('Playing self capture_stones')
+
+            return kolock_pt, captured
+
+        def update_friendly_groups():
+            """Update and/or remove opponent groups
+
+            :nonlocal param: colour
+            :nonlocal param: local_geners
+            """
+            for group_gen in local_geners[colour]:
+                try:
+                    next(group_gen)
+                except StopIteration:
+                    pass
+                else:
+                    raise RuntimeError('Group coroutines should end here')
+
+        #---------Main steps----------
+        if colour not in [BLACK, WHITE]:
+            raise ValueError('Unrecognized move colour: ' + str(colour))
+        local_geners = defaultdict(set)
+        find_local_group_gens()
+        kolock_pt, captured = no_self_capture()
+        update_friendly_groups()
+
+        return kolock_pt, captured
 
 
 class Position():
@@ -141,20 +463,19 @@ class Position():
     >>> Position(size=13).size
     13
     """
-
-    def __init__(self, moves=None, size=19, komi=7.5, lastmove=None, kolock=None):
+    def __init__(self, *, moves=None, size=19, komi=7.5, lastmove=None, kolock=None):
         """Initialize a Position with a board of size**2
 
         :param size: int
         >>> pos = Position()
         """
-        self.board = UnionFind(size_limit=size ** 2)
-        self.groups = {}
         self.kolock = kolock
         self.komi = komi
         self.size = size
+        self.lastmove = lastmove
         self.next_player = BLACK
         self.actions = set(range(size ** 2))
+        self.board = GroupUnionFind(size=size)
 
         try:
             for pt in moves:
@@ -162,57 +483,10 @@ class Position():
         except TypeError:
             pass
 
-    def __getitem__(self, pt):
-        """Return group pt is a part of
-
-        If point have bi group, returns an OPEN_POINT group object.
-        :param pt: int
-        :return: Group
-        >>> Position()[200]
-        Group(colour=0, size=0, liberties=frozenset())
-        """
-        try:
-            return self.groups[pt]
-        except KeyError:
-            repre = self.board[pt]
-            try:
-                return self.groups[repre]
-            except KeyError:
-                if pt != repre:  # pointing to a removed-group representative
-                    self.board._pointers[pt] = pt
-                return OPEN_POINT
-
-    def __setitem__(self, key, group):
-        """Set group object
-
-        :param key: int
-        :param data: Group
-
-        >>> pos = Position()
-        >>> pos[200] = Group(colour=1, size=1, liberties=frozenset({199, 201, 219, 181}))
-        >>> pos[200]
-        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
-        """
-        if type(group) is not Group:
-            raise ValueError('Not a Group object')
-        self.groups[self.board[key]] = group
-
-    def __delitem__(self, pt):
-        """Delete group at point pt
-
-        :param pt: int
-        >>> pos = Position()
-        >>> pos[100] = Group(size=1, colour=1, liberties=frozenset(NEIGHBORS[19][100]))
-        >>> del pos[100]
-        """
-        repre = self.board[pt]
-        try:
-            del self.groups[repre]
-        except KeyError:
-            raise KeyError('No stones at point ' + str(pt))
-
     def pass_move(self):
         """Execute a passing move
+
+        >>> Position().pass_move()
         """
         self.kolock = None
         self.next_player *= -1
@@ -255,10 +529,10 @@ class Position():
         for group in self.groups.values():
             if group.colour == 1:
                 black_stones += group.size
-                black_liberties |= group.liberties
+                black_liberties |= group.lib_count
             else:
                 white_stones += group.size
-                white_liberties |= group.liberties
+                white_liberties |= group.lib_count
         return black_stones + len(black_liberties) - white_stones - len(white_liberties)
 
     def move(self, move_pt, colour=None):
@@ -275,11 +549,11 @@ class Position():
         >>> move_pt = 200
         >>> pos = Position()
         >>> pos.move(move_pt, colour=BLACK)
-        >>> pos[move_pt]
-        Group(colour=1, size=1, liberties=frozenset({201, 219, 181, 199}))
+        >>> pos.board[move_pt]
+        Group(colour=1, size=1, liberties=4)
         >>> pos.move(move_pt+1, colour=BLACK)
-        >>> pos[move_pt+1]
-        Group(colour=1, size=2, liberties=frozenset({199, 202, 181, 182, 219, 220}))
+        >>> pos.board[move_pt+1]
+        Group(colour=1, size=2, liberties=6)
         """
         def basic_checks():
             """Check move can be played
@@ -292,12 +566,8 @@ class Position():
 
             if colour is None:
                 colour = self.next_player
-            elif colour not in [BLACK, WHITE]:
-                raise ValueError('Unrecognized move colour: ' + str(colour))
             if move_pt == self.kolock:
                 raise MoveError('Playing on a ko point.')
-            elif self[move_pt] is not OPEN_POINT:
-                raise MoveError('Playing on another stone.')
 
         def no_friendly_eye():
             """Do not play in a friendly eye space
@@ -308,24 +578,18 @@ class Position():
             :return: dict
             """
             neighbors, diagonals = BOXES[self.size][move_pt]
-            neigh_groups = {}
             might_be_friendly_eye = True
             for neigh_pt in neighbors:
-                group_pt = self.board[neigh_pt]
-                group = self[neigh_pt]
-                neigh_groups[group_pt] = group
-                if group.colour is not colour:
+                if self.board.colour(neigh_pt) is not colour:
                     might_be_friendly_eye = False
 
             if might_be_friendly_eye:
                 opp_count = 0
-                for pt in diagonals:
-                    if self[pt].colour == -colour:
+                for diag_pt in diagonals:
+                    if self.board.colour(pt=diag_pt) == -colour:
                         opp_count += 1
                 if EyeCorners(opp_count, corner_count=len(diagonals)) in IS_AN_EYE:
                     raise MoveError('Playing in a friendly eye')
-
-            return neigh_groups
 
         def no_self_capture():
             """Reducing your own liberties to zero is an illegal move
@@ -336,20 +600,22 @@ class Position():
             :nonlocal param: neigh_groups
             :return: dict
             """
-            neigh_details = defaultdict(list)
-            for group_pt, group in neigh_groups.items():
-                if group is OPEN_POINT:
-                    neigh_details['my liberties'] += [group_pt]
-                elif group.colour == colour:
-                    neigh_details['my liberties'] += list(group.liberties - {move_pt})
-                    neigh_details['my groups'] += [(group_pt, group)]
-                    neigh_details['my size'] += [group.size]
-                elif group.libs == 1:
-                    neigh_details['dead opponent'] += [(group_pt, group)]
+            neigh_details = defaultdict(set)
+            for neigh_pt in NEIGHBORS[self.size][move_pt]:
+                if self.board.colour(neigh_pt) is OPEN:
+                    neigh_details['new liberties'] |= {neigh_pt}
+                elif self.board.colour(neigh_pt) == colour:
+                    neigh_details['my groups'] |= {neigh_pt}
                 else:
-                    neigh_details['alive opponent'] += [(group_pt, group)]
+                    opp_group = self.board.find(neigh_pt)
+                    if opp_group.lib_count is 1:
+                        neigh_details['dead opponent'] |= {neigh_pt}
+                    else:
+                        neigh_details['alive opponent'] |= {neigh_pt}
 
-            if 'dead opponent' not in neigh_details and neigh_details['my liberties'] == []:
+            if ('dead opponent' not in neigh_details
+                and neigh_details['new liberties']  == set()
+                and neigh_details['my liberties']  == set()):
                 raise MoveError('Playing self capture.')
 
             return neigh_details
@@ -362,8 +628,22 @@ class Position():
             :nonlocal param: colour
             :nonlocal param: neigh_details
             """
+            def add_stone():
+                """Add a group representing the new stone
 
-            def capture(dead_pt):
+                :nonlocal param: self
+                :nonlocal param: move_pt
+                :nonlocal param: colour
+                :nonlocal param: neigh_details
+                :return: Group
+                """
+                self.board[move_pt] = Group(colour=colour,
+                                  size=(move_pt,),
+                                  liberties=neigh_details['new liberties'],
+                                  )
+                return self.board[move_pt]
+
+            def capture(dead_group):
                 """Remove captures and update surroundings
 
                 :nonlocal param: self
@@ -380,48 +660,27 @@ class Position():
 
                 nonlocal self
 
-                tracking = defaultdict(list)
-                tracking['to remove'] = [dead_pt]
-                while len(tracking['to remove']) > 0:
-                    remove_pt = tracking['to remove'].pop()
-                    for group_pt, group in neigh_groups_set(remove_pt):
-                        if group.colour == colour:
-                            # add liberties back to friendly stones
-                            self[group_pt] = Group(colour=group.colour, size=group.size,
-                                                   liberties=group.liberties.union({remove_pt}))
-                        else:
-                            # spread out search to remove other dead stones
-                            not_removed = group_pt not in tracking['removed']
-                            in_dead_group = (group.colour == -colour)
-                            if not_removed and in_dead_group:
-                                tracking['to remove'] += [group_pt]
+                dead_group = dead_group.find()
+                for pt in dead_group.stones():
+                    self[pt] = OPEN_POINT
+                    self.actions |= {pt}
 
-                    tracking['removed'] += [remove_pt]
-                    self.actions |= {remove_pt}
-
-                del self[dead_pt]
-                for removed_pt in tracking['removed']:
-                    _ = self[removed_pt]    # update unionfind in getitem
+                    for neigh_pt in NEIGHBORS[self.size][pt]:
+                        if self.colour(neigh_pt) is -colour:
+                            self[neigh_pt].lib_count.union({pt})
 
             nonlocal self
 
-            for group_pt, group in neigh_details['my groups']:
-                self.board[move_pt] = self.board[group_pt]
-                del self[group_pt]
+            new_stone = add_stone()
 
-            self[move_pt] = Group(colour=colour,
-                                  size=sum(neigh_details['my size']) + 1,
-                                  liberties=frozenset(neigh_details['my liberties']))
+            self[move_pt].union(new_stone, *neigh_details['my groups'])
 
-            for opp_pt, opp_group in neigh_details['alive opponent']:
-                self[opp_pt] = Group(colour=opp_group.colour,
-                                 size=opp_group.size,
-                                 liberties=opp_group.liberties - {move_pt})
+            for opp_pt in neigh_details['alive opponent']:
+                self[opp_pt].lib_count.difference({move_pt})
 
             captured = 0
-            for dead_pt, dead_group in neigh_details['dead opponent']:
-                captured += dead_group.size
-                capture(dead_pt)
+            for dead_pt in neigh_details['dead opponent']:
+                captured += capture(dead_pt)
 
             if captured == 1:
                 self.kolock = neigh_details['dead opponent'][0][0]
@@ -430,12 +689,13 @@ class Position():
 
         #---------Main steps----------
         basic_checks()
-        neigh_groups = no_friendly_eye()
+        no_friendly_eye()
         neigh_details = no_self_capture()
         update_groups()
 
         self.next_player = -colour
         self.actions -= {move_pt}
+        self.lastmove = move_pt
 
 
 class MoveError(Exception):
@@ -444,9 +704,9 @@ class MoveError(Exception):
     ie repeat play, suicide or on a ko
     """
     pass
-
-
-class TerminalPosition(StopIteration):
-    """Exception raised when a position is terminal and a move is attempted.
-    """
-    pass
+#
+#
+# class TerminalPosition(StopIteration):
+#     """Exception raised when a position is terminal and a move is attempted.
+#     """
+#     pass
