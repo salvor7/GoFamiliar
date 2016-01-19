@@ -174,7 +174,13 @@ class GroupUnionFind():
         >>> GroupUnionFind()[100]
         Group(colour=0, size=0, liberties=0)
         """
-        return self._pointers[elem]
+        try:
+            return self._pointers[elem]
+        except KeyError:
+            if type(elem) is int:
+                return OPEN_POINT
+            else:
+                raise
 
     def __setitem__(self, elem, group):
         """Set group as parent of elem
@@ -218,16 +224,14 @@ class GroupUnionFind():
         try:
             parent = self[node]
         except KeyError:
-            if type(node) is int:
-                return OPEN_POINT
-            else:
-                raise
+            return node
+
         while True:
             try:
                 parent = self[parent]
             except KeyError:
                 break
-        self[node] = parent    # point node to parent
+        self[node] = parent    # point node at parent
         return parent
 
     def add_lib(self, node, lib):
@@ -260,11 +264,11 @@ class GroupUnionFind():
         libs = set()
         while True:
             new_lib = yield
-            if type(new_lib) is int:
-                libs &= libs
-            else:
-                yield   # forces a next to be called before yielding the group
+            try:
+                libs |= {int(new_lib)}
+            except (ValueError, TypeError):
                 break
+        yield   # forces a next to be called before yielding the group
         new_stone = Group(colour=colour, stones=(pt,), liberties=frozenset(libs))
         yield new_stone
         self[pt] = new_stone
@@ -284,8 +288,8 @@ class GroupUnionFind():
         """
         group = self.find(node=node)
         yield group
-        colour, size, liberties = group
-        new_group = Group(colour=colour, size=size, liberties=liberties-{lost_lib})
+        colour, stones, liberties = group
+        new_group = Group(colour=colour, stones=stones, liberties=liberties-{lost_lib})
         yield new_group
         self[group] = new_group
 
@@ -356,7 +360,8 @@ class GroupUnionFind():
 
                 :raises: MoveError
                 """
-                if len(local_geners[colour]) == len(neighbors): # all four same colour as stone_pt
+                local_geners[colour] |= set()
+                if OPEN not in local_geners and -colour not in local_geners: # all four same colour as stone_pt
                     opp_count = 0
                     for diag_pt in diagonals:
                         if self[diag_pt].colour == -colour:
@@ -368,21 +373,21 @@ class GroupUnionFind():
             next(new_stone_gen) # prime the coroutine
 
             neighbors, diagonals = self._boxes[stone_pt]
-
             for neigh_pt in neighbors:
                 if self[neigh_pt].colour is OPEN:
                     new_stone_gen.send(neigh_pt)
+                    local_geners[OPEN] = OPEN   # mark open point around stone_pt
                 else:
                     group_gen = self._yield_remove_lib(node=neigh_pt, lost_lib=stone_pt)
                     root_group = next(group_gen)
                     if root_group not in local_geners:  # no repeat groups
-                        local_geners[root_group] &= {}
-                        local_geners[self[neigh_pt].colour] = group_gen
+                        local_geners[root_group] &= {root_group}
+                        local_geners[self[neigh_pt].colour] |= {group_gen}
 
             friendly_eye_check()
 
             new_stone_gen.send(None)
-            local_geners[colour] |= new_stone_gen
+            local_geners[colour] |= {new_stone_gen}
 
         def capture_stones(dead_group):
             """Remove captures and update surroundings
@@ -420,8 +425,12 @@ class GroupUnionFind():
 
             new_groups = [next(group_gen) for group_gen in local_geners[colour]]
             comb_group_gen = self._yield_union(*new_groups)
-            comb_group = next(comb_group_gen)
-            local_geners[colour] |= {comb_group_gen}
+            try:
+                comb_group = next(comb_group_gen)
+            except ValueError:
+                comb_group = new_groups[0]  # one stone
+            else:
+                local_geners[colour] |= {comb_group_gen}
 
             if len(captured) == 0 and comb_group.lib_count == 0:
                 raise MoveError('Playing self capture_stones')
@@ -552,149 +561,14 @@ class Position():
         >>> pos.board[move_pt]
         Group(colour=1, size=1, liberties=4)
         >>> pos.move(move_pt+1, colour=BLACK)
-        >>> pos.board[move_pt+1]
+        >>> pos.board.find(move_pt+1)
         Group(colour=1, size=2, liberties=6)
         """
-        def basic_checks():
-            """Check move can be played
-
-            :nonlocal param: self
-            :nonlocal param: move_pt
-            :nonlocal assigned param: colour
-            """
-            nonlocal colour
-
-            if colour is None:
-                colour = self.next_player
-            if move_pt == self.kolock:
-                raise MoveError('Playing on a ko point.')
-
-        def no_friendly_eye():
-            """Do not play in a friendly eye space
-
-            :nonlocal param: self
-            :nonlocal param: move_pt
-            :nonlocal param: colour
-            :return: dict
-            """
-            neighbors, diagonals = BOXES[self.size][move_pt]
-            might_be_friendly_eye = True
-            for neigh_pt in neighbors:
-                if self.board.colour(neigh_pt) is not colour:
-                    might_be_friendly_eye = False
-
-            if might_be_friendly_eye:
-                opp_count = 0
-                for diag_pt in diagonals:
-                    if self.board.colour(pt=diag_pt) == -colour:
-                        opp_count += 1
-                if EyeCorners(opp_count, corner_count=len(diagonals)) in IS_AN_EYE:
-                    raise MoveError('Playing in a friendly eye')
-
-        def no_self_capture():
-            """Reducing your own liberties to zero is an illegal move
-
-            :nonlocal param: self
-            :nonlocal param: move_pt
-            :nonlocal param: colour
-            :nonlocal param: neigh_groups
-            :return: dict
-            """
-            neigh_details = defaultdict(set)
-            for neigh_pt in NEIGHBORS[self.size][move_pt]:
-                if self.board.colour(neigh_pt) is OPEN:
-                    neigh_details['new liberties'] |= {neigh_pt}
-                elif self.board.colour(neigh_pt) == colour:
-                    neigh_details['my groups'] |= {neigh_pt}
-                else:
-                    opp_group = self.board.find(neigh_pt)
-                    if opp_group.lib_count is 1:
-                        neigh_details['dead opponent'] |= {neigh_pt}
-                    else:
-                        neigh_details['alive opponent'] |= {neigh_pt}
-
-            if ('dead opponent' not in neigh_details
-                and neigh_details['new liberties']  == set()
-                and neigh_details['my liberties']  == set()):
-                raise MoveError('Playing self capture.')
-
-            return neigh_details
-
-        def update_groups():
-            """Update and/or remove opponent groups
-
-            :nonlocal param: self
-            :nonlocal param: move_pt
-            :nonlocal param: colour
-            :nonlocal param: neigh_details
-            """
-            def add_stone():
-                """Add a group representing the new stone
-
-                :nonlocal param: self
-                :nonlocal param: move_pt
-                :nonlocal param: colour
-                :nonlocal param: neigh_details
-                :return: Group
-                """
-                self.board[move_pt] = Group(colour=colour,
-                                  size=(move_pt,),
-                                  liberties=neigh_details['new liberties'],
-                                  )
-                return self.board[move_pt]
-
-            def capture(dead_group):
-                """Remove captures and update surroundings
-
-                :nonlocal param: self
-                :nonlocal param: colour
-                """
-                def neigh_groups_set(pt):
-                    """Return the groups around pt
-
-                    :param pt: int
-                    :return: dict
-                    """
-                    for neigh_pt in NEIGHBORS[self.size][pt]:
-                        yield neigh_pt, self[neigh_pt]
-
-                nonlocal self
-
-                dead_group = dead_group.find()
-                for pt in dead_group.stones():
-                    self[pt] = OPEN_POINT
-                    self.actions |= {pt}
-
-                    for neigh_pt in NEIGHBORS[self.size][pt]:
-                        if self.colour(neigh_pt) is -colour:
-                            self[neigh_pt].lib_count.union({pt})
-
-            nonlocal self
-
-            new_stone = add_stone()
-
-            self[move_pt].union(new_stone, *neigh_details['my groups'])
-
-            for opp_pt in neigh_details['alive opponent']:
-                self[opp_pt].lib_count.difference({move_pt})
-
-            captured = 0
-            for dead_pt in neigh_details['dead opponent']:
-                captured += capture(dead_pt)
-
-            if captured == 1:
-                self.kolock = neigh_details['dead opponent'][0][0]
-            else:
-                self.kolock = None
-
-        #---------Main steps----------
-        basic_checks()
-        no_friendly_eye()
-        neigh_details = no_self_capture()
-        update_groups()
-
-        self.next_player = -colour
+        kolock_pt, captured = self.board.add_stone(stone_pt=move_pt, colour=colour)
+        self.kolock = kolock_pt
+        self.actions |= {captured}
         self.actions -= {move_pt}
+        self.next_player = -colour
         self.lastmove = move_pt
 
 
