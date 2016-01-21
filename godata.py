@@ -243,8 +243,8 @@ class GroupUnionFind():
         group = self.find(node)
 
         if lib not in group.liberties:
-            colour, size, liberties = group
-            new_group = Group(colour=colour, size=size, liberties=liberties|{lib})
+            colour, stones, liberties = group
+            new_group = Group(colour=colour, stones=stones, liberties=liberties|{lib})
             self[group] = new_group
 
     def _yield_new_stone(self, pt, colour):
@@ -395,8 +395,9 @@ class GroupUnionFind():
             :nonlocal param: self
             :nonlocal param: colour
             """
-            dead_group = dead_group.find()
-            for dead_stone in dead_group.stones():
+            dead_group = self.find(dead_group)
+
+            for dead_stone in dead_group.stones:
                 self[dead_stone] = OPEN_POINT
 
                 for neigh_pt in self._neighbors[dead_stone]:
@@ -512,7 +513,9 @@ class Position():
         while passes < 2:
             tried = set()
             while tried != position.actions:
-                move_pt = random.sample(position.actions - tried, k=1)[0]
+
+                sample_list =  random.sample(position.actions - tried, k=1)
+                move_pt = sample_list[0]
                 try:
                     position.move(move_pt)
                 except MoveError:
@@ -535,13 +538,17 @@ class Position():
         """
         black_stones, white_stones = 0, 0
         black_liberties, white_liberties = set(), set()
-        for group in self.groups.values():
-            if group.colour == 1:
+
+        intersections = set(range(self.size**2))
+        while intersections:
+            group = self.board.find(intersections.pop())
+            if group.colour == BLACK:
                 black_stones += group.size
                 black_liberties |= group.lib_count
-            else:
+            elif group.colour == WHITE:
                 white_stones += group.size
                 white_liberties |= group.lib_count
+            intersections -= set(group.stones)
         return black_stones + len(black_liberties) - white_stones - len(white_liberties)
 
     def move(self, move_pt, colour=None):
@@ -564,9 +571,11 @@ class Position():
         >>> pos.board.find(move_pt+1)
         Group(colour=1, size=2, liberties=6)
         """
+        if colour is None:
+            colour = self.next_player
         kolock_pt, captured = self.board.add_stone(stone_pt=move_pt, colour=colour)
         self.kolock = kolock_pt
-        self.actions |= {captured}
+        self.actions |= set(captured)
         self.actions -= {move_pt}
         self.next_player = -colour
         self.lastmove = move_pt
