@@ -1,4 +1,8 @@
+import random
 from collections import namedtuple, defaultdict
+from copy import deepcopy
+
+import numpy as np
 
 BLACK = 1
 WHITE = -1
@@ -108,7 +112,7 @@ def make_neighbors(size=19):
 NEIGHBORS = {n: {pt: neigh for pt, neigh in make_neighbors(size=n)} for n in range(9, 26, 2)}
 
 
-BOXES = {n: {pt: (neigh, diag) for pt, neigh, diag in make_boxes(size=n)} for n in range(9, 26, 2)}
+DIAGONALS = {n: {pt: diag for pt, neigh, diag in make_boxes(size=n)} for n in range(9, 26, 2)}
 
 
 class Board():
@@ -117,6 +121,12 @@ class Board():
     It is guaranteed to implements two query methods and one state change method needed
     to implement the rules of Go.
     >>> board = Board()
+EyeCorners = namedtuple('EyeCorners', 'opp_count corner_count')
+IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
+             EyeCorners(opp_count=0, corner_count=2),
+             EyeCorners(opp_count=0, corner_count=4),
+             EyeCorners(opp_count=1, corner_count=4),
+             }
 
     Change the colour of a point
     >>> board.change_colour(pt=200, new_colour=BLACK)
@@ -137,7 +147,7 @@ class Board():
         :param size: int
         >>> b = Board()
         """
-        self._neighbors = NEIGHBORS[size]
+        self.neighbors, self.diagonals = NEIGHBORS[size], DIAGONALS[size]
         self._liberties = defaultdict(set)
         self.size = size
         self._pointers = {idx:OPEN_POINT for idx in range(size ** 2)}
@@ -317,4 +327,215 @@ class Board():
 
 class BoardError(Exception):
     """"""
+    pass
+class Position():
+    """A Go game position object
+
+    An object to track all the aspects of a go game. It uses a "thick" representation of
+    the board to store group information.
+    >>> Position().size
+    19
+    >>> Position(size=13).size
+    13
+    """
+    def __init__(self, *, moves=None, size=19, komi=-7.5, lastmove=None, kolock=None):
+        """Initialize a Position with a board of size**2
+
+        :param size: int
+        >>> pos = Position()
+        """
+        self.kolock = kolock
+        self.komi = komi
+        self.size = size
+        self.lastmove = lastmove
+        self.next_player = BLACK
+        self.actions = set(range(size ** 2))
+        self.board = Board(size=size)
+
+        try:
+            for pt in moves:
+                self.move(pt)
+        except TypeError:
+            pass
+
+    def score(self):
+        """Return the score of the position
+
+        Scored for black being positive.
+        :return: float
+        >>> Position().score() == -7.5
+        True
+        """
+        stones = sum([self.board.colour(pt) for pt in self.board])
+        eyes = 0
+        if abs(stones + self.komi) <= len(self.actions):
+            for pt in self.actions:
+                neigh_col = set(self.board.colour(neigh_pt) for neigh_pt in self.board.neighbors[pt])
+                eyes += sum(neigh_col)
+        print(stones, eyes)
+        return stones + eyes + self.komi
+
+    def _move_coroutine(self, move_pt, colour=None):
+        """A coroutine splitting of the move function into check and updates
+
+        The expense of move is quite large, and a substantial part of that is the checks
+        required for legal play.
+        There are also application for when we need a legal move, but we do not want
+        to complete it.
+        The move coroutine allows the check to be performed, and MoveErrors
+        to be raised without completing the move itself.
+        An example of how to use this coroutine is the self.move function.
+
+        :param move_pt: int
+        :param colour: +1/-1
+        :raise: MoveError
+        :raise: StopIteration
+        :return: coroutine generator
+        """
+
+        def friendly_eye(pt, colour):
+            """Check whether pt is as friendly eye"""
+            neigh_colours = set(self.board.colour(neigh_pt)
+                                for neigh_pt in self.board.neighbors[move_pt])
+            if {colour} == neigh_colours:
+                opp_count = 0
+                diags = self.board.diagonals[pt]
+                for diag_pt in diags:
+                    if self.board[diag_pt].colour == -colour:
+                        opp_count += 1
+                if EyeCorners(opp_count, corner_count=len(diags)) in IS_AN_EYE:
+                    return True
+            return False
+
+        def self_capture(pt, colour):
+            """Reducing your own liberties to zero is an illegal move"""
+            nonlocal neigh_dead
+
+            pt_not_self_capture = False
+            neigh_alive = defaultdict(set)
+            for neigh_pt in self.board.neighbors[move_pt]:
+                try:
+                    liberties = self.board.group_liberties(group_pt=neigh_pt, limit=2)
+                except BoardError:      # when neigh_pt is OPEN
+                    pt_not_self_capture = True
+                    continue
+                neigh_col = self.board.colour(neigh_pt)
+                if liberties == {move_pt}:
+                    neigh_dead[neigh_col] |= {neigh_pt}
+                else:
+                    neigh_alive[neigh_col] |= {neigh_pt}
+
+            if pt_not_self_capture or colour in neigh_alive or -colour in neigh_dead:
+                return False
+            else:
+                return True
+
+        if colour is None:
+            colour = self.next_player
+        elif colour not in [BLACK, WHITE]:
+            raise MoveError('Unrecognized move colour: ' + str(colour))
+        elif move_pt == self.kolock:
+            raise MoveError('Playing in a ko locked point')
+        elif friendly_eye(move_pt, colour):
+            raise MoveError('Playing in a friendly eye')
+
+        neigh_dead = defaultdict(set)
+
+        if self_capture(move_pt, colour):
+            raise MoveError('Playing self capture')
+
+        yield   # may never return, and that's fine
+
+        self.board.change_colour(pt=move_pt, new_colour=colour)
+        captured = set()
+        for dead_pt in neigh_dead[-colour]:
+            captured |= self.board.remove_group(dead_pt)
+        self.actions |= captured
+        self.actions -= {move_pt}
+
+        self.kolock = captured.pop() if len(captured) == 1 else None
+
+        self.next_player = -colour
+        self.lastmove = move_pt
+
+    def move(self, move_pt, colour=None):
+        """Play a move on a go board
+
+        :param pt: int
+        :param colour: +1 or -1
+        :raise: MoveError
+
+        Completes all the checks to a ensure legal move, raising a MoveError if illegal.
+        Adds the move to the position, and returns the position.
+        >>> move_pt = 200
+        >>> pos = Position()
+        >>> pos.move(move_pt, colour=BLACK)
+        >>> pos.board[move_pt]
+        (BLACK Group, size 1, at 200)
+        """
+        if colour is None:
+            colour = self.next_player
+
+        move_routine = self._move_coroutine(move_pt=move_pt, colour=colour)
+        next(move_routine)      # prime the coroutine ie execute to first yield
+        try:
+            next(move_routine)      # complete the coroutine
+        except StopIteration:
+            pass
+        else:
+            raise MoveError('Move coroutine did not end when expected')
+
+    def pass_move(self):
+        """Execute a passing move
+
+        >>> Position().pass_move()
+        """
+        self.next_player *= -1
+        self.kolock = None
+        self.lastmove = None
+
+    def random_move(self):
+        """Play one random move
+
+        Move choosen uniformly at random and taken if possible
+        >>> Position().random_move()
+        """
+        tried = set()
+        while tried != self.actions:
+            sample_list =  random.sample(self.actions - tried, k=1)
+            move_pt = sample_list[0]
+            try:
+                self.move(move_pt)
+            except MoveError:
+                tried |= {move_pt}
+            else:
+                break
+        else:   # if loop condition fails
+            raise MoveError('Terminal Position')
+
+    def random_playout(self):
+        """Return score after playing to a terminal position randomly
+
+        :return: float
+        >>> Position().random_playout()
+        -7.5
+        """
+        position = deepcopy(self)
+        passes = 0
+        moves = []
+        while passes < 2:
+            try:
+                moves.append(position.random_move())
+            except MoveError:
+                position.pass_move()
+                passes +=1
+
+        return position.score()
+
+
+class MoveError(Exception):
+    """The exception throw when an illegal move is made.
+
+    ie repeat play, suicide or on a ko
+    """
     pass
