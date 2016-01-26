@@ -9,10 +9,27 @@ WHITE = -1
 OPEN = 0
 
 
-Group = namedtuple('Group','colour')
+class Group(namedtuple('Group','colour stones')):
+    def __repr__(self):
+        """Group representation
+
+        :return: str
+        """
+        def name():
+            if self.colour == BLACK:
+                return 'BLACK'
+            elif self.colour == WHITE:
+                return 'WHITE'
+            else:
+                return str(self.colour)
+
+        if self is OPEN_POINT:
+            return 'OPEN POINT'
+        else:
+            return '(' + name() + ' Group, size {0}, at {1})'.format(len(self.stones), min(self.stones))
 
 
-OPEN_POINT = Group(colour=OPEN)
+OPEN_POINT = Group(colour=OPEN, stones=frozenset())
 
 
 def make_boxes(size=19):
@@ -175,7 +192,7 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
         :param key: int or Group
         :param value: Group
         >>> board = Board()
-        >>> board[200] = Group(colour=BLACK)
+        >>> board[200] = Group(colour=BLACK, stones=frozenset({200}))
         >>> board[200].colour == BLACK
         True
         """
@@ -274,17 +291,21 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
         :return: Group
         """
         f_group, s_group = self._find(f_node), self._find(s_node)
-        if f_group is s_group:
+        if f_group == s_group:
             raise BoardError('Cannot union same group')
         elif f_group.colour != s_group.colour:
             raise BoardError('Cannot union different colour stones')
 
-        if len(self._liberties[f_group]) < self._liberties[s_group]:
-            f_group, s_group = s_group, f_group # union
-        self[s_group] = f_group
-        self._liberties[f_group] |= self._liberties[s_group]
-        del self._liberties[s_group]
-        return f_group
+        union_group = Group(colour=f_group.colour, stones=f_group.stones | s_group.stones)
+        self[s_group] = union_group
+        self[f_group] = union_group
+        self._liberties[union_group] |= (self._liberties[f_group] | self._liberties[s_group])
+        for group in [f_group, s_group]:
+            try:
+                del self._liberties[group]
+            except KeyError:
+                pass
+        return union_group
 
     def _board_crawl(self, start_pt):
         """Generator of the points and neighbors of a single colour area
