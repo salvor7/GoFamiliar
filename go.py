@@ -321,13 +321,33 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
                 group_liberties |= {crawl_pt}
             elif self.colour(group_pt) == self.colour(crawl_pt):
                 self._union(group_pt, crawl_pt)
+        return self._liberties[group]
 
-        return self._find_liberties(node=group_pt)
+    def remove_group(self, dead_pt):
+        """Remove a group and return the captured stone locations
+
+        :param dead_pt: int
+        :return: set
+        >>> board = Board()
+        >>> board.change_colour(pt=200, new_colour=BLACK)
+        >>> board.remove_group(dead_pt=200)
+        {200}
+        """
+        captured = set()
+        dead_colour = self.colour(pt=dead_pt)
+        for remove_pt in self._board_crawl(start_pt=dead_pt):
+            if self.colour(pt=remove_pt) == dead_colour:
+                captured |= {remove_pt}
+
+        self.change_colour(pt=captured, new_colour=OPEN)
+        return captured
 
 
 class BoardError(Exception):
-    """"""
+    """Error raised by Board objects when a query or transaction cannot be completed"""
     pass
+
+
 class Position():
     """A Go game position object
 
