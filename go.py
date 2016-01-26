@@ -226,32 +226,21 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
         >>> board.colour(0) == WHITE and board.colour(18) == WHITE
         True
         """
-        def update_neigh_libs(pt, add):
-            """Update liberties from each neighbor group
-
-            :param pt: int
-            """
-            for neigh_pt in self._neighbors[pt]:
-                neigh_group = self._find(neigh_pt)
-                if add and neigh_group is not OPEN_POINT:
-                    self._liberties[neigh_group] += {pt}
-                else:
-                    self._liberties[neigh_group] -= {pt}
-        # ------
         if new_colour not in [BLACK, WHITE, OPEN]:
             raise BoardError('Unrecognized colour')
+
         try:
             points = iter(pt)
         except TypeError:
             points = [pt]
+
         for pt in points:
             if new_colour is OPEN:
                 self[pt] = OPEN_POINT
-                update_neigh_libs(pt=pt, add=True)
-            else:
-                self[pt] = Group(colour=new_colour)
-                update_neigh_libs(pt=pt, add=False)
-        pass
+            elif self.colour(pt) != new_colour:
+                self[pt] = Group(colour=new_colour, stones=frozenset({pt}))
+                    neigh_group = self._find(neigh_pt)
+                    self._liberties[neigh_group] -= {pt}
 
     def _find(self, node):
         """Follow pointers to top Group
