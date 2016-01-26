@@ -302,25 +302,33 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
                 if self.colour(neigh_pt) is crawl_colour:
                     to_search |= {neigh_pt}
 
-    def liberty_lb(self, group_pt):
-        """Return a lower bound on the number of liberties
+    def group_liberties(self, group_pt, limit=3):
+        """Return liberties of the group at group_pt
 
-        If it returns < 3, it is exact.
+        If limit is finite, then the search is terminated when a certain number of
+        liberties have been found. Most liberty questions only require knowning if there
+        are 1, 2, or more liberties.
         :param group_pt: int
+        :limit: float
         :return: int
         >>> board = Board()
-        >>> board.change_colour(pt=[200, 201], new_colour=BLACK)
-        >>> len(board.liberty_lb(group_pt=200)) > 2
-        True
+        >>> board.change_colour(pt=[20, 21], new_colour=BLACK)
+        >>> len(board.group_liberties(group_pt=20, limit=8))
+        6
         """
+        group = self._find(node=group_pt)
+        if group is OPEN_POINT:
+            raise BoardError('Open point does not have liberties')
         for crawl_pt in self._board_crawl(start_pt=group_pt):
-            if len(self._find_liberties(node=group_pt)) > 2:
+            if len(self._liberties[group]) >= limit:
                 break
             elif self.colour(crawl_pt) is OPEN:
-                group_liberties = self._find_liberties(node=group_pt)
-                group_liberties |= {crawl_pt}
-            elif self.colour(group_pt) == self.colour(crawl_pt):
-                self._union(group_pt, crawl_pt)
+                self._liberties[group] |= {crawl_pt}
+            try:
+                group = self._union(group_pt, crawl_pt)
+            except BoardError:
+                pass
+
         return self._liberties[group]
 
     def remove_group(self, dead_pt):
