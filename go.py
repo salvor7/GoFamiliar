@@ -132,12 +132,6 @@ NEIGHBORS = {n: {pt: neigh for pt, neigh in make_neighbors(size=n)} for n in ran
 DIAGONALS = {n: {pt: diag for pt, neigh, diag in make_boxes(size=n)} for n in range(9, 26, 2)}
 
 
-class Board():
-    """A data structure for tracking and querying go data
-
-    It is guaranteed to implements two query methods and one state change method needed
-    to implement the rules of Go.
-    >>> board = Board()
 EyeCorners = namedtuple('EyeCorners', 'opp_count corner_count')
 IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
              EyeCorners(opp_count=0, corner_count=2),
@@ -145,16 +139,12 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
              EyeCorners(opp_count=1, corner_count=4),
              }
 
-    Change the colour of a point
-    >>> board.change_colour(pt=200, new_colour=BLACK)
 
-    Find the colour of a point
-    >>> board.colour(pt=200) == BLACK
-    True
+class Board():
+    """A data structure for tracking and querying go data
 
-    Find a lower bound which is at least 3 on the number of liberties a group has
-    >>> len(board.liberty_lb(group_pt=200)) > 2
-    True
+    "node"s mentioned below are either a Group object or an int representation of a
+    board position.
     """
 
     def __init__(self, size=19):
