@@ -142,6 +142,13 @@ class Board():
         self.size = size
         self._pointers = {idx:OPEN_POINT for idx in range(size ** 2)}
 
+    def __iter__(self):
+        """Iterator over the size**2 board points
+
+        :return: iter
+        """
+        return iter(range(self.size ** 2))
+
     def __getitem__(self, item):
         """Return the group object pointed at by item
 
