@@ -316,11 +316,16 @@ IS_AN_EYE = {EyeCorners(opp_count=0, corner_count=1),
         """
         crawl_colour = self.colour(start_pt)
         to_search = {start_pt}
+        searched = set()
         while to_search:
             search_pt = to_search.pop()
-            for neigh_pt in self._neighbors[search_pt]:
-                yield neigh_pt
-                if self.colour(neigh_pt) is crawl_colour:
+            yield search_pt     # yield start_pt coloured stones
+            searched |= {search_pt}
+            for neigh_pt in self.neighbors[search_pt]:
+                if (self.colour(neigh_pt) != crawl_colour):
+                    yield neigh_pt
+                    searched |= {neigh_pt}
+                elif (neigh_pt not in searched):
                     to_search |= {neigh_pt}
 
     def group_liberties(self, group_pt, limit=3):
