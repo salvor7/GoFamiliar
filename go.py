@@ -229,6 +229,7 @@ class Board():
                 self[pt] = OPEN_POINT
             elif self.colour(pt) != new_colour:
                 self[pt] = Group(colour=new_colour, stones=frozenset({pt}))
+                for neigh_pt in self.neighbors[pt]:     # remove a liberty
                     neigh_group = self._find(neigh_pt)
                     self._liberties[neigh_group] -= {pt}
 
@@ -405,7 +406,6 @@ class Position():
             for pt in self.actions:
                 neigh_col = set(self.board.colour(neigh_pt) for neigh_pt in self.board.neighbors[pt])
                 eyes += sum(neigh_col)
-        print(stones, eyes)
         return stones + eyes + self.komi
 
     def _move_coroutine(self, move_pt, colour=None):
