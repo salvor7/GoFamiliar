@@ -1,9 +1,9 @@
 from collections import defaultdict
 
-import godata as gd
+import go
 
 def open_position():
-    return gd.Position
+    return go.Position
 
 def first_position():
     """Sets up two positions in the
@@ -32,15 +32,15 @@ def first_position():
                         'oooXX',
                         'oXXX.',])
         board = first_three + '.'*s*(s-6) + last_three
-        position = gd.Position(size=s)
+        position = go.Position(size=s)
         stones_counts = defaultdict()
         for pt, symbol in enumerate(board):
             if symbol == 'X':
-                position.move(move_pt=pt, colour=gd.BLACK)
-                stones_counts[pt] = gd.BLACK
+                position.move(move_pt=pt, colour=go.BLACK)
+                stones_counts[pt] = go.BLACK
             elif symbol == 'o':
-                position.move(move_pt=pt, colour=gd.WHITE)
-                stones_counts[pt] = gd.WHITE
+                position.move(move_pt=pt, colour=go.WHITE)
+                stones_counts[pt] = go.WHITE
         return position, stones_counts
     return position_moves
 

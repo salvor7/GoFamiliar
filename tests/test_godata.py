@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pytest
 
-import godata as gd
+import go
 import tests.test_fixtures as fixt
 
 fixture_params = [n for n in range(9, 26, 2)]
@@ -34,7 +34,7 @@ def test_make_neighbors(position):
     middle_row = result_row(3, size)
     desired_result = first_row + (middle_row) * (size - 2) + last_row
 
-    for c, neighs in gd.make_neighbors(size=size):
+    for c, neighs in go.make_neighbors(size=size):
         for pt in list(neighs):
             neigh_counts[pt] += 1
 
@@ -137,11 +137,11 @@ def test_Position_board(position_moves):
 def test_Position_group_handling(position_moves):
     position, moves = position_moves
     s = position.size
-    position.move(move_pt=s - 1, colour=gd.BLACK)
-    assert position[s - 1] == gd.Group(size=1, colour=gd.BLACK,
+    position.move(move_pt=s - 1, colour=go.BLACK)
+    assert position[s - 1] == go.Group(size=1, colour=go.BLACK,
                                        liberties=frozenset({s - 2, 2 * s - 1}))
-    position.move(move_pt=2, colour=gd.BLACK)
-    assert position[1] == gd.Group(size=8, colour=gd.BLACK,
+    position.move(move_pt=2, colour=go.BLACK)
+    assert position[1] == go.Group(size=8, colour=go.BLACK,
                                    liberties=frozenset(
                                            {0, s + 1, 2 * s + 3, 3 * s, 3 * s + 1,
                                             3 * s + 2}))
@@ -151,11 +151,11 @@ def test_move_capture(position_moves):
     position, moves = position_moves
     s = position.size
 
-    position.move(s ** 2 - 1, gd.WHITE)  # capture corner
-    assert position[s ** 2 - 1] == gd.Group(size=1, colour=gd.WHITE,
+    position.move(s ** 2 - 1, go.WHITE)  # capture corner
+    assert position[s ** 2 - 1] == go.Group(size=1, colour=go.WHITE,
                                             liberties=frozenset(
                                                     {(s - 1) * s - 1, s ** 2 - 2}))
-    assert position[s ** 2 - 5] == gd.Group(size=8, colour=gd.WHITE,
+    assert position[s ** 2 - 5] == go.Group(size=8, colour=go.WHITE,
                                             liberties=frozenset(
                                                     {(s - 1) * s - 6, (s) * s - 6,
                                                      (s - 3) * s - 4,
@@ -164,16 +164,16 @@ def test_move_capture(position_moves):
                                                      (s - 2) * s - 5, (s - 1) * s - 2,
                                                      (s - 1) * s - 1,
                                                      s ** 2 - 4, s ** 2 - 3}
-                                            ) )
+                                            ))
     for lib in position[s ** 2 - 5].liberties | position[s ** 2 - 1].liberties:
-        assert position[lib] is gd.OPEN_POINT
+        assert position[lib] is go.OPEN_POINT
 
     def kolock_point():
-        position.move(2, gd.WHITE)
-        position.move(3, gd.BLACK) # the play on a ko
+        position.move(2, go.WHITE)
+        position.move(3, go.BLACK) # the play on a ko
 
-    fixt.exception_test(kolock_point, gd.MoveError, 'Playing on a ko point.')
-    assert position[2] == gd.Group(colour=gd.WHITE, size=1, liberties=frozenset({3}))
+    fixt.exception_test(kolock_point, go.MoveError, 'Playing on a ko point.')
+    assert position[2] == go.Group(colour=go.WHITE, size=1, liberties=frozenset({3}))
 
 
 def test_move_exceptions(position_moves):
@@ -204,21 +204,21 @@ def test_Position_actions(position_moves):
 
     assert 2 in position.actions
     assert 3 not in position.actions
-    position.move(move_pt=2, colour=gd.WHITE)
+    position.move(move_pt=2, colour=go.WHITE)
     assert 2 not in position.actions
     assert 3 in position.actions    # added after capture
 
     term_position = position.random_playout()
     for action in term_position.actions:
         try:
-            term_position.move(action, colour=gd.BLACK)
-        except gd.MoveError:
+            term_position.move(action, colour=go.BLACK)
+        except go.MoveError:
             pass
         else:
             assert False
         try:
-            term_position.move(action, colour=gd.WHITE)
-        except gd.MoveError:
+            term_position.move(action, colour=go.WHITE)
+        except go.MoveError:
             pass
         else:
             assert False
@@ -245,6 +245,6 @@ def test_score(position_moves):
 
 
 def test_Group_init():
-    for col, size, lib in itertools.product([gd.BLACK, gd.WHITE], range(361), range(361)):
-        assert gd.Group(colour=col, size=size, liberties=lib, ) == (col, size, lib)
+    for col, size, lib in itertools.product([go.BLACK, go.WHITE], range(361), range(361)):
+        assert go.Group(colour=col, size=size, liberties=lib, ) == (col, size, lib)
 
