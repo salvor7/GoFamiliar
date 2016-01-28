@@ -1,6 +1,6 @@
 import itertools
 from collections import defaultdict
-from copy import deepcopy
+import numpy as np
 
 import pytest
 
@@ -64,36 +64,41 @@ def test_Position_groups(position_moves):
     """
     position, moves = position_moves
     s = position.size
-    groups = [go.Group(stones=1, colour=1, ),
-              go.Group(stones=1, colour=1,),
-              go.Group(stones=5, colour=1,),
-              go.Group(stones=5, colour=1,),
-              go.Group(stones=3, colour=-1,),
-              go.Group(stones=8, colour=-1),
+    groups = [go.Group(colour=1, stones={3},),
+              go.Group(colour=1, stones={1},),
+              go.Group(colour=1, stones={s, 2*s, 2*s+1, 2*s+2, s+2}, ),
+              go.Group(colour=1, stones={s**2-s-1, s**2-3, s**2-4, s**2-s-2, s**2-2}),
+              go.Group(colour=-1, stones={4, s+3, s+4}, ),
+              go.Group(colour=-1, stones={s*(s-2)-4, s*(s-2)-3, s*(s-2)-2, s*(s-2)-1,
+                                          s*(s-1)-5, s*(s-1)-4, s*(s-1)-3,
+                                          s**2-5}),
               ]
-    for pt in position.board:
-        this_group = position.board.find(pt)
-        assert this_group in groups or this_group is go.OPEN_POINT
+    position.board.collapse_uftree()
+
+    for group in position.board._liberties:
+        assert group in groups or group is go.OPEN_POINT
+
+    position.move(move_pt=s-1, colour=go.BLACK)
+    assert position.board._find(s-1) == go.Group(stones={s-1}, colour=go.BLACK,)
+    position.move(move_pt=2, colour=go.BLACK)
+    position.board.group_liberties(group_pt=2, limit=np.infty)
+    assert position.board._find(1) == go.Group(colour=go.BLACK,
+                                               stones={1, 2, 3,
+                                                       s, s+2,
+                                                       2*s, 2*s+1, 2*s+2,})
 
 
 def test_Position_board(position_moves):
     position, moves = position_moves
     representatives = defaultdict(list)
     for pt in moves:
-        representatives[position.board.find(pt)] += [pt]
+        representatives[position.board._find(pt)] += [pt]
         assert moves[pt] == position.board.colour(pt)  # colour test
 
     for group in representatives:
         assert group.stones == set(representatives[group])
 
 
-def test_Position_group_handling(position_moves):
-    position, moves = position_moves
-    s = position.size
-    position.move(move_pt=s - 1, colour=go.BLACK)
-    assert position.board.find(s - 1) == go.Group(stones=1, colour=go.BLACK,)
-    position.move(move_pt=2, colour=go.BLACK)
-    assert position.board.find(1) == go.Group(stones=8, colour=go.BLACK,)
 
 
 def test_move_capture(position_moves):

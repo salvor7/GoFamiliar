@@ -26,7 +26,7 @@ class Group(namedtuple('Group','colour stones')):
         if self is OPEN_POINT:
             return 'OPEN POINT'
         else:
-            return '(' + name() + ' Group, size {0}, at {1})'.format(len(self.stones), min(self.stones))
+            return '(' + name() + ' Group, size {0}, at {1})'.format(len(self.stones), self.stones)
 
 
 OPEN_POINT = Group(colour=OPEN, stones=frozenset())
@@ -233,6 +233,7 @@ class Board():
                     neigh_group = self._find(neigh_pt)
                     self._liberties[neigh_group] -= {pt}
 
+
     def _find(self, node):
         """Follow pointers to top Group
 
@@ -275,6 +276,8 @@ class Board():
             raise BoardError('Cannot union same group')
         elif f_group.colour != s_group.colour:
             raise BoardError('Cannot union different colour stones')
+        elif f_group is OPEN_POINT:
+            raise BoardError('Cannot union with OPEN POINT')
 
         union_group = Group(colour=f_group.colour, stones=f_group.stones | s_group.stones)
         self[s_group] = union_group
@@ -325,6 +328,7 @@ class Board():
         group = self._find(node=group_pt)
         if group is OPEN_POINT:
             raise BoardError('Open point does not have liberties')
+
         for crawl_pt in self._board_crawl(start_pt=group_pt):
             if len(self._liberties[group]) >= limit:
                 break
