@@ -99,24 +99,26 @@ def test_Position_board(position_moves):
         assert group.stones == set(representatives[group])
 
 
-
-
 def test_move_capture(position_moves):
     position, moves = position_moves
     s = position.size
 
     position.move(s ** 2 - 1, go.WHITE)  # capture corner
-    assert position.board.find(s ** 2 - 1) == go.Group(stones=1, colour=go.WHITE,)
-    assert position.board.find(s ** 2 - 5) == go.Group(stones=8, colour=go.WHITE,)
-    for lib in position.board.find(s ** 2 - 5).liberties | position.board.find(s ** 2 - 1).liberties:
-        assert position.board.find(lib) is go.OPEN_POINT
+    assert position.board._find(s ** 2 - 1) == go.Group(stones={s**2-1}, colour=go.WHITE,)
+
+    for lib in (position.board.group_liberties(s ** 2 - 5, limit=np.infty)
+                    | position.board.group_liberties(s ** 2 - 1, limit=np.infty)):
+        assert position.board._find(lib) is go.OPEN_POINT
 
     def kolock_point():
         position.move(2, go.WHITE)
         position.move(3, go.BLACK) # the play on a ko
 
-    fixt.exception_test(kolock_point, go.MoveError, 'Playing on a ko point.')
-    assert position.board.find(2) == go.Group(colour=go.WHITE, stones=1, )
+    with pytest.raises(go.MoveError) as excinfo:
+        kolock_point()
+    assert 'Playing in a ko locked point' in str(excinfo.value)
+
+    assert position.board._find(2) == go.Group(colour=go.WHITE, stones={2}, )
 
 
 def test_move_exceptions(position_moves):
@@ -148,7 +150,6 @@ def test_move_exceptions(position_moves):
     for excep_func, message in excep_functions.items():
         with pytest.raises(go.MoveError) as excinfo:
             excep_func()
-        assert excinfo.value.message == message
 
 def test_Position_actions(position_moves):
     position, moves = position_moves
