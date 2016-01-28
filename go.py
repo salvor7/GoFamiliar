@@ -484,6 +484,8 @@ class Position():
             raise MoveError('Unrecognized move colour: ' + str(colour))
         elif move_pt == self.kolock:
             raise MoveError('Playing in a ko locked point')
+        elif self.board.colour(pt=move_pt) is not OPEN:
+            raise MoveError('Playing on another stone')
         elif friendly_eye(move_pt, colour):
             raise MoveError('Playing in a friendly eye')
 

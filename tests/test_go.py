@@ -140,11 +140,11 @@ def test_move_exceptions(position_moves):
         position.move(4 * position.size, 't')
 
     excep_functionsI = [(suicide_move,'Playing in a friendly eye'),
-                        (suicide_moveII,'Playing self capture.'),
+                        (suicide_moveII,'Playing self capture'),
                         (bad_colour,'Unrecognized move colour: t')
                        ]
 
-    excep_functions2 = [(func,'Playing on another stone.')
+    excep_functions2 = [(func,'Playing on another stone')
                             for func in play_on_all_moves()]
     excep_functions = dict(excep_functionsI+excep_functions2)
     for excep_func, message in excep_functions.items():
