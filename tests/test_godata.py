@@ -49,39 +49,6 @@ def test_Position_initial(position):
     assert position.komi == 7.5
 
 
-def test_Position_getsetdel(position_moves):
-    position, moves = position_moves
-    s = position.size
-    # test moves made in fixture
-    for pt in position.board:
-        group = position[pt]
-        assert type(group) == gd.Group
-        assert pt in moves or group == gd.OPEN_POINT
-        assert pt not in moves or group == position.groups[position.board[pt]]
-
-    # test exceptions
-    def del_no_stone():
-        del position[0]
-
-    fixt.exception_test(del_no_stone, KeyError, "'No stones at point 0'")
-
-    def set_bad_group():
-        position[0] = 1
-
-    fixt.exception_test(set_bad_group, ValueError, 'Not a Group object')
-
-    # test deleting and setting groups
-    for pt in moves:
-        group = position[pt]
-        del position[pt]
-        position[pt] = group
-        assert position[pt] == group
-    # test get after a delete
-    del position[s]
-    for pt in [s, s + 1, 2 * s, 2 * s + 1, 2 * s + 2]:
-        assert position[pt] == gd.OPEN_POINT
-        assert position.board[pt] == pt
-
 
 def test_Position_groups(position_moves):
     """ The fixture makes a number of moves,
