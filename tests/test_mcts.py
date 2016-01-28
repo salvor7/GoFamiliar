@@ -156,5 +156,5 @@ def test_tsumego_solving(tsumego):
 
 if __name__ == '__main__':
     import cProfile
-    cProfile.run('expanded_root(unexpanded_root(position_moves()))', filename='mcts.cprof')
+    cProfile.run('expanded_root(unexpanded_root(position_moves()))')
 

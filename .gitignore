@@ -1,4 +1,7 @@
+subproctest.py
+
 sgf_store/*
+profiling/*
 *.hdf5
 *.csv
 *.sgf
