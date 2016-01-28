@@ -33,13 +33,13 @@ def first_position():
                         'oXXX.',])
         board = first_three + '.'*s*(s-6) + last_three
         position = go.Position(size=s)
-        stones_counts = defaultdict()
+        moves_played = defaultdict()
         for pt, symbol in enumerate(board):
             if symbol == 'X':
                 position.move(move_pt=pt, colour=go.BLACK)
-                stones_counts[pt] = go.BLACK
+                moves_played[pt] = go.BLACK
             elif symbol == 'o':
                 position.move(move_pt=pt, colour=go.WHITE)
-                stones_counts[pt] = go.WHITE
-        return position, stones_counts
+                moves_played[pt] = go.WHITE
+        return position, moves_played
     return position_moves

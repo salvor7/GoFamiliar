@@ -71,24 +71,20 @@ def test_Position_groups(position_moves):
               go.Group(stones=3, colour=-1,),
               go.Group(stones=8, colour=-1),
               ]
-    for repre in position.groups:
-        assert position.board.find(repre) in groups
+    for pt in position.board:
+        this_group = position.board.find(pt)
+        assert this_group in groups or this_group is go.OPEN_POINT
 
 
 def test_Position_board(position_moves):
     position, moves = position_moves
-    s = position.size
     representatives = defaultdict(list)
     for pt in moves:
-        representatives[position.board[pt]] += [pt]
-        assert moves[pt] == moves[position.board[pt]]  # colour test
+        representatives[position.board.find(pt)] += [pt]
+        assert moves[pt] == position.board.colour(pt)  # colour test
 
-    assert len(representatives) == len(position.groups)
-
-    for repre in position.groups:
-        assert repre in representatives
-        assert position.board.find(repre).size == len(representatives[repre])
-        assert position.board.find(repre).colour == moves[repre]
+    for group in representatives:
+        assert group.stones == set(representatives[group])
 
 
 def test_Position_group_handling(position_moves):
@@ -184,9 +180,10 @@ def test_score(position_moves):
 
     term_position = position.random_playout()
     assert term_position is not position
+
     black_stones, white_stones = 0, 0
     black_liberties, white_liberties = set(), set()
-    for group in term_position.groups.values():
+    for group in term_position.board._liberties:
         if group.colour == 1:
             black_stones += group.size
             black_liberties |= group.liberties
