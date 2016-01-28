@@ -64,20 +64,12 @@ def test_Position_groups(position_moves):
     """
     position, moves = position_moves
     s = position.size
-    groups = [gd.Group(size=1, colour=1, liberties=frozenset({0, s + 1, 2})),
-              gd.Group(size=1, colour=1, liberties=frozenset({2})),
-              gd.Group(size=5, colour=1,
-                       liberties=frozenset(
-                               {0, 2, s + 1, 2 * s + 3, 3 * s, 3 * s + 1, 3 * s + 2})),
-              gd.Group(size=5, colour=1, liberties=frozenset({s ** 2 - 1})),
-              gd.Group(size=3, colour=-1,
-                       liberties=frozenset({s + 5, 5, 2 * s + 3, 2 * s + 4})),
-              gd.Group(size=8, colour=-1,
-                       liberties=frozenset({(s - 1) * s - 6, (s) * s - 6, (s - 3) * s - 4,
-                                            (s - 3) * s - 3, (s - 3) * s - 2,
-                                            (s - 3) * s - 1,
-                                            (s - 2) * s - 5})
-                       ),
+    groups = [go.Group(stones=1, colour=1, ),
+              go.Group(stones=1, colour=1,),
+              go.Group(stonese=5, colour=1,),
+              go.Group(stones=5, colour=1,),
+              go.Group(stones=3, colour=-1,),
+              go.Group(stones=8, colour=-1),
               ]
     for repre in position.groups:
         assert position[repre] in groups
@@ -103,13 +95,9 @@ def test_Position_group_handling(position_moves):
     position, moves = position_moves
     s = position.size
     position.move(move_pt=s - 1, colour=go.BLACK)
-    assert position[s - 1] == go.Group(size=1, colour=go.BLACK,
-                                       liberties=frozenset({s - 2, 2 * s - 1}))
+    assert position[s - 1] == go.Group(stones=1, colour=go.BLACK,)
     position.move(move_pt=2, colour=go.BLACK)
-    assert position[1] == go.Group(size=8, colour=go.BLACK,
-                                   liberties=frozenset(
-                                           {0, s + 1, 2 * s + 3, 3 * s, 3 * s + 1,
-                                            3 * s + 2}))
+    assert position[1] == go.Group(stones=8, colour=go.BLACK,)
 
 
 def test_move_capture(position_moves):
@@ -117,19 +105,8 @@ def test_move_capture(position_moves):
     s = position.size
 
     position.move(s ** 2 - 1, go.WHITE)  # capture corner
-    assert position[s ** 2 - 1] == go.Group(size=1, colour=go.WHITE,
-                                            liberties=frozenset(
-                                                    {(s - 1) * s - 1, s ** 2 - 2}))
-    assert position[s ** 2 - 5] == go.Group(size=8, colour=go.WHITE,
-                                            liberties=frozenset(
-                                                    {(s - 1) * s - 6, (s) * s - 6,
-                                                     (s - 3) * s - 4,
-                                                     (s - 3) * s - 3, (s - 3) * s - 2,
-                                                     (s - 3) * s - 1,
-                                                     (s - 2) * s - 5, (s - 1) * s - 2,
-                                                     (s - 1) * s - 1,
-                                                     s ** 2 - 4, s ** 2 - 3}
-                                            ))
+    assert position[s ** 2 - 1] == go.Group(stones=1, colour=go.WHITE,)
+    assert position[s ** 2 - 5] == go.Group(stones=8, colour=go.WHITE,)
     for lib in position[s ** 2 - 5].liberties | position[s ** 2 - 1].liberties:
         assert position[lib] is go.OPEN_POINT
 
@@ -138,7 +115,7 @@ def test_move_capture(position_moves):
         position.move(3, go.BLACK) # the play on a ko
 
     fixt.exception_test(kolock_point, go.MoveError, 'Playing on a ko point.')
-    assert position[2] == go.Group(colour=go.WHITE, size=1, liberties=frozenset({3}))
+    assert position[2] == go.Group(colour=go.WHITE, stones=1, )
 
 
 def test_move_exceptions(position_moves):
@@ -220,6 +197,6 @@ def test_score(position_moves):
 
 
 def test_Group_init():
-    for col, size, lib in itertools.product([go.BLACK, go.WHITE], range(361), range(361)):
-        assert go.Group(colour=col, size=size, liberties=lib, ) == (col, size, lib)
+    for col, pt, lib in itertools.product([go.BLACK, go.WHITE], range(361)):
+        assert go.Group(colour=col, stones={pt}, ) == (col, pt)
 
