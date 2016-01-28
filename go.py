@@ -10,6 +10,13 @@ OPEN = 0
 
 
 class Group(namedtuple('Group','colour stones')):
+    """An object to carry the immutable elements of a group
+    """
+    @property
+    def size(self):
+        """:return: int for how big the group is"""
+        return len(self.stones)
+
     def __repr__(self):
         """Group representation
 
