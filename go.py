@@ -356,6 +356,17 @@ class Board():
         self.change_colour(pt=captured, new_colour=OPEN)
         return captured
 
+    def collapse_uftree(self):
+        """Run full liberty search and find on every pt on board
+
+        This will ensure every point only points at the actual group object it is apart of
+        """
+        for pt in self:
+            try:
+                self.group_liberties(group_pt=pt, limit=np.infty)
+            except BoardError:
+                pass
+            self._find(pt)
 
 class BoardError(Exception):
     """Error raised by Board objects when a query or transaction cannot be completed"""
