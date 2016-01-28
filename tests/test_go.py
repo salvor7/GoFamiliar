@@ -66,13 +66,13 @@ def test_Position_groups(position_moves):
     s = position.size
     groups = [go.Group(stones=1, colour=1, ),
               go.Group(stones=1, colour=1,),
-              go.Group(stonese=5, colour=1,),
+              go.Group(stones=5, colour=1,),
               go.Group(stones=5, colour=1,),
               go.Group(stones=3, colour=-1,),
               go.Group(stones=8, colour=-1),
               ]
     for repre in position.groups:
-        assert position[repre] in groups
+        assert position.board.find(repre) in groups
 
 
 def test_Position_board(position_moves):
@@ -87,17 +87,17 @@ def test_Position_board(position_moves):
 
     for repre in position.groups:
         assert repre in representatives
-        assert position[repre].size == len(representatives[repre])
-        assert position[repre].colour == moves[repre]
+        assert position.board.find(repre).size == len(representatives[repre])
+        assert position.board.find(repre).colour == moves[repre]
 
 
 def test_Position_group_handling(position_moves):
     position, moves = position_moves
     s = position.size
     position.move(move_pt=s - 1, colour=go.BLACK)
-    assert position[s - 1] == go.Group(stones=1, colour=go.BLACK,)
+    assert position.board.find(s - 1) == go.Group(stones=1, colour=go.BLACK,)
     position.move(move_pt=2, colour=go.BLACK)
-    assert position[1] == go.Group(stones=8, colour=go.BLACK,)
+    assert position.board.find(1) == go.Group(stones=8, colour=go.BLACK,)
 
 
 def test_move_capture(position_moves):
@@ -105,17 +105,17 @@ def test_move_capture(position_moves):
     s = position.size
 
     position.move(s ** 2 - 1, go.WHITE)  # capture corner
-    assert position[s ** 2 - 1] == go.Group(stones=1, colour=go.WHITE,)
-    assert position[s ** 2 - 5] == go.Group(stones=8, colour=go.WHITE,)
-    for lib in position[s ** 2 - 5].liberties | position[s ** 2 - 1].liberties:
-        assert position[lib] is go.OPEN_POINT
+    assert position.board.find(s ** 2 - 1) == go.Group(stones=1, colour=go.WHITE,)
+    assert position.board.find(s ** 2 - 5) == go.Group(stones=8, colour=go.WHITE,)
+    for lib in position.board.find(s ** 2 - 5).liberties | position.board.find(s ** 2 - 1).liberties:
+        assert position.board.find(lib) is go.OPEN_POINT
 
     def kolock_point():
         position.move(2, go.WHITE)
         position.move(3, go.BLACK) # the play on a ko
 
     fixt.exception_test(kolock_point, go.MoveError, 'Playing on a ko point.')
-    assert position[2] == go.Group(colour=go.WHITE, stones=1, )
+    assert position.board.find(2) == go.Group(colour=go.WHITE, stones=1, )
 
 
 def test_move_exceptions(position_moves):
