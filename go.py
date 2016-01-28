@@ -166,6 +166,29 @@ class Board():
         """
         return iter(range(self.size ** 2))
 
+    def __repr__(self):
+        """String representation of a Board
+
+        :return: str
+        """
+        BLACKstr = 'X'
+        WHITEstr = 'o'
+        OPENstr = '.'
+
+        repre = ''
+        for idx, pt in enumerate(self):
+            if self.colour(pt) == BLACK:
+                repre += BLACKstr
+            elif self.colour(pt) == WHITE:
+                repre += WHITEstr
+            elif self.colour(pt) == OPEN:
+                repre += OPENstr
+
+            if idx + 1 % self.size == 0:
+                repre += r'\n'
+        return repre
+
+
     def __getitem__(self, item):
         """Return the group object pointed at by item
 
