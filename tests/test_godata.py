@@ -43,11 +43,9 @@ def test_make_neighbors(position):
 
 def test_Position_initial(position):
     assert position.kolock is None
-    assert position.next_player is gd.BLACK
-    assert len(position.board) == position.size ** 2
-    assert len(position.groups) == 0
-    assert position.komi == 7.5
-
+    assert position.next_player is go.BLACK
+    assert len(position.board._pointers) == position.size ** 2
+    assert position.komi == -7.5
 
 
 def test_Position_groups(position_moves):
