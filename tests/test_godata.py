@@ -145,22 +145,32 @@ def test_move_exceptions(position_moves):
     position, moves = position_moves
 
     def suicide_move():
-        position.move((position.size ** 2) - 1, gd.BLACK)
-    fixt.exception_test(suicide_move, gd.MoveError, 'Playing in a friendly eye')
+        position.move((position.size ** 2) - 1, go.BLACK)
 
     def suicide_moveII():
-        position.move(0, gd.WHITE)
-    fixt.exception_test(suicide_moveII, gd.MoveError, 'Playing self capture.')
+        position.move(0, go.WHITE)
 
-    for pt in moves:
-        def existing_stone():
-            position.move(pt, gd.WHITE)
-        fixt.exception_test(existing_stone, gd.MoveError, 'Playing on another stone.')
+    def play_on_all_moves():
+        for pt in moves:
+            def existing_stone():
+                position.move(pt, go.WHITE)
+            yield existing_stone
 
     def bad_colour():
         position.move(4 * position.size, 't')
-    fixt.exception_test(bad_colour, ValueError, 'Unrecognized move colour: t')
 
+    excep_functionsI = [(suicide_move,'Playing in a friendly eye'),
+                        (suicide_moveII,'Playing self capture.'),
+                        (bad_colour,'Unrecognized move colour: t')
+                       ]
+
+    excep_functions2 = [(func,'Playing on another stone.')
+                            for func in play_on_all_moves()]
+    excep_functions = dict(excep_functionsI+excep_functions2)
+    for excep_func, message in excep_functions.items():
+        with pytest.raises(go.MoveError) as excinfo:
+            excep_func()
+        assert excinfo.value.message == message
 
 def test_Position_actions(position_moves):
     position, moves = position_moves

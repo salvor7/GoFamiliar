@@ -43,11 +43,3 @@ def first_position():
                 stones_counts[pt] = go.WHITE
         return position, stones_counts
     return position_moves
-
-def exception_test(func, err, message):
-    try:
-        func()
-    except err as err:
-        assert message == str(err)
-    else:
-        assert False
