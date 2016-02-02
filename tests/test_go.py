@@ -121,6 +121,37 @@ def test_move_capture(position_moves):
     assert position.board._find(2) == go.Group(colour=go.WHITE, stones={2}, )
 
 
+def test_position_playout(position):
+    """Added to test a bug where during playout stones were not being removed
+    when they had no liberties.
+    """
+    passes = 0
+    moves = []
+    board = position.board
+    while passes < 2:
+        try:
+            moves.append(position.random_move())
+        except go.MoveError:
+            position.pass_move()
+            passes +=1
+        else:
+            print(position.board)
+            for pt in board:
+                if board.colour(pt) is not go.OPEN:
+                    for neigh_pt in board.neighbors[pt]:
+                        try:
+                            # pt is no longer in the liberty set
+                            assert pt not in board._find_liberties(node=neigh_pt)
+                        except go.BoardError:
+                            assert board._find(node=neigh_pt) == go.OPEN_POINT
+                else:
+                    if pt not in position.actions:
+                        pass
+                    assert pt in position.actions
+    else:
+        pass
+
+
 def test_move_exceptions(position_moves):
     position, moves = position_moves
 
