@@ -227,7 +227,7 @@ def test_score(position_moves):
         else:
             white_stones += group.size
             white_liberties |= term_position.board._liberties[group]
-            
+
     black_score = black_stones + len(black_liberties)
     white_score = white_stones + len(white_liberties)
     assert black_score + white_score > 0
