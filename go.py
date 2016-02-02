@@ -414,7 +414,10 @@ class Board():
         groups_to_remove = set(self._find(node=node) for node in dead_nodes)
         captured = set()
         for dead_group in groups_to_remove:
-            del self._liberties[dead_group]
+            try:
+                del self._liberties[dead_group]     # no liberties explored yet
+            except KeyError:
+                pass
             captured |= set(dead_group.stones)
             self.change_colour(pt=dead_group.stones, new_colour=OPEN)
         return captured
