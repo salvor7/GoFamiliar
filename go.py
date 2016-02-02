@@ -397,23 +397,26 @@ class Board():
 
         return self._liberties[group]
 
-    def remove_group(self, dead_pt):
+    def remove_group(self, dead_node=None):
         """Remove a group and return the captured stone locations
 
         :param dead_pt: int
         :return: set
         >>> board = Board()
         >>> board.change_colour(pt=200, new_colour=BLACK)
-        >>> board.remove_group(dead_pt=200)
+        >>> board.remove_group(dead_node=200)
         {200}
         """
+        try:
+            dead_nodes = iter(dead_node)
+        except TypeError:
+            dead_nodes = [dead_node]
+        groups_to_remove = set(self._find(node=node) for node in dead_nodes)
         captured = set()
-        dead_colour = self.colour(pt=dead_pt)
-        for remove_pt in self._board_crawl(start_pt=dead_pt):
-            if self.colour(pt=remove_pt) == dead_colour:
-                captured |= {remove_pt}
-
-        self.change_colour(pt=captured, new_colour=OPEN)
+        for dead_group in groups_to_remove:
+            del self._liberties[dead_group]
+            captured |= set(dead_group.stones)
+            self.change_colour(pt=dead_group.stones, new_colour=OPEN)
         return captured
 
     def collapse_uftree(self):
