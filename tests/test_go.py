@@ -226,7 +226,6 @@ def test_score(position_moves):
 
 
 def test_Group_init():
-    for col, pt, lib in itertools.product([go.BLACK, go.WHITE], range(361)):
-        assert go.Group(colour=col, stones={pt}, ) == (col, pt)
+    for col, pt in itertools.product([go.BLACK, go.WHITE], range(361)):
+        assert go.Group(colour=col, stones={pt} ) == (col, {pt})
 
-    position.board.collapse_uftree()
