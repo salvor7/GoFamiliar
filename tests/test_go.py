@@ -109,6 +109,7 @@ def test_move_capture(position_moves):
     for lib in (position.board.group_liberties(s ** 2 - 5, limit=np.infty)
                     | position.board.group_liberties(s ** 2 - 1, limit=np.infty)):
         assert position.board._find(lib) is go.OPEN_POINT
+        assert lib in position.actions
 
     def kolock_point():
         position.move(2, go.WHITE)
@@ -194,6 +195,9 @@ def test_Position_actions(position_moves):
     position.move(move_pt=2, colour=go.WHITE)
     assert 2 not in position.actions
     assert 3 in position.actions    # added after capture
+
+    position.move(move_pt=s**2-1, colour=go.WHITE)
+    assert {s**2-s-1, s**2-3, s**2-4, s**2-s-2, s**2-2}.issubset(position.actions)
 
     term_position = position.random_playout()
     for action in term_position.actions:
