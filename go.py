@@ -177,13 +177,24 @@ class Board():
         """String representation of a Board
 
         :return: str
+        >>> print(repr(Board(size=9)))
+        ---------
+        ---------
+        ---------
+        ---------
+        ---------
+        ---------
+        ---------
+        ---------
+        ---------
+        <BLANKLINE>
         """
         BLACKstr = 'X'
         WHITEstr = 'o'
-        OPENstr = '.'
+        OPENstr = '-'
 
         repre = ''
-        for idx, pt in enumerate(self):
+        for pt in self:
             if self.colour(pt) == BLACK:
                 repre += BLACKstr
             elif self.colour(pt) == WHITE:
@@ -191,10 +202,9 @@ class Board():
             elif self.colour(pt) == OPEN:
                 repre += OPENstr
 
-            if idx + 1 % self.size == 0:
-                repre += r'\n'
+            if (pt + 1) % self.size == 0:
+                repre += '\n'
         return repre
-
 
     def __getitem__(self, item):
         """Return the group object pointed at by item
