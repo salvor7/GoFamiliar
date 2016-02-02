@@ -581,7 +581,7 @@ class Position():
         >>> pos = Position()
         >>> pos.move(move_pt, colour=BLACK)
         >>> pos.board[move_pt]
-        (BLACK Group, size 1, at 200)
+        (BLACK Group, size 1, at frozenset({200}))
         """
         if colour is None:
             colour = self.next_player
@@ -607,8 +607,8 @@ class Position():
     def random_move(self):
         """Play one random move
 
-        Move choosen uniformly at random and taken if possible
-        >>> Position().random_move()
+        Legal move choosen uniformly at random and taken if possible
+        >>> move = Position().random_move()
         """
         tried = set()
         while tried != self.actions:
@@ -622,6 +622,7 @@ class Position():
                 break
         else:   # if loop condition fails
             raise MoveError('Terminal Position')
+        return move_pt
 
     def random_playout(self):
         """Return score after playing to a terminal position randomly
