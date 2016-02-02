@@ -559,9 +559,7 @@ class Position():
         yield   # may never return, and that's fine
 
         self.board.change_colour(pt=move_pt, new_colour=colour)
-        captured = set()
-        for dead_pt in neigh_dead[-colour]:
-            captured |= self.board.remove_group(dead_pt)
+        captured = self.board.remove_group(dead_node=neigh_dead[-colour])
         self.actions |= captured
         self.actions -= {move_pt}
 
