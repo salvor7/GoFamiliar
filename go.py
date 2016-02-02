@@ -431,6 +431,7 @@ class Board():
                 pass
             self._find(pt)
 
+
 class BoardError(Exception):
     """Error raised by Board objects when a query or transaction cannot be completed"""
     pass
@@ -520,12 +521,13 @@ class Position():
 
             pt_not_self_capture = False
             neigh_alive = defaultdict(set)
-            for neigh_pt in self.board.neighbors[move_pt]:
+            for neigh_pt in self.board.neighbors[move_pt]:  #check neighbor groups
                 try:
                     liberties = self.board.group_liberties(group_pt=neigh_pt, limit=2)
                 except BoardError:      # when neigh_pt is OPEN
                     pt_not_self_capture = True
                     continue
+
                 neigh_col = self.board.colour(neigh_pt)
                 if liberties == {move_pt}:
                     neigh_dead[neigh_col] |= {neigh_pt}
@@ -541,7 +543,8 @@ class Position():
             colour = self.next_player
         elif colour not in [BLACK, WHITE]:
             raise MoveError('Unrecognized move colour: ' + str(colour))
-        elif move_pt == self.kolock:
+
+        if move_pt == self.kolock:
             raise MoveError('Playing in a ko locked point')
         elif self.board.colour(pt=move_pt) is not OPEN:
             raise MoveError('Playing on another stone')
