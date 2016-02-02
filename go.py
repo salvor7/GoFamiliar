@@ -628,8 +628,8 @@ class Position():
         """Return score after playing to a terminal position randomly
 
         :return: float
-        >>> Position().random_playout()
-        -7.5
+        >>> type(Position(size=9).random_playout())
+        <class 'go.Position'>
         """
         position = deepcopy(self)
         passes = 0
@@ -641,7 +641,7 @@ class Position():
                 position.pass_move()
                 passes +=1
 
-        return position.score()
+        return position
 
 
 class MoveError(Exception):
