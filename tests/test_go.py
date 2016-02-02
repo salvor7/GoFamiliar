@@ -208,7 +208,8 @@ def test_score(position_moves):
     position, moves = position_moves
     black_stones, black_liberties = 12, 8
     white_stones, white_liberties = 11, 11
-    assert position.score() == black_stones + black_liberties - white_stones - white_liberties
+    komi = -7.5
+    assert position.score() == black_stones + black_liberties - white_stones - white_liberties + komi
 
     term_position = position.random_playout()
     assert term_position is not position
@@ -218,11 +219,17 @@ def test_score(position_moves):
     for group in term_position.board._liberties:
         if group.colour == 1:
             black_stones += group.size
-            black_liberties |= group.liberties
+            black_liberties |= term_position.board._liberties[group]
         else:
             white_stones += group.size
-            white_liberties |= group.liberties
-    assert black_stones + len(black_liberties) - white_stones - len(white_liberties)
+            white_liberties |= term_position.board._liberties[group]
+            
+    black_score = black_stones + len(black_liberties)
+    white_score = white_stones + len(white_liberties)
+    assert black_score + white_score > 0
+
+    calculated_score = term_position.score()
+    assert black_score - white_score + term_position.komi == calculated_score
 
 
 def test_Group_init():
