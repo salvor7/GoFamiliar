@@ -181,6 +181,8 @@ def test_move_exceptions(position_moves):
     for excep_func, message in excep_functions.items():
         with pytest.raises(go.MoveError) as excinfo:
             excep_func()
+        assert message in str(excinfo.value)
+
 
 def test_Position_actions(position_moves):
     position, moves = position_moves
@@ -195,18 +197,11 @@ def test_Position_actions(position_moves):
 
     term_position = position.random_playout()
     for action in term_position.actions:
-        try:
+        with pytest.raises(go.MoveError):
             term_position.move(action, colour=go.BLACK)
-        except go.MoveError:
-            pass
-        else:
-            assert False
-        try:
+        with pytest.raises(go.MoveError):
             term_position.move(action, colour=go.WHITE)
-        except go.MoveError:
-            pass
-        else:
-            assert False
+
 
 
 def test_score(position_moves):
