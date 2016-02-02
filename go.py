@@ -231,6 +231,13 @@ class Board():
         else:
             raise BoardError('Expected Group. Got ' + str(type(value)))
 
+    def __delitem__(self, key):
+        """Delete an item from pointers using a special method
+
+        :param key: node
+        """
+        del self._pointers[key]
+
     def colour(self, pt):
         """Find the colour of the board at pt
 
@@ -268,11 +275,16 @@ class Board():
             if new_colour is OPEN:
                 self[pt] = OPEN_POINT
             elif self.colour(pt) != new_colour:
+
                 self[pt] = Group(colour=new_colour, stones=frozenset({pt}))
-                for neigh_pt in self.neighbors[pt]:     # remove a liberty
+                try:
+                    del self[self[pt]]      # ensure no old trees are revived
+                except KeyError:
+                    pass
+
+                for neigh_pt in self.neighbors[pt]:     # remove pt as a liberty
                     neigh_group = self._find(neigh_pt)
                     self._liberties[neigh_group] -= {pt}
-
 
     def _find(self, node):
         """Follow pointers to top Group
@@ -320,6 +332,10 @@ class Board():
             raise BoardError('Cannot union with OPEN POINT')
 
         union_group = Group(colour=f_group.colour, stones=f_group.stones | s_group.stones)
+        try:
+            del self[union_group]       # ensure no old trees are revived
+        except KeyError:
+            pass
         self[s_group] = union_group
         self[f_group] = union_group
         self._liberties[union_group] |= (self._liberties[f_group] | self._liberties[s_group])
