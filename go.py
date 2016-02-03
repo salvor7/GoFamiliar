@@ -566,7 +566,7 @@ class Position():
         self.actions |= captured
         self.actions -= {move_pt}
 
-        self.kolock = captured.pop() if len(captured) == 1 else None
+        self.kolock = captured.pop() if len(captured) == 1 else None # single stone caught
 
         self.next_player = -colour
         self.lastmove = move_pt
@@ -622,10 +622,8 @@ class Position():
             except MoveError:
                 tried |= {move_pt}
             else:
-                break
-        else:   # if loop condition fails
-            raise MoveError('Terminal Position')
-        return move_pt
+                return move_pt
+        raise MoveError('Terminal Position')
 
     def random_playout(self):
         """Return score after playing to a terminal position randomly
@@ -643,6 +641,8 @@ class Position():
             except MoveError:
                 position.pass_move()
                 passes +=1
+            else:
+                passes = 0
 
         return position
 

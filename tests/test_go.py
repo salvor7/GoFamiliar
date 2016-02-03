@@ -136,6 +136,7 @@ def test_position_playout(position):
             position.pass_move()
             passes +=1
         else:
+            passes = 0
             print(position.board)
             for pt in board:
                 if board.colour(pt) is not go.OPEN:
@@ -205,7 +206,6 @@ def test_Position_actions(position_moves):
             term_position.move(action, colour=go.BLACK)
         with pytest.raises(go.MoveError):
             term_position.move(action, colour=go.WHITE)
-
 
 
 def test_score(position_moves):
