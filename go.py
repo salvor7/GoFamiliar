@@ -1,6 +1,6 @@
 import random
 from collections import namedtuple, defaultdict
-from copy import deepcopy
+from copy import copy, deepcopy
 
 import numpy as np
 
@@ -237,6 +237,19 @@ class Board():
         :param key: node
         """
         del self._pointers[key]
+
+    # def __deepcopy__(self, memo):
+    #     """Return a mid depth copy of self
+    #
+    #     Not all the mutable properties change, so multiple Board objects can point to the
+    #     same sub-object without conflict.
+    #     :return: Board
+    #     """
+    #     board = copy(self)
+    #     board._liberties = deepcopy(self._liberties)
+    #     board._pointers = copy(self._pointers)
+    #
+    #     return board
 
     def colour(self, pt):
         """Find the colour of the board at pt
