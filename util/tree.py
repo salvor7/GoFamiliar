@@ -1,48 +1,54 @@
 """Node object definition for tree construction. """
 
-class Node:
+class Node(object):
     """Node object for tree construction.
 
     This construction can be found at http://cbio.ufs.ac.za/live_docs/nbn_tut/trees.html
 
-    >>> tree = Node('grandmother', [
-    ...                             Node('daughter', [ Node('granddaughter'), Node('grandson')]),
-    ...                             Node('son', [ Node('granddaughter'), Node('grandson')])
-    ...                             ])
-    >>> tree.data
+    >>> tree = Node(rel0='grandmother',
+    ...             children=[Node(rel1='daughter',
+    ...                              children=[ Node(rel2='granddaughter'),
+    ...                                         Node(rel2='grandson')]
+    ...                             ),
+    ...                       Node(rel1='son',
+    ...                             children=[ Node(rel2='granddaughter'),
+    ...                                        Node(rel2='grandson')]
+    ...                 )])
+    >>> tree.rel0
     'grandmother'
-    >>> tree.children[0].data
+    >>> tree.children[0].rel1
     'daughter'
-    >>> tree.children[0].children[0].data
+    >>> tree.children[0].children[0].rel2
     'granddaughter'
     """
-    def __init__(self, node_data, children = None):
-        """Construct a Node.
+    def __init__(self, children=None, **kwargs):
+        """
+        Construct a Node.
 
         Error checks the children parameter ensuring it iterates over Node objects.
-
-        :param node_data: Node node_data
         :param children: iterable over Node objects
         """
         if children is None:
             children = []
+        self.children = []
+        for child in children:
+            self.add(child)
 
-        try:
-            for node in children:
-                try:
-                    assert type(node) == Node
-                except AssertionError:
-                    raise TypeError('Node expected. ' + str(type(node)) + ' received.')
-        except TypeError:
-            raise TypeError(str(children) + 'is not iterable')
+        for keyword, value in kwargs.items():
+            setattr(self, keyword, value)
 
-        self.data = node_data
-        self.children = list(children)
+        self.parent = None
 
     def add(self, child):
+        """
+        Add a child
+
+        :param child: Node
+        """
         try:
             assert type(child) == Node
         except AssertionError:
             raise TypeError('Node expected. ' + str(type(child)) + ' received.')
+        child.parent = self
         self.children.append(child)
 

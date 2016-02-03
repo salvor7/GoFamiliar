@@ -1,4 +1,5 @@
-"""General Monte Carlo Tree Search algorithm
+"""
+General Monte Carlo Tree Search algorithm
 
 This module is a general implementation of an MCTS algorithm.
 It is not intended to be specialized for go, though that is the first and only use anticipated.
@@ -9,6 +10,81 @@ from math import sqrt, log
 
 import go
 from util import tree
+
+
+class NodeMCTS(tree.Node):
+    """
+    A node of MC search tree
+    """
+    def __init__(self, state, children=None):
+        """
+        Initialize a MCTS node object
+        """
+        self.name = state.last_move,
+        self.state = state
+        self.wins = 0
+        self.sims = 0
+        super(NodeMCTS, self).__init__(children=children)
+
+    @property
+    def colour(self):
+        """
+        Return the two player colour
+
+        :return: int
+        """
+        return self.state.next_player
+
+    def new_child(self):
+        """
+        Add a new child node and play it out
+        """
+        new_state=deepcopy(self.state)
+        new_state.random_move()
+
+        child = NodeMCTS(state=new_state)
+        self.add(child=child)
+        child.random_sim()
+
+    def random_sim(self):
+        """
+        Randomly simulate from the game state to a terminal state
+        """
+        terminal_state, moves = self.state.random_playout()
+        term_value = terminal_state.value()
+        self.sims += 1
+        self.wins += term_value
+        self.update_parent(value=term_value)
+
+    def update_parent(self, value):
+        """
+        Update sim results up the tree
+        :param value: numeric
+        """
+        try:
+            self.parent.sims += 1
+        except AttributeError:
+            pass       # root reached
+        else:
+            self.parent.wins += value
+            self.parent.update_parent(value=value)
+
+    def bestchild(self, c=0):
+        """
+        Find the child with the highest upper confidence bound
+
+        Formula from "A Survery of Monte Carlo Tree Search Methods"
+        :param c: float
+        :return: NodeMCTS
+        """
+        def conf_score(node):
+            w = node.wins
+            n = node.sims
+            col = self.colour       # white scores negative
+            N = node.parent.sims
+            return col * w / n + c * sqrt(2 * log(N) / n)
+
+        return max(self.children, key=conf_score)
 
 
 def search(state, sim_limit=100, const=0):
@@ -58,65 +134,3 @@ def treepolicy(node, const=0):
         else:
             return expand(node, action)
     return node
-
-
-def expand(node, action):
-    """Add new node in MC tree corresponding to taking action.
-
-    "Expanding" is adding a child node with the associated state data to a non-terminal node.
-    :param node: tree.Node
-    :param action: action
-    :return: tree.Node
-    """
-    state = deepcopy(node.data['state'])
-    state.move(action)
-    node_data = {'name': action,
-                 'state': state,
-                 'defaultpolicy': state.random_playout,
-                 'wins': 0,
-                 'sims': 0,
-                 'parent': node,}
-    child = tree.Node(node_data=node_data)
-    node.add(child)
-    return child
-
-
-def bestchild(node, c=0):
-    """Find the child with the highest upper confidence bound
-
-    :param node: tree.Node
-    :param c: float
-    :return: tree.Node
-    """
-    def conf_score(node):
-        wins = node.data['wins']
-        sims = node.data['sims']
-        player = -node.data['state'].next_player
-        par_sims = node.data['parent'].data['sims']
-        return player * wins / sims + c * sqrt(2 * log(par_sims) / sims)
-
-    return max(node.children, key=conf_score)
-
-
-def defaultpolicy(node):
-    """The random game simulator
-
-    :param state: game state
-    :return: float
-    """
-    state = node.data['defaultpolicy']()
-    score = state.score()
-    return score/abs(score)
-
-
-def backup(node, reward):
-    """Record details of a sim backup the MC tree
-
-    :param node: tree.Node
-    :param reward: float
-    """
-    while node is not None:
-        node.data['sims'] += 1
-        node.data['wins'] += reward
-        reward = -reward
-        node = node.data['parent']
