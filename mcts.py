@@ -7,11 +7,11 @@ It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search
 from copy import deepcopy
 from math import sqrt, log
 
-import godata as gd
+import go
 from util import tree
 
 
-def search(state, sim_limit=100, const=0, TerminalPosition=gd.TerminalPosition):
+def search(state, sim_limit=100, const=0):
     """Find a good action
 
     This is the main function of the MCTS algorithm.

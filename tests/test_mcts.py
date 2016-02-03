@@ -2,7 +2,7 @@ import itertools
 
 import pytest
 
-import godata as gd
+import go
 import mcts
 import tests.test_fixtures as fixt
 from sgf.library import Library
@@ -36,7 +36,7 @@ def expanded_root(unexpanded_root):
     for action in unexpanded_root.data['state'].actions:
         try:
             child = mcts.expand(node=unexpanded_root, action=action)
-        except gd.MoveError:
+        except go.MoveError:
             continue
         reward = mcts.defaultpolicy(child)
         mcts.backup(node=child, reward=reward)
@@ -110,7 +110,7 @@ def test_search_open_board(position, position_moves):
     for idx in range(19 ** 2 * 3):
         try:
             move_pt, last_pt = mcts.search(position), move_pt
-        except gd.MoveError as err:
+        except go.MoveError as err:
             assert str(err) == 'Terminal Position'
             break
         assert type(move_pt) is int
@@ -127,7 +127,7 @@ def test_search_avoid_eyes(position_moves):
     for idx in range(19 ** 2 * 3):
         try:
             move_pt, last_pt = mcts.search(position), move_pt
-        except gd.MoveError as err:
+        except go.MoveError as err:
             assert str(err) == 'Terminal Position'
             break
         assert move_pt not in [0, 20]

@@ -2,7 +2,7 @@ import os
 import h5py
 import numpy as np
 
-import godata
+import go
 import sgf.read
 
 doctest_dir = r'sgf_store\hikaru_sgfs'
@@ -84,4 +84,4 @@ class Library():
         except KeyError:
             komi = 6.5
 
-        return godata.Position(moves=sgf_data, size=size, komi=komi)
+        return go.Position(moves=sgf_data, size=size, komi=komi)
