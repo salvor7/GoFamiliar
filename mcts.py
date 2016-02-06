@@ -41,11 +41,12 @@ class NodeMCTS(tree.Node):
         Add a new child node and play it out
         """
         new_state=deepcopy(self.state)
-        new_state.random_move()
+        new_state.random_move(tried=self.children.key())
 
         child = NodeMCTS(state=new_state)
         self.children[child.name] = child
         child.random_sim()
+        return child
 
     def random_sim(self):
         """

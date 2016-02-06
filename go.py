@@ -620,13 +620,17 @@ class Position():
         self.kolock = None
         self.lastmove = None
 
-    def random_move(self):
+    def random_move(self, tried=None):
         """Play one random move
 
         Legal move choosen uniformly at random and taken if possible
+        :param tried: iter of move coordinates
         >>> move = Position().random_move()
         """
-        tried = set()
+        if tried is None:
+            tried = set()
+        else:
+            tried = set(tried)
         while tried != self.actions:
             sample_list =  random.sample(self.actions - tried, k=1)
             move_pt = sample_list[0]
@@ -636,7 +640,7 @@ class Position():
                 tried |= {move_pt}
             else:
                 return move_pt
-        raise MoveError('Terminal Position')
+        raise MoveError('No moves to take')
 
     def random_playout(self):
         """Return score after playing to a terminal position randomly
@@ -656,7 +660,7 @@ class Position():
                 passes +=1
             else:
                 passes = 0
-
+        print(position.board)
         return position
 
 
