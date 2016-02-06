@@ -25,6 +25,7 @@ class NodeMCTS(tree.Node):
         self.wins = 0
         self.sims = 0
         super(NodeMCTS, self).__init__(children=children)
+        children = {}
 
     @property
     def colour(self):
@@ -43,12 +44,14 @@ class NodeMCTS(tree.Node):
         new_state.random_move()
 
         child = NodeMCTS(state=new_state)
-        self.add(child=child)
+        self.children[child.name] = child
         child.random_sim()
 
     def random_sim(self):
         """
         Randomly simulate from the game state to a terminal state
+
+        Updates the result up the tree.
         """
         terminal_state, moves = self.state.random_playout()
         term_value = terminal_state.value()
@@ -84,7 +87,7 @@ class NodeMCTS(tree.Node):
             N = node.parent.sims
             return col * w / n + c * sqrt(2 * log(N) / n)
 
-        return max(self.children, key=conf_score)
+        return max(self.children.values(), key=conf_score)
 
 
 def search(state, sim_limit=100, const=0):
