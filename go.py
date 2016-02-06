@@ -543,13 +543,13 @@ class Position():
             """Reducing your own liberties to zero is an illegal move"""
             nonlocal neigh_dead
 
-            pt_not_self_capture = False
+            pt_is_self_capture = True
             neigh_alive = defaultdict(set)
             for neigh_pt in self.board.neighbors[move_pt]:  #check neighbor groups
                 try:
                     liberties = self.board.group_liberties(group_pt=neigh_pt, limit=2)
                 except BoardError:      # when neigh_pt is OPEN
-                    pt_not_self_capture = True
+                    pt_is_self_capture = False
                     continue
 
                 neigh_col = self.board.colour(neigh_pt)
@@ -558,10 +558,10 @@ class Position():
                 else:
                     neigh_alive[neigh_col] |= {neigh_pt}
 
-            if pt_not_self_capture or colour in neigh_alive or -colour in neigh_dead:
-                return False
-            else:
+            if pt_is_self_capture and (colour not in neigh_alive) and (-colour not in neigh_dead):
                 return True
+            else:
+                return False
 
         if colour is None:
             colour = self.next_player
