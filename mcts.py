@@ -41,7 +41,9 @@ class NodeMCTS(tree.Node):
 
     def add(self, child):
         """
+        Add a Node as a child to self
 
+        Overrides tree.Node.add
         :param child: NodeMCTS
         """
         child.parent = self
@@ -76,6 +78,7 @@ class NodeMCTS(tree.Node):
     def update_parent(self, value):
         """
         Update sim results up the tree
+
         :param value: numeric
         """
         try:

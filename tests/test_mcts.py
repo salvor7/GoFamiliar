@@ -37,7 +37,6 @@ def expanded_root(unexpanded_root):
         else:
             increasing_counter += 1
             assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
-
     return unexpanded_root
 
 
@@ -60,28 +59,29 @@ def test_root(unexpanded_root):
 def test_children(expanded_root):
     assert len(expanded_root.children) == 361 - 23 - 2
 
-    testing_lambdas = [lambda x: x.state,
-                       lambda x: x.state.board,
-                       lambda x: x.name,]
+    testing_lambdas = [(lambda x: x.state),
+                       (lambda x: x.state.actions),
+                       (lambda x: x.state.board),
+                       (lambda x: x.state.board._pointers),
+                       (lambda x: x.state.board._liberties),]
 
     # test that nodes aren't sharing the same mutable objects
-    mutable_objects = [[func(node) for node in expanded_root.children.values()]
-                                    for func in testing_lambdas]
-    mutable_objects += [func(expanded_root) for func in testing_lambdas]
+    all_nodes = list(expanded_root.children.values()) + [expanded_root]
+    mutable_objects = [ [func(node) for node in all_nodes] for func in testing_lambdas]
 
     for mutable_objs in mutable_objects:
         for obj1, obj2 in itertools.combinations(mutable_objs, r=2):
             assert type(obj1) == type(obj2)
             assert obj1 is not obj2
 
-    for node in expanded_root.children:
+    for node in expanded_root.children.values():
         assert node.parent is expanded_root
         assert node.sims == 1
 
     assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
-    assert expanded_root.wins == -sum([child.wins for child in expanded_root.children.values()])
+    assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
-    best = expanded_root.best_child()
+    best = expanded_root.bestchild()
     assert best.wins == -1      # white move
     assert best in expanded_root.children.values()
     assert type(best) == mcts.NodeMCTS
