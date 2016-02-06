@@ -16,11 +16,14 @@ class NodeMCTS(tree.Node):
     """
     A node of MC search tree
     """
-    def __init__(self, state, children=None):
+    def __init__(self, state, name=None, children=None):
         """
         Initialize a MCTS node object
         """
-        self.name = state.last_move,
+        if name is None:
+            self.name = state.lastmove
+        else:
+            self.name = name
         self.state = state
         self.wins = 0
         self.sims = 0
