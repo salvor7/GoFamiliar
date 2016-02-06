@@ -70,7 +70,7 @@ class NodeMCTS(tree.Node):
         self.sims += 1
         self.wins += winner
         self.update_parent(value=winner)
-        print(terminal_state.board)
+
         return terminal_state, moves
 
     def update_parent(self, value):

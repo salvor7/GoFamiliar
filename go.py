@@ -30,7 +30,7 @@ class Group(namedtuple('Group','colour stones')):
             else:
                 return str(self.colour)
 
-        if self is OPEN_POINT:
+        if self == OPEN_POINT:
             return 'OPEN POINT'
         else:
             return '(' + name() + ' Group, size {0}, at {1})'.format(len(self.stones), self.stones)
@@ -238,18 +238,18 @@ class Board():
         """
         del self._pointers[key]
 
-    # def __deepcopy__(self, memo):
-    #     """Return a mid depth copy of self
-    #
-    #     Not all the mutable properties change, so multiple Board objects can point to the
-    #     same sub-object without conflict.
-    #     :return: Board
-    #     """
-    #     board = copy(self)
-    #     board._liberties = deepcopy(self._liberties)
-    #     board._pointers = copy(self._pointers)
-    #
-    #     return board
+    def __deepcopy__(self, memo):
+        """Return a mid depth copy of self
+
+        Not all the mutable properties change, so multiple Board objects can point to the
+        same sub-object without conflict.
+        :return: Board
+        """
+        board = copy(self)
+        board._liberties = deepcopy(self._liberties)
+        board._pointers = copy(self._pointers)
+
+        return board
 
     def colour(self, pt):
         """Find the colour of the board at pt
@@ -395,7 +395,7 @@ class Board():
         6
         """
         group = self._find(node=group_pt)
-        if group is OPEN_POINT:
+        if group == OPEN_POINT:
             raise BoardError('Open point does not have liberties')
 
         for crawl_pt in self._board_crawl(start_pt=group_pt):
