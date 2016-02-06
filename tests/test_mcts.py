@@ -22,94 +22,81 @@ def position_moves():
 @pytest.fixture()
 def unexpanded_root(position_moves):
     position, moves = position_moves
-    node_data = {'name': list(moves.keys())[-1],
-             'state': position,
-             'defaultpolicy': position.random_playout,
-             'wins': 0,
-             'sims': 0,
-             'parent': None,}
-    return tree.Node(node_data=node_data)
+
+    return mcts.NodeMCTS(state=position, name='root')
 
 
 @pytest.fixture()
 def expanded_root(unexpanded_root):
-    for action in unexpanded_root.data['state'].actions:
+    increasing_counter = 0
+    while True:
         try:
-            child = mcts.expand(node=unexpanded_root, action=action)
+            _ = unexpanded_root.new_child()
         except go.MoveError:
-            continue
-        reward = mcts.defaultpolicy(child)
-        mcts.backup(node=child, reward=reward)
+            break
+        else:
+            increasing_counter += 1
+            assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
     return unexpanded_root
 
 
 def test_root(unexpanded_root):
-    action = next(unexpanded_root.data['defaultpolicy'])
-    child = mcts.expand(node=unexpanded_root, action=action)
-    assert type(child) == tree.Node
-    assert child in unexpanded_root.children
+    assert unexpanded_root.name is 'root'
+    child = unexpanded_root.new_child()
+    assert type(child) == mcts.NodeMCTS
+    assert child in unexpanded_root.children.values()
 
-    assert child.data['name'] == action[0]
-    assert type(child.data['state']) == type(unexpanded_root.data['state'])
-    assert type(child.data['defaultpolicy']) == type(unexpanded_root.data['defaultpolicy'])
-    assert child.data['wins'] == 0
-    assert child.data['sims'] == 0
-    assert child.data['parent'] == unexpanded_root
+    assert type(child.name) == int
+    assert type(child.state) == type(unexpanded_root.state)
+    assert child.wins in [1, -1]
+    assert child.sims == 1
+    assert child.parent is unexpanded_root
 
-    reward = mcts.defaultpolicy(child)
-    mcts.backup(child, reward)
-    assert child.data['sims'] == 1
-    assert unexpanded_root.data['sims'] == 1
-    assert child.data['wins'] == reward and child.data['wins'] == -unexpanded_root.data['wins']
+    assert child.sims == unexpanded_root.sims
+    assert child.wins == unexpanded_root.wins
 
 
 def test_children(expanded_root):
     assert len(expanded_root.children) == 361 - 23 - 2
 
-    testing_lambdas = [lambda x: x.data['state'],
-                       lambda x: x.data['state'].board,
-                       lambda x: x.data['state'].groups,
-                       lambda x: x.data['defaultpolicy'],
-                       lambda x: x.data['name'],]
+    testing_lambdas = [lambda x: x.state,
+                       lambda x: x.state.board,
+                       lambda x: x.name,]
 
-    mutable_objects = [[func(node) for node in expanded_root.children + [expanded_root]]
-                       for func in testing_lambdas]
+    # test that nodes aren't sharing the same mutable objects
+    mutable_objects = [[func(node) for node in expanded_root.children.values()]
+                                    for func in testing_lambdas]
+    mutable_objects += [func(expanded_root) for func in testing_lambdas]
+
     for mutable_objs in mutable_objects:
         for obj1, obj2 in itertools.combinations(mutable_objs, r=2):
             assert type(obj1) == type(obj2)
             assert obj1 is not obj2
 
     for node in expanded_root.children:
-        assert node.data['parent'] is expanded_root
-        assert node.data['sims'] == 1
+        assert node.parent is expanded_root
+        assert node.sims == 1
 
-    assert expanded_root.data['sims'] == sum([child.data['sims'] for child in expanded_root.children])
-    assert expanded_root.data['wins'] == -sum([child.data['wins'] for child in expanded_root.children])
+    assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
+    assert expanded_root.wins == -sum([child.wins for child in expanded_root.children.values()])
 
-    best = mcts.bestchild(expanded_root)
-    assert best.data['wins'] == 1
-    assert best in expanded_root.children
-    assert type(best) == tree.Node
+    best = expanded_root.best_child()
+    assert best.wins == -1      # white move
+    assert best in expanded_root.children.values()
+    assert type(best) == mcts.NodeMCTS
 
-    child = mcts.treepolicy(expanded_root)
-    assert type(child) == tree.Node
-    assert child in best.children
-
-    reward = mcts.defaultpolicy(child)
-    mcts.backup(node=child, reward=reward)
-    assert best.data['sims'] == 2
-    assert best.data['wins'] == 1 + reward
-    assert expanded_root.data['sims'] == 1 + sum([child.data['sims']
-                                                      for child in expanded_root.children])
-    assert expanded_root.data['wins'] == reward + sum([child.data['wins']
-                                                       for child in expanded_root.children])
+    next_child = best.new_child()
+    assert best.sims == 2
+    assert best.wins == -1 + next_child.wins
+    assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
+    assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
 
 def test_search_open_board(position, position_moves):
     move_pt = None
     for idx in range(19 ** 2 * 3):
         try:
-            move_pt, last_pt = mcts.search(position), move_pt
+            move_pt, last_pt = mcts.search(position, sim_limit=10), move_pt
         except go.MoveError as err:
             assert str(err) == 'Terminal Position'
             break
