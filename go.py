@@ -499,6 +499,14 @@ class Position():
                 eyes += sum(neigh_col)
         return stones + eyes + self.komi
 
+    def winner(self):
+        """Return the winner of self
+
+        :return: +/-1
+        """
+        score = self.score()
+        return int(score/abs(score))
+
     def _move_coroutine(self, move_pt, colour=None):
         """A coroutine splitting of the move function into check and updates
 

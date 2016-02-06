@@ -55,7 +55,7 @@ class NodeMCTS(tree.Node):
         Updates the result up the tree.
         """
         terminal_state, moves = self.state.random_playout()
-        term_value = terminal_state.value()
+        winner = terminal_state.winner()
         self.sims += 1
         self.wins += term_value
         self.update_parent(value=term_value)
