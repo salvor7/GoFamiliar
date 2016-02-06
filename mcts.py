@@ -28,7 +28,7 @@ class NodeMCTS(tree.Node):
         self.wins = 0
         self.sims = 0
         super(NodeMCTS, self).__init__(children=children)
-        children = {}
+        self.children = {}
 
     @property
     def colour(self):
@@ -52,7 +52,7 @@ class NodeMCTS(tree.Node):
         Add a new child node and play it out
         """
         new_state=deepcopy(self.state)
-        new_state.random_move(tried=self.children.key())
+        new_state.random_move(tried=self.children.keys())
 
         child = NodeMCTS(state=new_state)
         self.add(child)
@@ -68,8 +68,10 @@ class NodeMCTS(tree.Node):
         terminal_state, moves = self.state.random_playout()
         winner = terminal_state.winner()
         self.sims += 1
-        self.wins += term_value
-        self.update_parent(value=term_value)
+        self.wins += winner
+        self.update_parent(value=winner)
+        print(terminal_state.board)
+        return terminal_state, moves
 
     def update_parent(self, value):
         """

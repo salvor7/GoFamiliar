@@ -668,8 +668,7 @@ class Position():
                 passes +=1
             else:
                 passes = 0
-        print(position.board)
-        return position
+        return position, moves
 
 
 class MoveError(Exception):

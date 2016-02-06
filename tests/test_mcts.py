@@ -37,6 +37,7 @@ def expanded_root(unexpanded_root):
         else:
             increasing_counter += 1
             assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
+
     return unexpanded_root
 
 
