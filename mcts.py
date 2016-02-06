@@ -100,37 +100,30 @@ def search(state, sim_limit=100, const=0):
     :param const: float
     :return: action
     """
-    node_data = {'name':None,
-                'state':state,
-                 'defaultpolicy':state.random_playout,
-                 'wins':0,
-                 'sims':0,
-                 'parent':None,}
-    root = tree.Node(node_data=node_data)
-    node = root
-    while root.data['sims'] < sim_limit:
-        node = treepolicy(node, const=const)
-        reward = defaultpolicy(node)
-        backup(node, reward)
+    def treepolicy(root):
+        """Simulate a select node
 
-    return bestchild(root, c=0).data['name']
-
-
-def treepolicy(node, const=0):
-    """Find a node to simulate a game for.
-
-    :param node: tree.Node
-    :param const: float
-    :return: tree.Node
-    """
-    while True:
-        try:
-            action = next(node.data['actions'])
-        except StopIteration:
+        :param root: NodeMCTS
+        :param const: float
+        :return: NodeMCTS
+        """
+        node = root
+        while True:
             try:
-                node = bestchild(node, c=const)
-            except IndexError:
-                break
-        else:
-            return expand(node, action)
-    return node
+                new_child = node.new_child()
+            except go.MoveError:    # no moves to expand node with
+                try:
+                    node = node.bestchild(c=const)
+                except ValueError:      # no children either, so terminal position
+                    return node
+            else:
+                return new_child
+
+    root = NodeMCTS(state=state)
+    while root.sims < sim_limit:
+        treepolicy(root)
+
+    return root.bestchild(c=0).name
+
+
+
