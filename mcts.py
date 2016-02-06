@@ -36,6 +36,14 @@ class NodeMCTS(tree.Node):
         """
         return self.state.next_player
 
+    def add(self, child):
+        """
+
+        :param child: NodeMCTS
+        """
+        child.parent = self
+        self.children[child.name] = child
+
     def new_child(self):
         """
         Add a new child node and play it out
@@ -44,7 +52,7 @@ class NodeMCTS(tree.Node):
         new_state.random_move(tried=self.children.key())
 
         child = NodeMCTS(state=new_state)
-        self.children[child.name] = child
+        self.add(child)
         child.random_sim()
         return child
 
