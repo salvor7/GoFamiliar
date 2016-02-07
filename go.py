@@ -195,11 +195,11 @@ class Board():
 
         repre = ''
         for pt in self:
-            if self.colour(pt) == BLACK:
+            if self._pointers[pt].colour == BLACK:
                 repre += BLACKstr
-            elif self.colour(pt) == WHITE:
+            elif self._pointers[pt].colour == WHITE:
                 repre += WHITEstr
-            elif self.colour(pt) == OPEN:
+            elif self._pointers[pt].colour == OPEN:
                 repre += OPENstr
 
             if (pt + 1) % self.size == 0:
@@ -259,7 +259,7 @@ class Board():
         >>> Board().colour(200) == OPEN
         True
         """
-        return self[pt].colour
+        return self._pointers[pt].colour
 
     def change_colour(self, pt, new_colour):
         """Change the colour at pt
@@ -286,12 +286,12 @@ class Board():
 
         for pt in points:
             if new_colour is OPEN:
-                self[pt] = OPEN_POINT
-            elif self.colour(pt) != new_colour:
+                self._pointers[pt] = OPEN_POINT
+            elif self._pointers[pt].colour != new_colour:
 
-                self[pt] = Group(colour=new_colour, stones=frozenset({pt}))
+                self._pointers[pt] = Group(colour=new_colour, stones=frozenset({pt}))
                 try:
-                    del self[self[pt]]      # ensure no old trees are revived
+                    del self._pointers[self._pointers[pt]]      # ensure no old trees are revived
                 except KeyError:
                     pass
 
@@ -309,10 +309,10 @@ class Board():
         parent = node
         while True:
             try:
-                parent = self[parent]
+                parent = self._pointers[parent]
             except KeyError:
                 break
-        self[node] = parent # shrink union-find pointer tree
+        self._pointers[node] = parent # shrink union-find pointer tree
         return parent
 
     def _find_liberties(self, node):
@@ -346,11 +346,11 @@ class Board():
 
         union_group = Group(colour=f_group.colour, stones=f_group.stones | s_group.stones)
         try:
-            del self[union_group]       # ensure no old trees are revived
+            del self._pointers[union_group]       # ensure no old trees are revived
         except KeyError:
             pass
-        self[s_group] = union_group
-        self[f_group] = union_group
+        self._pointers[s_group] = union_group
+        self._pointers[f_group] = union_group
         self._liberties[union_group] |= (self._liberties[f_group] | self._liberties[s_group])
         for group in [f_group, s_group]:
             try:
@@ -366,7 +366,7 @@ class Board():
         :param start_pt: int
         :yield: int
         """
-        crawl_colour = self.colour(start_pt)
+        crawl_colour = self._pointers[start_pt].colour
         to_search = {start_pt}
         searched = set()
         while to_search:
@@ -374,7 +374,7 @@ class Board():
             yield search_pt     # yield start_pt coloured stones
             searched |= {search_pt}
             for neigh_pt in self.neighbors[search_pt]:
-                if (self.colour(neigh_pt) != crawl_colour):
+                if (self._pointers[neigh_pt].colour != crawl_colour):
                     yield neigh_pt
                     searched |= {neigh_pt}
                 elif (neigh_pt not in searched):
@@ -401,7 +401,7 @@ class Board():
         for crawl_pt in self._board_crawl(start_pt=group_pt):
             if len(self._liberties[group]) >= limit:
                 break
-            elif self.colour(crawl_pt) is OPEN:
+            elif self._pointers[crawl_pt].colour is OPEN:
                 self._liberties[group] |= {crawl_pt}
             try:
                 group = self._union(group_pt, crawl_pt)
@@ -493,10 +493,10 @@ class Position():
         """
         stones = sum([self.board.colour(pt) for pt in self.board])
         eyes = 0
-        if abs(stones + self.komi) <= len(self.actions):
-            for pt in self.actions:
-                neigh_col = set(self.board.colour(neigh_pt) for neigh_pt in self.board.neighbors[pt])
-                eyes += sum(neigh_col)
+
+        for pt in self.actions:
+            neigh_col = set(self.board.colour(neigh_pt) for neigh_pt in self.board.neighbors[pt])
+            eyes += sum(neigh_col)
         return stones + eyes + self.komi
 
     def winner(self):
