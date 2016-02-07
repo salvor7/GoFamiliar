@@ -147,7 +147,6 @@ def test_position_playout(position):
                             assert board._find(node=neigh_pt) == go.OPEN_POINT
                 else:
                     assert pt in position.actions
-    print(position.board)
 
 
 def test_move_exceptions(position_moves):
@@ -196,7 +195,7 @@ def test_Position_actions(position_moves):
     position.move(move_pt=s**2-1, colour=go.WHITE)
     assert {s**2-s-1, s**2-3, s**2-4, s**2-s-2, s**2-2}.issubset(position.actions)
 
-    term_position = position.random_playout()
+    term_position, moves = position.random_playout()
     for action in term_position.actions:
         with pytest.raises(go.MoveError):
             term_position.move(action, colour=go.BLACK)
@@ -211,25 +210,21 @@ def test_score(position_moves):
     komi = -7.5
     assert position.score() == black_stones + black_liberties - white_stones - white_liberties + komi
 
-    term_position = position.random_playout()
+    term_position, moves = position.random_playout()
     assert term_position is not position
 
-    black_stones, white_stones = 0, 0
-    black_liberties, white_liberties = set(), set()
-    for group in term_position.board._liberties:
-        if group.colour == 1:
-            black_stones += group.size
-            black_liberties |= term_position.board._liberties[group]
+    score = term_position.komi
+    for pt in term_position.board:
+        score += term_position.board.colour(pt)
+        if term_position.board.colour(pt) == go.OPEN:
+            # will find the 1 neighbor colour unless it is a seki liberty, then its 0
+            neigh_colours = set([term_position.board[neigh_pt].colour
+                                    for neigh_pt in term_position.board.neighbors[pt]])
         else:
-            white_stones += group.size
-            white_liberties |= term_position.board._liberties[group]
+            neigh_colours = []
+        score += sum(neigh_colours)
 
-    black_score = black_stones + len(black_liberties)
-    white_score = white_stones + len(white_liberties)
-    assert black_score + white_score > 0
-
-    calculated_score = term_position.score()
-    assert black_score - white_score + term_position.komi == calculated_score
+    assert score == term_position.score()
 
 
 def test_Group_init():
