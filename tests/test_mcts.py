@@ -123,7 +123,7 @@ def tsumego(request):
 
 def test_tsumego_solving(tsumego):
     position, correct_move = tsumego
-    found_move = mcts.search(position)
+    found_move = mcts.search(position, sim_limit=500)
     assert correct_move == found_move
 
 if __name__ == '__main__':

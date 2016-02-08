@@ -654,7 +654,7 @@ class Position():
         """Return score after playing to a terminal position randomly
 
         :return: float
-        >>> type(Position(size=9).random_playout())
+        >>> type(Position(size=9).random_playout()[0])
         <class 'go.Position'>
         """
         position = deepcopy(self)

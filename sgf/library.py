@@ -71,7 +71,7 @@ class Library():
         :param sgf_name: str
         :return: godata.Position
         >>> type(Library(doctest_dir, doctest_file).sgf_position('chap075'))
-        <class 'godata.Position'>
+        <class 'go.Position'>
         """
         sgf_data = self[sgf_name]
         d = dict(sgf_data.attrs)

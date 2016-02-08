@@ -102,7 +102,7 @@ class NodeMCTS(tree.Node):
             n = node.sims
             col = self.colour       # white scores negative
             N = node.parent.sims
-            return col * w / n + c * sqrt(2 * log(N) / n)
+            return (col * w / n) + c * sqrt(2 * log(N) / n)
 
         return max(self.children.values(), key=conf_score)
 
