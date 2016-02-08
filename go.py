@@ -507,7 +507,7 @@ class Position():
         score = self.score()
         return int(score/abs(score))
 
-    def _move_coroutine(self, move_pt, colour=None, playback=True):
+    def _move_coroutine(self, move_pt, colour=None):
         """A coroutine splitting of the move function into check and updates
 
         The expense of move is quite large, and a substantial part of that is the checks
@@ -518,13 +518,8 @@ class Position():
         to be raised without completing the move itself.
         An example of how to use this coroutine is the self.move function.
 
-        Playback refers to playing back into spots stones have been captured from. In
-        general, this is desirable as it is in the rules, but it is rarely useful. And in
-        playout, allowing play back extends the playout well past a normal length game, so
-        disallowing it in random playout will reduce the time spent.
         :param move_pt: int
         :param colour: +1/-1
-        :param playback: boolean
         :raise: MoveError
         :raise: StopIteration
         :return: coroutine generator
@@ -577,7 +572,7 @@ class Position():
             raise MoveError('Playing in a ko locked point')
         elif self.board.colour(pt=move_pt) is not OPEN:
             raise MoveError('Playing on another stone')
-        elif playback and friendly_eye(move_pt, colour):
+        elif friendly_eye(move_pt, colour):
             raise MoveError('Playing in a friendly eye')
 
         neigh_dead = defaultdict(set)
@@ -589,8 +584,7 @@ class Position():
 
         self.board.change_colour(pt=move_pt, new_colour=colour)
         captured = self.board.remove_group(dead_node=neigh_dead[-colour])
-        if playback:
-            self.actions |= captured
+        self.actions |= captured
         self.actions -= {move_pt}
 
         self.kolock = captured.pop() if len(captured) == 1 else None # single stone caught
@@ -598,7 +592,7 @@ class Position():
         self.next_player = -colour
         self.lastmove = move_pt
 
-    def move(self, move_pt, colour=None, playback=True):
+    def move(self, move_pt, colour=None):
         """Play a move on a go board
 
         :param pt: int
@@ -616,7 +610,7 @@ class Position():
         if colour is None:
             colour = self.next_player
 
-        move_routine = self._move_coroutine(move_pt=move_pt, colour=colour, playback=playback)
+        move_routine = self._move_coroutine(move_pt=move_pt, colour=colour)
         next(move_routine)      # prime the coroutine ie execute to first yield
         try:
             next(move_routine)      # complete the coroutine
@@ -634,7 +628,7 @@ class Position():
         self.kolock = None
         self.lastmove = None
 
-    def random_move(self, tried=None, playback=True):
+    def random_move(self, tried=None):
         """Play one random move
 
         Legal move choosen uniformly at random and taken if possible
@@ -649,14 +643,14 @@ class Position():
             sample_list =  random.sample(self.actions - tried, k=1)
             move_pt = sample_list[0]
             try:
-                self.move(move_pt, playback=playback)
+                self.move(move_pt)
             except MoveError:
                 tried |= {move_pt}
             else:
                 return move_pt
         raise MoveError('No moves to take')
 
-    def random_playout(self, playback=True):
+    def random_playout(self):
         """Return score after playing to a terminal position randomly
 
         :return: float
@@ -668,7 +662,7 @@ class Position():
         moves = []
         while passes < 2:
             try:
-                moves.append(position.random_move(playback=playback))
+                moves.append(position.random_move())
             except MoveError:
                 position.pass_move()
                 passes +=1
