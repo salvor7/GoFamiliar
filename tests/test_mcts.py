@@ -81,16 +81,17 @@ def test_children(expanded_root):
     assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
     assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
-    best = expanded_root.bestchild()
-    assert best.wins == -1      # white move
-    assert best in expanded_root.children.values()
-    assert type(best) == mcts.NodeMCTS
+    for idx in range(1, 400):
+        best1stgen = expanded_root.bestchild()
+        assert best1stgen.wins < 0      # white move
+        assert best1stgen in expanded_root.children.values()
+        assert type(best1stgen) == mcts.NodeMCTS
 
-    next_child = best.new_child()
-    assert best.sims == 2
-    assert best.wins == -1 + next_child.wins
-    assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
-    assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
+        child2ndgen = best1stgen.new_child()
+        assert best1stgen.sims == 1 + sum([child.sims for child in best1stgen.children.values()])
+        assert best1stgen.wins == -1 + sum([child.wins for child in best1stgen.children.values()])
+        assert expanded_root.sims == 361 - 23 - 2 + idx
+        assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
 
 def test_search_open_board(position, position_moves):
