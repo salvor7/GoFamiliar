@@ -94,22 +94,18 @@ def test_children(expanded_root):
         assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
 
-def test_search_open_board(position, position_moves):
+def test_search_open_board():
     move_pt = None
-    for idx in range(19 ** 2 * 3):
+    position = go.Position(size=9, komi=0.5)
+    for idx in range(4):
         try:
-            move_pt, last_pt = mcts.search(position, sim_limit=10), move_pt
+            move_pt, last_pt = mcts.search(position, sim_limit=200), move_pt
         except go.MoveError as err:
             assert str(err) == 'Terminal Position'
             break
         assert type(move_pt) is int
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
-    else:
-        assert 'it is an' == 'infinite loop'
-    assert idx > 200
-
-
         print(position.board)
 
 
