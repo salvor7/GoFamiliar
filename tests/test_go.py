@@ -126,12 +126,13 @@ def test_position_playout(position):
     """Added to test a bug where during playout stones were not being removed
     when they had no liberties.
     """
+    playback = False
     passes = 0
     moves = []
     board = position.board
     while passes < 2:
         try:
-            moves.append(position.random_move())
+            moves.append(position.random_move(playback=playback))
         except go.MoveError:
             position.pass_move()
             passes +=1
@@ -146,7 +147,9 @@ def test_position_playout(position):
                         except go.BoardError:
                             assert board._find(node=neigh_pt) == go.OPEN_POINT
                 else:
-                    assert pt in position.actions
+                    assert (not playback) or (pt in position.actions)
+    print()
+    print(position.board)
 
 
 def test_move_exceptions(position_moves):
