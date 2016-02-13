@@ -9,13 +9,70 @@ WHITE = -1
 OPEN = 0
 
 
-class Group(namedtuple('Group','colour stones')):
-    """An object to carry the immutable elements of a group
+class Group:
     """
+    A object to tracking colour, size and liberties
+
+    >>> Group(colour=BLACK, stones={60}, liberties={61})
+    BLACK Group size=1 libs=1
+    """
+    def __init__(self, colour, stones, liberties=None):
+        """Initialize a Group
+
+        :param colour: +1/-1
+        :param stones: iter
+        :param liberties: iter
+        :return: None
+        """
+        self.colour = colour
+        self._stones = set(stones)
+
+        if liberties is None:
+            self._liberties = set()
+        else:
+            self._liberties = set(liberties)
+
     @property
     def size(self):
         """:return: int for how big the group is"""
-        return len(self.stones)
+        return len(self._stones)
+
+    @property
+    def liberties(self):
+        """:return: number of _liberties
+        """
+        return len(self._liberties)
+
+    def add_lib(self, pt):
+        """Add pt as a liberty of self
+
+        :param pt: int
+        """
+        self._liberties |= {pt}
+
+    def remove_lib(self, pt):
+        """Remove pt as a liberty of self
+
+        :param pt: int
+        """
+        self._liberties -= {pt}
+
+    def combine(self, other):
+        """
+        Combine other into self
+
+        Logically this occurs when it is discovered that the two groups are beside each
+        other on a game board, though that is constraint is not enforced by this method.
+        Be cautious when combining groups, as they can be combined by this method even
+        when they are not adjacent.
+
+        :param other: Group
+        """
+        if self.colour != other.colour:
+            raise GroupError('Cannot combine different player groups')
+
+        self._stones |= other._stones
+        self._liberties |= other._liberties
 
     def __repr__(self):
         """Group representation
@@ -30,13 +87,12 @@ class Group(namedtuple('Group','colour stones')):
             else:
                 return str(self.colour)
 
-        if self == OPEN_POINT:
-            return 'OPEN POINT'
-        else:
-            return '(' + name() + ' Group, size {0}, at {1})'.format(len(self.stones), self.stones)
+        return name() + ' Group size={0} libs={1}'.format(len(self._stones), self.liberties)
 
 
-OPEN_POINT = Group(colour=OPEN, stones=frozenset())
+class GroupError(Exception):
+    """Errors occuring due to the misfunctioning of Group objects"""
+    pass
 
 
 def make_boxes(size=19):
@@ -157,14 +213,13 @@ class Board():
     def __init__(self, size=19):
         """Initialize a Board object
 
-        Board uses a union find data structure using pointers in a dictionary
+        Board uses a union find data structure using _pointers in a dictionary
         :param size: int
         >>> b = Board()
         """
         self.neighbors, self.diagonals = NEIGHBORS[size], DIAGONALS[size]
-        self._liberties = defaultdict(set)
         self.size = size
-        self._pointers = {idx:OPEN_POINT for idx in range(size ** 2)}
+        self._pointers = [None for _ in range(size ** 2)]
 
     def __iter__(self):
         """Iterator over the size**2 board points
@@ -195,11 +250,11 @@ class Board():
 
         repre = ''
         for pt in self:
-            if self._pointers[pt].colour == BLACK:
+            if self.colour(pt) == BLACK:
                 repre += BLACKstr
-            elif self._pointers[pt].colour == WHITE:
+            elif self.colour(pt) == WHITE:
                 repre += WHITEstr
-            elif self._pointers[pt].colour == OPEN:
+            elif self.colour(pt) == OPEN:
                 repre += OPENstr
 
             if (pt + 1) % self.size == 0:
@@ -211,7 +266,7 @@ class Board():
 
         :param item: int or Group
         :return: Group
-        >>> Board()[200] == OPEN_POINT
+        >>> Board()[200] is None
         True
         """
         return self._pointers[item]
@@ -222,21 +277,14 @@ class Board():
         :param key: int or Group
         :param value: Group
         >>> board = Board()
-        >>> board[200] = Group(colour=BLACK, stones=frozenset({200}))
-        >>> board[200].colour == BLACK
+        >>> board[200] = Group(colour=BLACK, stones={200})
+        >>> board.colour(200) == BLACK
         True
         """
         if type(value) is Group:
             self._pointers[key] = value
         else:
             raise BoardError('Expected Group. Got ' + str(type(value)))
-
-    def __delitem__(self, key):
-        """Delete an item from pointers using a special method
-
-        :param key: node
-        """
-        del self._pointers[key]
 
     def __deepcopy__(self, memo):
         """Return a mid depth copy of self
@@ -246,8 +294,7 @@ class Board():
         :return: Board
         """
         board = copy(self)
-        board._liberties = deepcopy(self._liberties)
-        board._pointers = copy(self._pointers)
+        board._pointers = deepcopy(self._pointers)
 
         return board
 
@@ -259,7 +306,11 @@ class Board():
         >>> Board().colour(200) == OPEN
         True
         """
-        return self._pointers[pt].colour
+        if self._pointers[pt] is None:
+            return OPEN
+        else:
+            group, _ = self._find(pt)
+            return group.colour
 
     def change_colour(self, pt, new_colour):
         """Change the colour at pt
@@ -286,78 +337,57 @@ class Board():
 
         for pt in points:
             if new_colour is OPEN:
-                self._pointers[pt] = OPEN_POINT
-            elif self._pointers[pt].colour != new_colour:
-
-                self._pointers[pt] = Group(colour=new_colour, stones=frozenset({pt}))
-                try:
-                    del self._pointers[self._pointers[pt]]      # ensure no old trees are revived
-                except KeyError:
-                    pass
+                self._pointers[pt] = None
+            else:
+                self._pointers[pt] = Group(colour=new_colour,
+                                           stones={pt}, )
 
                 for neigh_pt in self.neighbors[pt]:     # remove pt as a liberty
-                    neigh_group = self._find(neigh_pt)
-                    self._liberties[neigh_group] -= {pt}
+                    neigh_group, _ = self._find(neigh_pt)
+                    try:
+                        neigh_group.remove_lib(pt)
+                    except AttributeError:
+                        pass    # group is None
 
-    def _find(self, node):
-        """Follow pointers to top Group
+    def _find(self, pt):
+        """Follow _pointers to Group
 
-        Updates the pointers also to make future searches require fewer loops
-        :param node: int or Group
-        :return: Group
+        Updates the _pointers also to make future searches require fewer loops
+        :param pt: int
+        :return: Group, int
         """
-        parent = node
-        while True:
-            try:
-                parent = self._pointers[parent]
-            except KeyError:
-                break
-        self._pointers[node] = parent # shrink union-find pointer tree
-        return parent
-
-    def _find_liberties(self, node):
-        """Find the liberties of the Group at node
-
-        :param node: int or Group
-        :return: set
-        """
-        group = self._find(node)
-        if group is OPEN_POINT:
-            raise BoardError('Open points do not have liberties')
-        return self._liberties[group]
+        parent = self._pointers[pt]
+        try:
+            group, g_at = self._find(pt=parent)
+        except TypeError:
+            return parent, pt
+        else:
+            if pt is not g_at:
+                self._pointers[pt] = g_at
+            return group, g_at
 
     def _union(self, f_node, s_node):
         """Union two groups into one
 
-        Union is performed favouring the group with the most liberties.
-        Liberties is used as a correlate of group size, so generally, the smaller group
-        is added to the larger group to make _find act quicker.
-        :param f_node: int or Group
-        :param s_node: int of Group
+        Union is performed favouring the group with the most _stones.
+        :param f_node: int
+        :param s_node: int
         :return: Group
         """
-        f_group, s_group = self._find(f_node), self._find(s_node)
-        if f_group == s_group:
-            raise BoardError('Cannot union same group')
-        elif f_group.colour != s_group.colour:
-            raise BoardError('Cannot union different colour stones')
-        elif f_group is OPEN_POINT:
-            raise BoardError('Cannot union with OPEN POINT')
+        (f_group, f_at), (s_group, s_at) = self._find(f_node), self._find(s_node)
 
-        union_group = Group(colour=f_group.colour, stones=f_group.stones | s_group.stones)
-        try:
-            del self._pointers[union_group]       # ensure no old trees are revived
-        except KeyError:
-            pass
-        self._pointers[s_group] = union_group
-        self._pointers[f_group] = union_group
-        self._liberties[union_group] |= (self._liberties[f_group] | self._liberties[s_group])
-        for group in [f_group, s_group]:
-            try:
-                del self._liberties[group]
-            except KeyError:
-                pass
-        return union_group
+        if f_group is None or s_group is None:
+            raise BoardError('Cannot union with an open point')
+        elif f_group is s_group:
+            return f_group
+        elif f_group.size >= s_group.size:
+            f_group.combine(s_group)
+            self._pointers[s_at] = f_at
+        else:
+            s_group.combine(f_group)
+            self._pointers[f_at] = s_at
+
+        return self._find(f_at)[0]
 
     def _board_crawl(self, start_pt):
         """Generator of the points and neighbors of a single colour area
@@ -366,49 +396,48 @@ class Board():
         :param start_pt: int
         :yield: int
         """
-        crawl_colour = self._pointers[start_pt].colour
+        crawl_colour = self.colour(start_pt)
         to_search = {start_pt}
         searched = set()
         while to_search:
             search_pt = to_search.pop()
-            yield search_pt     # yield start_pt coloured stones
+            yield search_pt     # yield start_pt coloured _stones
             searched |= {search_pt}
             for neigh_pt in self.neighbors[search_pt]:
-                if (self._pointers[neigh_pt].colour != crawl_colour):
+                if (self.colour(neigh_pt) != crawl_colour):
                     yield neigh_pt
                     searched |= {neigh_pt}
                 elif (neigh_pt not in searched):
                     to_search |= {neigh_pt}
 
-    def group_liberties(self, group_pt, limit=3):
-        """Return liberties of the group at group_pt
+    def discover_liberties(self, group_pt, limit=3):
+        """Discover more _liberties of the group at group_pt
 
         If limit is finite, then the search is terminated when a certain number of
-        liberties have been found. Most liberty questions only require knowning if there
-        are 1, 2, or more liberties.
+        _liberties have been found. Most liberty questions only require distinguishing
+        1, 2, or more _liberties.
         :param group_pt: int
         :limit: float
         :return: int
         >>> board = Board()
         >>> board.change_colour(pt=[20, 21], new_colour=BLACK)
-        >>> len(board.group_liberties(group_pt=20, limit=8))
+        >>> board.discover_liberties(group_pt=20, limit=8)
         6
         """
-        group = self._find(node=group_pt)
-        if group == OPEN_POINT:
-            raise BoardError('Open point does not have liberties')
-
+        group, _ = self._find(pt=group_pt)
+        if group is None:
+            raise BoardError("Open point does not have liberties")
         for crawl_pt in self._board_crawl(start_pt=group_pt):
-            if len(self._liberties[group]) >= limit:
+            if group.liberties >= limit:
                 break
-            elif self._pointers[crawl_pt].colour is OPEN:
-                self._liberties[group] |= {crawl_pt}
             try:
                 group = self._union(group_pt, crawl_pt)
             except BoardError:
+                group.add_lib(crawl_pt)
+            except GroupError:
                 pass
 
-        return self._liberties[group]
+        return group.liberties
 
     def remove_group(self, dead_node=None):
         """Remove a group and return the captured stone locations
@@ -424,25 +453,28 @@ class Board():
             dead_nodes = iter(dead_node)
         except TypeError:
             dead_nodes = [dead_node]
-        groups_to_remove = set(self._find(node=node) for node in dead_nodes)
+        groups_to_remove = set(self._find(pt=node) for node in dead_nodes)
         captured = set()
-        for dead_group in groups_to_remove:
-            try:
-                del self._liberties[dead_group]     # no liberties explored yet
-            except KeyError:
-                pass
-            captured |= set(dead_group.stones)
-            self.change_colour(pt=dead_group.stones, new_colour=OPEN)
+        for dead_group, _ in groups_to_remove:
+            captured |= set(dead_group._stones)
+            self.change_colour(pt=dead_group._stones, new_colour=OPEN)
         return captured
 
-    def collapse_uftree(self):
+    def discover_all_libs(self):
         """Run full liberty search and find on every pt on board
 
         This will ensure every point only points at the actual group object it is apart of
+        >>> board = Board()
+        >>> board.change_colour(pt=[20, 21, 23], new_colour=BLACK)
+        >>> board.discover_all_libs()
+        >>> board._find(pt=20)[0].liberties
+        6
+        >>> board._find(pt=23)[0].liberties
+        4
         """
         for pt in self:
             try:
-                self.group_liberties(group_pt=pt, limit=np.infty)
+                self.discover_liberties(group_pt=pt, limit=np.infty)
             except BoardError:
                 pass
             self._find(pt)
@@ -533,27 +565,27 @@ class Position():
                 opp_count = 0
                 diags = self.board.diagonals[pt]
                 for diag_pt in diags:
-                    if self.board[diag_pt].colour == -colour:
+                    if self.board.colour(diag_pt) == -colour:
                         opp_count += 1
                 if EyeCorners(opp_count, corner_count=len(diags)) in IS_AN_EYE:
                     return True
             return False
 
         def self_capture(pt, colour):
-            """Reducing your own liberties to zero is an illegal move"""
+            """Reducing your own _liberties to zero is an illegal move"""
             nonlocal neigh_dead
 
             pt_is_self_capture = True
             neigh_alive = defaultdict(set)
-            for neigh_pt in self.board.neighbors[move_pt]:  #check neighbor groups
+            for neigh_pt in self.board.neighbors[pt]:  #check neighbor groups
                 try:
-                    liberties = self.board.group_liberties(group_pt=neigh_pt, limit=2)
+                    liberties = self.board.discover_liberties(group_pt=neigh_pt, limit=2)
                 except BoardError:      # when neigh_pt is OPEN
                     pt_is_self_capture = False
                     continue
 
                 neigh_col = self.board.colour(neigh_pt)
-                if liberties == {move_pt}:
+                if liberties == {pt}:
                     neigh_dead[neigh_col] |= {neigh_pt}
                 else:
                     neigh_alive[neigh_col] |= {neigh_pt}
@@ -605,7 +637,7 @@ class Position():
         >>> pos = Position()
         >>> pos.move(move_pt, colour=BLACK)
         >>> pos.board[move_pt]
-        (BLACK Group, size 1, at frozenset({200}))
+        BLACK Group size=1 libs=0
         """
         if colour is None:
             colour = self.next_player
