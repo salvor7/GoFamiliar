@@ -1,5 +1,5 @@
 import itertools
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import numpy as np
 
 import pytest
@@ -64,39 +64,30 @@ def test_Position_groups(position_moves):
     """
     position, moves = position_moves
     s = position.size
-    groups = [go.Group(colour=1, stones={3},),
-              go.Group(colour=1, stones={1},),
-              go.Group(colour=1, stones={s, 2*s, 2*s+1, 2*s+2, s+2}, ),
-              go.Group(colour=1, stones={s**2-s-1, s**2-3, s**2-4, s**2-s-2, s**2-2}),
-              go.Group(colour=-1, stones={4, s+3, s+4}, ),
-              go.Group(colour=-1, stones={s*(s-2)-4, s*(s-2)-3, s*(s-2)-2, s*(s-2)-1,
+    QuasiGroup = namedtuple('QuasiGroup', 'colour, stones')
+    groups = [QuasiGroup(colour=1, stones={3},),
+              QuasiGroup(colour=1, stones={1},),
+              QuasiGroup(colour=1, stones={s, 2*s, 2*s+1, 2*s+2, s+2}, ),
+              QuasiGroup(colour=1, stones={s**2-s-1, s**2-3, s**2-4, s**2-s-2, s**2-2}),
+              QuasiGroup(colour=-1, stones={4, s+3, s+4}, ),
+              QuasiGroup(colour=-1, stones={s*(s-2)-4, s*(s-2)-3, s*(s-2)-2, s*(s-2)-1,
                                           s*(s-1)-5, s*(s-1)-4, s*(s-1)-3,
                                           s**2-5}),
               ]
-    position.board.collapse_uftree()
+    position.board.discover_all_libs()
 
-    for group in position.board._liberties:
-        assert group in groups or group is go.OPEN_POINT
+    for pt in position.board:
+        group, _ = position.board._find(pt=pt)
+        assert group is None or QuasiGroup(colour=group.colour, stones=group._stones) in groups
 
     position.move(move_pt=s-1, colour=go.BLACK)
-    assert position.board._find(s-1) == go.Group(stones={s-1}, colour=go.BLACK,)
+    assert position.board._find(s-1)[0] == go.Group(stones={s-1}, colour=go.BLACK,)
     position.move(move_pt=2, colour=go.BLACK)
-    position.board.group_liberties(group_pt=2, limit=np.infty)
-    assert position.board._find(1) == go.Group(colour=go.BLACK,
+    position.board.discover_liberties(group_pt=2, limit=np.infty)
+    assert position.board._find(1)[0] == go.Group(colour=go.BLACK,
                                                stones={1, 2, 3,
                                                        s, s+2,
                                                        2*s, 2*s+1, 2*s+2,})
-
-
-def test_Position_board(position_moves):
-    position, moves = position_moves
-    representatives = defaultdict(list)
-    for pt in moves:
-        representatives[position.board._find(pt)] += [pt]
-        assert moves[pt] == position.board.colour(pt)  # colour test
-
-    for group in representatives:
-        assert group.stones == set(representatives[group])
 
 
 def test_move_capture(position_moves):
@@ -104,11 +95,14 @@ def test_move_capture(position_moves):
     s = position.size
 
     position.move(s ** 2 - 1, go.WHITE)  # capture corner
-    assert position.board._find(s ** 2 - 1) == go.Group(stones={s**2-1}, colour=go.WHITE,)
+    assert position.board._find(s ** 2 - 1)[0] == go.Group(stones={s**2-1}, colour=go.WHITE,)
 
-    for lib in (position.board.group_liberties(s ** 2 - 5, limit=np.infty)
-                    | position.board.group_liberties(s ** 2 - 1, limit=np.infty)):
-        assert position.board._find(lib) is go.OPEN_POINT
+    position.board.discover_liberties(s ** 2 - 5, limit=np.infty)
+    position.board.discover_liberties(s ** 2 - 1, limit=np.infty)
+    group1, _ = position.board._find(pt=s**2-1)
+    group2, _ = position.board._find(pt=s**2-5)
+    for lib in (group1._liberties | group2._liberties):
+        assert position.board._find(lib)[0] is None
         assert lib in position.actions
 
     def kolock_point():
@@ -119,12 +113,12 @@ def test_move_capture(position_moves):
         kolock_point()
     assert 'Playing in a ko locked point' in str(excinfo.value)
 
-    assert position.board._find(2) == go.Group(colour=go.WHITE, stones={2}, )
+    assert position.board._find(2)[0] == go.Group(colour=go.WHITE, stones={2}, )
 
 
 def test_position_playout(position):
-    """Added to test a bug where during playout stones were not being removed
-    when they had no liberties.
+    """Added to test a bug where during playout _stones were not being removed
+    when they had no _liberties.
     """
     passes = 0
     moves = []
@@ -140,11 +134,12 @@ def test_position_playout(position):
             for pt in board:
                 if board.colour(pt) is not go.OPEN:
                     for neigh_pt in board.neighbors[pt]:
+                        group, _ = board._find(pt=neigh_pt)
                         try:
                             # pt is no longer in the liberty set
-                            assert pt not in board._find_liberties(node=neigh_pt)
-                        except go.BoardError:
-                            assert board._find(node=neigh_pt) == go.OPEN_POINT
+                            assert pt not in group._liberties
+                        except AttributeError:
+                            assert group is None
                 else:
                     assert pt in position.actions
 
@@ -218,7 +213,7 @@ def test_score(position_moves):
         score += term_position.board.colour(pt)
         if term_position.board.colour(pt) == go.OPEN:
             # will find the 1 neighbor colour unless it is a seki liberty, then its 0
-            neigh_colours = set([term_position.board[neigh_pt].colour
+            neigh_colours = set([term_position.board.colour(neigh_pt)
                                     for neigh_pt in term_position.board.neighbors[pt]])
         else:
             neigh_colours = []
@@ -229,5 +224,7 @@ def test_score(position_moves):
 
 def test_Group_init():
     for col, pt in itertools.product([go.BLACK, go.WHITE], range(361)):
-        assert go.Group(colour=col, stones={pt} ) == (col, {pt})
-
+        group = go.Group(colour=col, stones={pt} )
+        assert group.colour == col
+        assert group.size == 1
+        assert group.liberties == 0

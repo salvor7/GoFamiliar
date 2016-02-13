@@ -32,6 +32,16 @@ class Group:
         else:
             self._liberties = set(liberties)
 
+    def __eq__(self, other):
+        """
+        Group are equal if they have the same colour and positions
+
+        :param other:
+        :return:
+        """
+        return (self.colour == other.colour
+                and self._stones == other._stones)
+
     @property
     def size(self):
         """:return: int for how big the group is"""
@@ -439,29 +449,30 @@ class Board():
 
         return group.liberties
 
-    def remove_group(self, dead_node=None):
+    def remove_group(self, dead_pt=None):
         """Remove a group and return the captured stone locations
 
         :param dead_pt: int
         :return: set
         >>> board = Board()
         >>> board.change_colour(pt=200, new_colour=BLACK)
-        >>> board.remove_group(dead_node=200)
+        >>> board.remove_group(dead_pt=200)
         {200}
         """
         try:
-            dead_nodes = iter(dead_node)
+            dead_points = iter(dead_pt)
         except TypeError:
-            dead_nodes = [dead_node]
-        groups_to_remove = set(self._find(pt=node) for node in dead_nodes)
+            dead_points = [dead_pt]
+        groups_to_remove = set(self._find(pt=pt)[1] for pt in dead_points)
+        groups_to_remove = [self._pointers[pt] for pt in groups_to_remove]
         captured = set()
-        for dead_group, _ in groups_to_remove:
+        for dead_group in groups_to_remove:
             captured |= set(dead_group._stones)
             self.change_colour(pt=dead_group._stones, new_colour=OPEN)
         return captured
 
     def discover_all_libs(self):
-        """Run full liberty search and find on every pt on board
+        """Run full liberty search on every pt on board
 
         This will ensure every point only points at the actual group object it is apart of
         >>> board = Board()
@@ -585,7 +596,7 @@ class Position():
                     continue
 
                 neigh_col = self.board.colour(neigh_pt)
-                if liberties == {pt}:
+                if liberties == 1:
                     neigh_dead[neigh_col] |= {neigh_pt}
                 else:
                     neigh_alive[neigh_col] |= {neigh_pt}
@@ -615,7 +626,7 @@ class Position():
         yield   # may never return, and that's fine
 
         self.board.change_colour(pt=move_pt, new_colour=colour)
-        captured = self.board.remove_group(dead_node=neigh_dead[-colour])
+        captured = self.board.remove_group(dead_pt=neigh_dead[-colour])
         self.actions |= captured
         self.actions -= {move_pt}
 
