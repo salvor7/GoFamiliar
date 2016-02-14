@@ -362,28 +362,30 @@ class Board():
                 self._pointers[pt] = pointer
         return target, pointer
 
-    def _union(self, f_node, s_node):
+    def _union(self, f_pt, s_pt):
         """Union two groups into one
 
         Union is performed favouring the group with the most _stones.
-        :param f_node: int
-        :param s_node: int
+        :param f_pt: int
+        :param s_pt: int
         :return: Group
         """
-        (f_group, f_at), (s_group, s_at) = self._find(f_node), self._find(s_node)
-
-        if f_group is None or s_group is None:
+        if self._board_colour[f_pt] is OPEN or self._board_colour[s_pt] is OPEN:
             raise BoardError('Cannot union with an open point')
-        elif f_group is s_group:
+        elif self._board_colour[f_pt] != self._board_colour[s_pt]:
+            raise GroupError('Cannot union with different colours')
+
+        (f_group, f_at), (s_group, s_at) = self._find(f_pt), self._find(s_pt)
+        if f_group is s_group:
             return f_group
         elif f_group.size >= s_group.size:
             f_group.combine(s_group)
             self._pointers[s_at] = f_at
+            return f_group
         else:
             s_group.combine(f_group)
             self._pointers[f_at] = s_at
-
-        return self._find(f_at)[0]
+            return s_group
 
     def _board_crawl(self, start_pt):
         """Generator of the points and neighbors of a single colour area
