@@ -583,29 +583,35 @@ class Position():
                     return True
             return False
 
-        def self_capture(pt, colour):
+        def self_capture(move_pt, colour):
             """Reducing your own _liberties to zero is an illegal move"""
+
+            neigh_points = defaultdict(set)
+            for neigh_pt in self.board.neighbors[move_pt]:
+                neigh_colour = self.board._board_colour[neigh_pt]
+                neigh_points[neigh_colour] |= {neigh_pt}
+            open_neighbor = (OPEN in neigh_points)
+
             nonlocal neigh_dead
 
-            pt_is_self_capture = True
-            neigh_alive = defaultdict(set)
-            for neigh_pt in self.board.neighbors[pt]:  #check neighbor groups
-                try:
-                    liberties = self.board.discover_liberties(group_pt=neigh_pt, limit=2)
-                except BoardError:      # when neigh_pt is OPEN
-                    pt_is_self_capture = False
-                    continue
-
-                neigh_col = self.board.colour(neigh_pt)
+            enemy_points = neigh_points[-colour]
+            for enemy_pt in enemy_points:
+                liberties = self.board.discover_liberties(group_pt=enemy_pt, limit=2)
                 if liberties == 1:
-                    neigh_dead[neigh_col] |= {neigh_pt}
-                else:
-                    neigh_alive[neigh_col] |= {neigh_pt}
+                    neigh_dead[-colour] |= {enemy_pt}
+            capturing_move = (len(neigh_dead[-colour]) > 0)
 
-            if pt_is_self_capture and (colour not in neigh_alive) and (-colour not in neigh_dead):
-                return True
-            else:
                 return False
+
+            alive_neighbor = False
+            friendly_points = neigh_points[colour]
+            for friendly_pt in friendly_points:
+                liberties = self.board.discover_liberties(group_pt=friendly_pt, limit=2)
+                alive_neighbor = (liberties > 1) or alive_neighbor
+
+                return False
+            else:
+                return True
 
         if colour is None:
             colour = self.next_player
