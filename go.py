@@ -282,21 +282,6 @@ class Board():
         """
         return self._pointers[item]
 
-    def __setitem__(self, key, value):
-        """Change the group key is pointing to
-
-        :param key: int or Group
-        :param value: Group
-        >>> board = Board()
-        >>> board[200] = Group(colour=BLACK, stones={200})
-        >>> board.colour(200) == BLACK
-        True
-        """
-        if type(value) is Group:
-            self._pointers[key] = value
-        else:
-            raise BoardError('Expected Group. Got ' + str(type(value)))
-
     def __deepcopy__(self, memo):
         """Return a mid depth copy of self
 
