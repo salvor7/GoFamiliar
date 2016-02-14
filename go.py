@@ -558,9 +558,9 @@ class Position():
 
         def friendly_eye(pt, colour):
             """Check whether pt is as friendly eye"""
-            neigh_colours = set(self.board._board_colour[neigh_pt]
-                                for neigh_pt in self.board.neighbors[move_pt])
-            if {colour} == neigh_colours:
+            nonlocal neigh_points
+
+            if -colour not in neigh_points and OPEN not in neigh_points:
                 opp_count = 0
                 diags = self.board.diagonals[pt]
                 for diag_pt in diags:
@@ -572,14 +572,10 @@ class Position():
 
         def self_capture(move_pt, colour):
             """Reducing your own _liberties to zero is an illegal move"""
-
-            neigh_points = defaultdict(set)
-            for neigh_pt in self.board.neighbors[move_pt]:
-                neigh_colour = self.board._board_colour[neigh_pt]
-                neigh_points[neigh_colour] |= {neigh_pt}
-            open_neighbor = (OPEN in neigh_points)
-
+            nonlocal neigh_points
             nonlocal neigh_dead
+
+            open_neighbor = (OPEN in neigh_points)
 
             enemy_points = neigh_points[-colour]
             for enemy_pt in enemy_points:
@@ -611,8 +607,14 @@ class Position():
             raise MoveError('Playing in a ko locked point')
         elif self.board._board_colour[move_pt] is not OPEN:
             raise MoveError('Playing on another stone')
-        elif friendly_eye(move_pt, colour):
-            raise MoveError('Playing in a friendly eye')
+
+        neigh_points = defaultdict(set)
+        for neigh_pt in self.board.neighbors[move_pt]:
+            neigh_colour = self.board._board_colour[neigh_pt]
+            neigh_points[neigh_colour] |= {neigh_pt}
+
+        if friendly_eye(move_pt, colour):
+            raise MoveError(str(move_pt) + ' is a play in a friendly eye')
 
         neigh_dead = defaultdict(set)
 
