@@ -435,18 +435,18 @@ class Board():
         >>> board.discover_liberties(group_pt=20, limit=8)
         6
         """
-        group, _ = self._find(pt=group_pt)
-        if group is None:
+        if self._board_colour[group_pt] is OPEN:
             raise BoardError("Open point does not have liberties")
+
         for crawl_pt in self._board_crawl(start_pt=group_pt):
-            if group.liberties >= limit:
-                break
             try:
                 group = self._union(group_pt, crawl_pt)
-            except BoardError:
+            except BoardError:  # occurs when unioning with an open point
                 group.add_lib(crawl_pt)
-            except GroupError:
+            except GroupError:  # occurs when combining different colours
                 pass
+            if group.liberties >= limit:
+                break
 
         return group.liberties
 
