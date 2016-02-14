@@ -366,15 +366,16 @@ class Board():
         :param pt: int
         :return: Group, int
         """
-        parent = self._pointers[pt]
-        try:
-            group, g_at = self._find(pt=parent)
-        except TypeError:
-            return parent, pt
-        else:
-            if pt is not g_at:
-                self._pointers[pt] = g_at
-            return group, g_at
+        pointer = pt
+        target = self._pointers[pointer]
+        while True:
+            try:
+                pointer, target = target, self._pointers[target]
+            except TypeError:
+                break
+            else:
+                self._pointers[pt] = pointer
+        return target, pointer
 
     def _union(self, f_node, s_node):
         """Union two groups into one
