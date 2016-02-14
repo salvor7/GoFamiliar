@@ -111,7 +111,7 @@ def test_move_capture(position_moves):
 
     with pytest.raises(go.MoveError) as excinfo:
         kolock_point()
-    assert 'Playing in a ko locked point' in str(excinfo.value)
+    assert 'ko locked point' in str(excinfo.value)
 
     assert position.board._find(2)[0] == go.Group(colour=go.WHITE, stones={2}, )
 
@@ -162,9 +162,9 @@ def test_move_exceptions(position_moves):
     def bad_colour():
         position.move(4 * position.size, 't')
 
-    excep_functionsI = [(suicide_move,'Playing in a friendly eye'),
-                        (suicide_moveII,'Playing self capture'),
-                        (bad_colour,'Unrecognized move colour: t')
+    excep_functionsI = [(suicide_move,'friendly eye'),
+                        (suicide_moveII,'self capture'),
+                        (bad_colour,'Unrecognized move colour')
                        ]
 
     excep_functions2 = [(func,'Playing on another stone')

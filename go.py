@@ -604,7 +604,7 @@ class Position():
             raise MoveError('Unrecognized move colour: ' + str(colour))
 
         if move_pt == self.kolock:
-            raise MoveError('Playing in a ko locked point')
+            raise MoveError(str(move_pt) + ' is a ko locked point')
         elif self.board._board_colour[move_pt] is not OPEN:
             raise MoveError('Playing on another stone')
 
@@ -619,7 +619,7 @@ class Position():
         neigh_dead = defaultdict(set)
 
         if self_capture(move_pt, colour):
-            raise MoveError('Playing self capture')
+            raise MoveError(str(move_pt) + ' is self capture')
 
         yield   # may never return, and that's fine
 
