@@ -230,6 +230,7 @@ class Board():
         self.neighbors, self.diagonals = NEIGHBORS[size], DIAGONALS[size]
         self.size = size
         self._pointers = [None for _ in range(size ** 2)]
+        self._board_colour = [OPEN for _ in range(size ** 2)]
 
     def __iter__(self):
         """Iterator over the size**2 board points
@@ -260,11 +261,11 @@ class Board():
 
         repre = ''
         for pt in self:
-            if self.colour(pt) == BLACK:
+            if self._board_colour[pt] == BLACK:
                 repre += BLACKstr
-            elif self.colour(pt) == WHITE:
+            elif self._board_colour[pt] == WHITE:
                 repre += WHITEstr
-            elif self.colour(pt) == OPEN:
+            elif self._board_colour[pt] == OPEN:
                 repre += OPENstr
 
             if (pt + 1) % self.size == 0:
@@ -305,6 +306,7 @@ class Board():
         """
         board = copy(self)
         board._pointers = deepcopy(self._pointers)
+        board._board_colour = copy(self._board_colour)
 
         return board
 
@@ -316,11 +318,7 @@ class Board():
         >>> Board().colour(200) == OPEN
         True
         """
-        if self._pointers[pt] is None:
-            return OPEN
-        else:
-            group, _ = self._find(pt)
-            return group.colour
+        return self._board_colour[pt]
 
     def change_colour(self, pt, new_colour):
         """Change the colour at pt
@@ -348,9 +346,11 @@ class Board():
         for pt in points:
             if new_colour is OPEN:
                 self._pointers[pt] = None
+                self._board_colour[pt] = OPEN
             else:
                 self._pointers[pt] = Group(colour=new_colour,
                                            stones={pt}, )
+                self._board_colour[pt] = new_colour
 
                 for neigh_pt in self.neighbors[pt]:     # remove pt as a liberty
                     neigh_group, _ = self._find(neigh_pt)
@@ -407,7 +407,7 @@ class Board():
         :param start_pt: int
         :yield: int
         """
-        crawl_colour = self.colour(start_pt)
+        crawl_colour = self._board_colour[start_pt]
         to_search = {start_pt}
         searched = set()
         while to_search:
@@ -415,7 +415,7 @@ class Board():
             yield search_pt     # yield start_pt coloured _stones
             searched |= {search_pt}
             for neigh_pt in self.neighbors[search_pt]:
-                if (self.colour(neigh_pt) != crawl_colour):
+                if (self._board_colour[neigh_pt] != crawl_colour):
                     yield neigh_pt
                     searched |= {neigh_pt}
                 elif (neigh_pt not in searched):
@@ -535,9 +535,9 @@ class Position():
         >>> Position().score() == -7.5
         True
         """
-        stones = sum([self.board.colour(pt) for pt in self.board])
-        eyes = 0
+        stones = sum(self.board._board_colour)
 
+        eyes = 0
         for pt in self.actions:
             neigh_col = set(self.board.colour(neigh_pt) for neigh_pt in self.board.neighbors[pt])
             eyes += sum(neigh_col)
@@ -571,13 +571,13 @@ class Position():
 
         def friendly_eye(pt, colour):
             """Check whether pt is as friendly eye"""
-            neigh_colours = set(self.board.colour(neigh_pt)
+            neigh_colours = set(self.board._board_colour[neigh_pt]
                                 for neigh_pt in self.board.neighbors[move_pt])
             if {colour} == neigh_colours:
                 opp_count = 0
                 diags = self.board.diagonals[pt]
                 for diag_pt in diags:
-                    if self.board.colour(diag_pt) == -colour:
+                    if self.board._board_colour[diag_pt] == -colour:
                         opp_count += 1
                 if EyeCorners(opp_count, corner_count=len(diags)) in IS_AN_EYE:
                     return True
@@ -601,6 +601,7 @@ class Position():
                     neigh_dead[-colour] |= {enemy_pt}
             capturing_move = (len(neigh_dead[-colour]) > 0)
 
+            if open_neighbor or capturing_move: # first exit
                 return False
 
             alive_neighbor = False
@@ -609,6 +610,7 @@ class Position():
                 liberties = self.board.discover_liberties(group_pt=friendly_pt, limit=2)
                 alive_neighbor = (liberties > 1) or alive_neighbor
 
+            if alive_neighbor: # final exit
                 return False
             else:
                 return True
@@ -620,7 +622,7 @@ class Position():
 
         if move_pt == self.kolock:
             raise MoveError('Playing in a ko locked point')
-        elif self.board.colour(pt=move_pt) is not OPEN:
+        elif self.board._board_colour[move_pt] is not OPEN:
             raise MoveError('Playing on another stone')
         elif friendly_eye(move_pt, colour):
             raise MoveError('Playing in a friendly eye')
@@ -718,6 +720,7 @@ class Position():
                 passes +=1
             else:
                 passes = 0
+
         return position, moves
 
 
