@@ -53,7 +53,7 @@ class NodeMCTS(tree.Node):
         """
         Add a new child node and play it out
         """
-        new_state=deepcopy(self.state)
+        new_state = deepcopy(self.state)
         new_state.random_move(tried=self.children.keys())
 
         child = NodeMCTS(state=new_state)

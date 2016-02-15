@@ -63,7 +63,7 @@ def test_children(expanded_root):
                        (lambda x: x.state.actions),
                        (lambda x: x.state.board),
                        (lambda x: x.state.board._pointers),
-                       (lambda x: x.state.board._liberties),]
+                       (lambda x: x.state.board._board_colour),]
 
     # test that nodes aren't sharing the same mutable objects
     all_nodes = list(expanded_root.children.values()) + [expanded_root]
