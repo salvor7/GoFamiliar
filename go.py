@@ -507,6 +507,7 @@ class Position():
         self.next_player = BLACK
         self.actions = set(range(size ** 2))
         self.board = Board(size=size)
+        self.avoid = {BLACK:set(), WHITE:set()}
 
         try:
             for pt in moves:
@@ -614,11 +615,13 @@ class Position():
             neigh_points[neigh_colour] |= {neigh_pt}
 
         if friendly_eye(move_pt, colour):
+            self.avoid[colour] |= {move_pt}
             raise MoveError(str(move_pt) + ' is a play in a friendly eye')
 
         neigh_dead = defaultdict(set)
 
         if self_capture(move_pt, colour):
+            self.avoid[colour] |= {move_pt}
             raise MoveError(str(move_pt) + ' is self capture')
 
         yield   # may never return, and that's fine
@@ -626,7 +629,10 @@ class Position():
         self.board.change_colour(pt=move_pt, new_colour=colour)
         captured = self.board.remove_group(dead_pt=neigh_dead[-colour])
         self.actions |= captured
+        self.avoid[-colour] |= captured
         self.actions -= {move_pt}
+        self.avoid[colour] -= {move_pt}
+        self.avoid[-colour] -= {move_pt}
 
         self.kolock = captured.pop() if len(captured) == 1 else None # single stone caught
 
@@ -680,8 +686,13 @@ class Position():
             tried = set()
         else:
             tried = set(tried)
+
         while tried != self.actions:
-            sample_list =  random.sample(self.actions - tried, k=1)
+            move_set = self.actions - (self.avoid[self.next_player] | tried)
+            try:
+                sample_list =  random.sample(move_set, k=1)
+            except ValueError:
+                sample_list = random.sample(self.actions - tried, k=1)
             move_pt = sample_list[0]
             try:
                 self.move(move_pt)
