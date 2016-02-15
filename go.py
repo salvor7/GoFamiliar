@@ -631,8 +631,6 @@ class Position():
         self.actions |= captured
         self.avoid[-colour] |= captured
         self.actions -= {move_pt}
-        self.avoid[colour] -= {move_pt}
-        self.avoid[-colour] -= {move_pt}
 
         self.kolock = captured.pop() if len(captured) == 1 else None # single stone caught
 
