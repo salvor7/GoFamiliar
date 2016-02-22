@@ -9,6 +9,24 @@ from sgf.library import Library
 from util import tree
 
 
+@pytest.fixture(scope='module')
+def library():
+    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
+
+
+@pytest.fixture(params=list(library()))
+def tsumego(request):
+    tsumego_name = request.param
+    correct_move = int(tsumego_name[7:10])  # correct move encoded in file name
+    return library().sgf_position(tsumego_name), correct_move
+
+
+def test_tsumego_solving(tsumego):
+    position, correct_move = tsumego
+    found_move = mcts.search(position, sim_limit=500)
+    assert correct_move == found_move
+
+
 @pytest.fixture()
 def position():
     return fixt.open_position()()
@@ -81,13 +99,13 @@ def test_children(expanded_root):
     assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
     assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
-    for idx in range(1, 400):
+    for idx in range(1, 200):
         best1stgen = expanded_root.bestchild()
         assert best1stgen.wins < 0      # white move
         assert best1stgen in expanded_root.children.values()
         assert type(best1stgen) == mcts.NodeMCTS
 
-        child2ndgen = best1stgen.new_child()
+        best1stgen.new_child()
         assert best1stgen.sims == 1 + sum([child.sims for child in best1stgen.children.values()])
         assert best1stgen.wins == -1 + sum([child.wins for child in best1stgen.children.values()])
         assert expanded_root.sims == 361 - 23 - 2 + idx
@@ -99,7 +117,7 @@ def test_search_open_board():
     position = go.Position(size=9, komi=0.5)
     for idx in range(4):
         try:
-            move_pt, last_pt = mcts.search(position, sim_limit=200), move_pt
+            move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
         except go.MoveError as err:
             assert str(err) == 'Terminal Position'
             break
@@ -109,22 +127,8 @@ def test_search_open_board():
         print(position.board)
 
 
-@pytest.fixture(scope='module')
-def library():
-    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
 
 
-@pytest.fixture(params=list(library()))
-def tsumego(request):
-    tsumego_name = request.param
-    correct_move = int(tsumego_name[7:10])  # correct move encoded in file name
-    return library().sgf_position(tsumego_name), correct_move
-
-
-def test_tsumego_solving(tsumego):
-    position, correct_move = tsumego
-    found_move = mcts.search(position, sim_limit=500)
-    assert correct_move == found_move
 
 if __name__ == '__main__':
     import cProfile
