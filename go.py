@@ -624,7 +624,7 @@ class Position():
             self.avoid[colour] |= {move_pt}
             raise MoveError(str(move_pt) + ' is self capture')
 
-        yield   # may never return, and that's fine
+        yield   # may never return here, and that's fine
 
         self.board.change_colour(pt=move_pt, new_colour=colour)
         captured = self.board.remove_group(dead_pt=neigh_dead[-colour])
@@ -709,10 +709,11 @@ class Position():
         """
         position = deepcopy(self)
         passes = 0
-        moves = []
+        moves = {BLACK:set(), WHITE:set()}
         while passes < 2:
             try:
-                moves.append(position.random_move())
+                colour = position.next_player
+                moves[colour] |= {position.random_move()}
             except MoveError:
                 position.pass_move()
                 passes +=1
