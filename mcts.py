@@ -94,9 +94,9 @@ class NodeMCTS(tree.Node):
                             reduced_moves = deepcopy(moves)
                             reduced_moves[node.colour] -= {child.name}
                             update_children(node=child, moves=reduced_moves)
+            self.sims += 1
+            self.wins += winner
             root = self
-            root.sims += 1
-            root.wins += winner
             while root.parent is not None:
                 root = root.parent
                 root.sims += 1
