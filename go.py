@@ -686,11 +686,8 @@ class Position():
             tried = set(tried)
 
         while tried != self.actions:
-            move_set = self.actions - (self.avoid[self.next_player] | tried)
-            try:
-                sample_list =  random.sample(move_set, k=1)
-            except ValueError:
-                sample_list = random.sample(self.actions - tried, k=1)
+            sample_list = random.sample(self.actions - tried, k=1)
+
             move_pt = sample_list[0]
             try:
                 self.move(move_pt)
@@ -719,6 +716,8 @@ class Position():
                 passes +=1
             else:
                 passes = 0
+        for colour in moves:
+            moves[colour] &= self.actions
 
         return position, moves
 
