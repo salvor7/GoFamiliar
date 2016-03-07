@@ -9,32 +9,19 @@ from sgf.library import Library
 from util import tree
 
 
-@pytest.fixture(scope='module')
-def library():
-    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
-
-
-@pytest.fixture(params=list(library()))
-def tsumego(request):
-    tsumego_name = request.param
-    correct_move = int(tsumego_name[7:10])  # correct move encoded in file name
-    return library().sgf_position(tsumego_name), correct_move
-
-
-def test_tsumego_solving(tsumego):
-    position, correct_move = tsumego
-    found_move = mcts.search(position, sim_limit=500)
-    assert correct_move == found_move
-
-
-@pytest.fixture()
-def position():
-    return fixt.open_position()()
-
-
-@pytest.fixture()
-def position_moves():
-    return fixt.first_position()(s=19)
+def test_search_open_board():
+    move_pt = None
+    position = go.Position(size=9, komi=0.5)
+    for idx in range(4):
+        try:
+            move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
+        except go.MoveError as err:
+            assert str(err) == 'No moves to take'
+            break
+        assert type(move_pt) is int
+        assert move_pt != last_pt
+        position.move(move_pt=move_pt)
+        print(position.board)
 
 
 @pytest.fixture()
@@ -42,20 +29,6 @@ def unexpanded_root(position_moves):
     position, moves = position_moves
 
     return mcts.NodeMCTS(state=position, name='root')
-
-
-@pytest.fixture()
-def expanded_root(unexpanded_root):
-    increasing_counter = 0
-    while True:
-        try:
-            _ = unexpanded_root.new_child()
-        except go.MoveError:
-            break
-        else:
-            increasing_counter += 1
-            assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
-    return unexpanded_root
 
 
 def test_root(unexpanded_root):
@@ -72,6 +45,20 @@ def test_root(unexpanded_root):
 
     assert child.sims == unexpanded_root.sims
     assert child.wins == unexpanded_root.wins
+
+
+@pytest.fixture()
+def expanded_root(unexpanded_root):
+    increasing_counter = 0
+    while True:
+        try:
+            _ = unexpanded_root.new_child()
+        except go.MoveError:
+            break
+        else:
+            increasing_counter += 1
+            assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
+    return unexpanded_root
 
 
 def test_children(expanded_root):
@@ -112,22 +99,32 @@ def test_children(expanded_root):
         assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
 
-def test_search_open_board():
-    move_pt = None
-    position = go.Position(size=9, komi=0.5)
-    for idx in range(4):
-        try:
-            move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
-        except go.MoveError as err:
-            assert str(err) == 'Terminal Position'
-            break
-        assert type(move_pt) is int
-        assert move_pt != last_pt
-        position.move(move_pt=move_pt)
-        print(position.board)
+@pytest.fixture(scope='module')
+def library():
+    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
 
 
+@pytest.fixture(params=list(library()))
+def tsumego(request):
+    tsumego_name = request.param
+    correct_move = int(tsumego_name[7:10])  # correct move encoded in file name
+    return library().sgf_position(tsumego_name), correct_move
 
+
+def test_tsumego_solving(tsumego):
+    position, correct_move = tsumego
+    found_move = mcts.search(position, sim_limit=800)
+    assert correct_move == found_move
+
+
+@pytest.fixture()
+def position():
+    return fixt.open_position()()
+
+
+@pytest.fixture()
+def position_moves():
+    return fixt.first_position()(s=19)
 
 
 if __name__ == '__main__':
