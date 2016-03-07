@@ -74,6 +74,7 @@ class NodeMCTS(tree.Node):
         self.sims += 1
         self.wins += winner
         self.update_parent(value=winner)
+        winner = max(0, self.colour * terminal_state.winner())
 
         self.amaf_perm_update(moves=moves, result=winner)
 
@@ -106,8 +107,10 @@ class NodeMCTS(tree.Node):
         def win_rate(node):
             w = node.wins
             n = node.sims
-            col = self.colour       # white scores negative
-            return (1 - a)*(col * w / n)
+            try:
+                return (1 - amaf_const) * (w / n)
+            except ZeroDivisionError:
+                return 0
 
         def confidence(node):
             n = node.sims
@@ -117,9 +120,8 @@ class NodeMCTS(tree.Node):
         def amaf_rate(node):
             w = node.amaf_wins
             n = node.amaf_sims
-            col = self.colour       # white scores negative
             try:
-                return a * (col * w / n)
+                return amaf_const * (w / n)
             except ZeroDivisionError:
                 return 0
 

@@ -39,7 +39,7 @@ def test_root(unexpanded_root):
 
     assert type(child.name) == int
     assert type(child.state) == type(unexpanded_root.state)
-    assert child.wins in [1, -1]
+
     assert child.sims == 1
     assert child.parent is unexpanded_root
 
