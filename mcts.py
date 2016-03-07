@@ -32,6 +32,13 @@ class NodeMCTS(tree.Node):
         super(NodeMCTS, self).__init__(children=children)
         self.children = {}
 
+    def __repr__(self):
+        """
+        :return: A string representation of a node
+        """
+        return 'n: {0} w: {1}  amaf: {2} aw: {3}'.format(self.sims, self.wins,
+                                                         self.amaf_sims, self.amaf_wins)
+
     @property
     def colour(self):
         """
