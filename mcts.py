@@ -61,32 +61,48 @@ class NodeMCTS(tree.Node):
 
         Updates the result up the tree.
         """
+        def update_tree(moves, result):
+            """
+            MCTS update and All-Moves-As-First permutation style update
+
+            Update node.amaf_wins total by sim win
+                   node.amaf_sims total by 1
+            for any node which can be reached by moves of the sam colour form the play out.
+
+            move_set is expected to exclude moves after the first game capture.
+            :param move_set: {BLACK:iter, WHITE:iter}
+            """
+            def update_children(node, moves):
+                for child_name in moves[node.colour]:
+                    try:
+                        child = node.children[child_name]
+                    except KeyError:
+                        continue
+                    else:
+                        child.amaf_sims += 1
+                        child.amaf_wins += result
+                        if child.sims > 0:
+                            reduced_moves = deepcopy(moves)
+                            reduced_moves[node.colour] -= {child.name}
+                            update_children(node=child, moves=reduced_moves)
+            root = self
+            root.sims += 1
+            root.wins += winner
+            while root.parent is not None:
+                root = root.parent
+                root.sims += 1
+                root.wins += winner
+
+            update_children(node=root, moves=moves)
+
         terminal_state, moves = self.state.random_playout()
-        winner = terminal_state.winner()
-        self.sims += 1
-        self.wins += winner
-        self.update_parent(value=winner)
         winner = max(0, self.colour * terminal_state.winner())
 
-        self.amaf_perm_update(moves=moves, result=winner)
+        update_tree(moves=moves, result=winner)
 
         return terminal_state
 
-    def update_parent(self, value):
-        """
-        Update sim results up the tree
-
-        :param value: numeric
-        """
-        try:
-            self.parent.sims += 1
-        except AttributeError:
-            pass       # root reached
-        else:
-            self.parent.wins += value
-            self.parent.update_parent(value=value)
-
-    def bestchild(self, c=0.0, a=0.5):
+    def bestchild(self, conf_const=0.0, amaf_const=0.5):
         """
         Find the child with the highest upper confidence bound
 
@@ -122,29 +138,6 @@ class NodeMCTS(tree.Node):
 
         return max(self.children.values(), key=score)
 
-    def amaf_perm_update(self, moves, result):
-        """
-        All-Moves-As-First permutation style update
-
-        Update node.amaf_wins total by sim win
-               node.amaf_sims total by 1
-        for any node which can be reached by moves of the sam colour form the play out.
-
-        move_set is expected to exclude moves after the first game capture.
-        :param move_set: {BLACK:iter, WHITE:iter}
-        """
-        def update_children(node):
-            for child in node.children.values():
-                if child.name in moves[node.colour]:
-                    child.amaf_sims += 1
-                    child.amaf_wins += result
-                    update_children(child)
-        root = self
-        parent = root.parent
-        while parent is not None:
-            root, parent = root.parent, parent.parent
-
-        update_children(root)
 
 def search(state, sim_limit=100, const=0):
     """Find a good action
