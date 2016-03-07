@@ -158,25 +158,33 @@ def search(state, sim_limit=100, const=0):
     :return: action
     """
     def treepolicy(root):
-        """Simulate a select node
+        """Simulate a select node using MCTS with AMAF
 
         :param root: NodeMCTS
         :param const: float
         :return: NodeMCTS
         """
         node = root
+
         while True:
             try:
-                new_child = node.new_child()
-            except go.MoveError:    # no moves to expand node with
+                node = node.bestchild()
+            except ValueError:  # no children
                 try:
-                    node = node.bestchild(c=const)
-                except ValueError:      # no children either, so terminal position
-                    return node
-            else:
-                return new_child
+                    node = node.new_child()
+                except go.MoveError:    # terminal position
+                    node = root.bestchild(conf_const=1, amaf_const=0)   # start from root again
+            if node.sims == 0:
+                node.random_sim()
+                break
 
     root = NodeMCTS(state=state)
+    for move in root.state.actions:
+        try:
+            root.new_child(move_pt=move)
+        except go.MoveError:
+            continue
+
     while root.sims < sim_limit:
         treepolicy(root)
 
