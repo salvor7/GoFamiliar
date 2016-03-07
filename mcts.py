@@ -108,8 +108,8 @@ class NodeMCTS(tree.Node):
 
         Formula from "A Survery of Monte Carlo Tree Search Methods"
 
-        :param c: float
-        :param a: float
+        :param conf_const: float
+        :param amaf_const: float
         :return: NodeMCTS
         """
         def win_rate(node):
@@ -123,7 +123,10 @@ class NodeMCTS(tree.Node):
         def confidence(node):
             n = node.sims
             N = node.parent.sims
-            return c * (1 - a) * sqrt(log(N) / n)
+            try:
+                return conf_const * (1 - amaf_const) * sqrt(log(N) / n)
+            except ZeroDivisionError:
+                return 0
 
         def amaf_rate(node):
             w = node.amaf_wins
@@ -134,7 +137,7 @@ class NodeMCTS(tree.Node):
                 return 0
 
         def score(node):
-            return win_rate(node) + confidence(node) + amaf_rate(node)
+            return win_rate(node) + (amaf_rate(node) if conf_const == 0 else confidence(node))
 
         return max(self.children.values(), key=score)
 
@@ -175,7 +178,7 @@ def search(state, sim_limit=100, const=0):
     while root.sims < sim_limit:
         treepolicy(root)
 
-    return root.bestchild(c=0).name
+    return root.bestchild(conf_const=0).name
 
 
 
