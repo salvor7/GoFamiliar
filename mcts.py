@@ -41,12 +41,15 @@ class NodeMCTS(tree.Node):
         """
         return self.state.next_player
 
-    def new_child(self):
+    def new_child(self, move_pt=None):
         """
         Add a new child node and play it out
         """
         new_state = deepcopy(self.state)
-        new_state.random_move(tried=self.children.keys())
+        if move_pt is None:
+            new_state.random_move(tried=self.children.keys())
+        else:
+            new_state.move(move_pt=move_pt)
 
         child = NodeMCTS(state=new_state)
         child.parent = self
