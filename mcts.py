@@ -49,7 +49,6 @@ class NodeMCTS(tree.Node):
         new_state.random_move(tried=self.children.keys())
 
         child = NodeMCTS(state=new_state)
-        child.random_sim()
         child.parent = self
         self.children[child.name] = child
 
