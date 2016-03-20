@@ -13,11 +13,7 @@ def test_search_open_board():
     move_pt = None
     position = go.Position(size=9, komi=0.5)
     for idx in range(4):
-        try:
-            move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
-        except go.MoveError as err:
-            assert str(err) == 'No moves to take'
-            break
+        move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
         assert type(move_pt) is int
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
