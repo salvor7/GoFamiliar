@@ -118,14 +118,14 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
-    def bestchild(self, conf_const=0, amaf_const=15):
+    def bestchild(self, conf_const=False, amaf_const=15):
         """
         Find the child name with the highest score
 
         Formula is a mix of MCTS, AMAF, Permutation-AMAF and RAVE.
         The best AMAF child is created as a node if it is not already in the tree.
 
-        :param conf_const: float
+        :param conf_const: boolean
             Interpolates between usual confidence algorithm and AMAF.
             0 means do not use confidence term; 1 means do not use AMAF term.
         :param amaf_const:
@@ -209,7 +209,7 @@ def search(state, sim_limit=100, const=0):
     while root.sims < sim_limit:
         treepolicy(root)
 
-    return root.bestchild(conf_const=0)
+    return root.bestchild(conf_const=False, amaf_const=0)
 
 
 
