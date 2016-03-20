@@ -507,7 +507,6 @@ class Position():
         self.next_player = BLACK
         self.actions = set(range(size ** 2))
         self.board = Board(size=size)
-        self.avoid = {BLACK:set(), WHITE:set()}
 
         try:
             for pt in moves:
@@ -615,13 +614,11 @@ class Position():
             neigh_points[neigh_colour] |= {neigh_pt}
 
         if friendly_eye(move_pt, colour):
-            self.avoid[colour] |= {move_pt}
             raise MoveError(str(move_pt) + ' is a play in a friendly eye')
 
         neigh_dead = defaultdict(set)
 
         if self_capture(move_pt, colour):
-            self.avoid[colour] |= {move_pt}
             raise MoveError(str(move_pt) + ' is self capture')
 
         yield   # may never return here, and that's fine
@@ -629,7 +626,6 @@ class Position():
         self.board.change_colour(pt=move_pt, new_colour=colour)
         captured = self.board.remove_group(dead_pt=neigh_dead[-colour])
         self.actions |= captured
-        self.avoid[-colour] |= captured
         self.actions -= {move_pt}
 
         self.kolock = captured.pop() if len(captured) == 1 else None # single stone caught
