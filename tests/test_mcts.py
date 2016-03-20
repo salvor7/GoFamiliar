@@ -40,12 +40,12 @@ def test_root(unexpanded_root):
     assert child.parent is unexpanded_root
 
     assert child.sims == unexpanded_root.sims
-    assert child.wins == unexpanded_root.wins
+    assert child.sims - child.wins == unexpanded_root.wins
 
 
 @pytest.fixture(scope='module')
 def expanded_root(unexpanded_root):
-    increasing_counter = 0
+    increasing_counter = 1  # child added above
     while True:
         try:
             _ = unexpanded_root.new_child()
@@ -91,11 +91,11 @@ def test_children_of_expanded(expanded_root):
         assert node.sims == 1
 
     assert expanded_root.sims == sum([child.sims for child in expanded_root.children.values()])
-    assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
+    assert expanded_root.sims - expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
     for idx in range(1, 200):
         best1stgen = expanded_root.bestchild()
-        assert best1stgen.wins < 0      # white move
+        best1stgen = expanded_root.children[best1stgen]
         assert best1stgen in expanded_root.children.values()
         assert type(best1stgen) == mcts.NodeMCTS
 
