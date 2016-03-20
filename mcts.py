@@ -197,6 +197,7 @@ def search(state, sim_limit=100, const=0):
                 bestchildname = node.bestchild()
             except ValueError:  # no children or AMAF totals
                 node.new_child()
+                break
 
             try:
                 node = node.children[bestchildname]
