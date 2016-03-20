@@ -38,7 +38,7 @@ class NodeMCTS(tree.Node):
         """
         :return: A string representation of a node
         """
-        return 'n: {0} w: {1}'.format(self.sims, self.wins,)
+        return 'move: {2} n: {0} w: {1}'.format(self.sims, self.wins, self.name)
 
     @property
     def colour(self):
