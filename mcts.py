@@ -6,7 +6,8 @@ It is not intended to be specialized for go, though that is the first and only u
 It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search Methods".
 """
 from copy import deepcopy
-from math import sqrt, log
+from math import sqrt, log, exp
+
 from collections import Counter
 
 import go
@@ -62,6 +63,7 @@ class NodeMCTS(tree.Node):
         child.parent = self
         self.children[child.name] = child
 
+        child.random_sim()
         return child
 
     def random_sim(self):
@@ -74,7 +76,7 @@ class NodeMCTS(tree.Node):
             """
             MCTS update and All-Moves-As-First permutation style update
 
-            Update node.amaf_wins total by sim win
+            Update node.amaf_rates total by sim win
                    node.amaf_sims total by 1
             for any node which can be reached by moves of the sam colour form the play out.
 
@@ -98,6 +100,7 @@ class NodeMCTS(tree.Node):
                 for child in node.children.values():
                     update_children(node=child, moves=moves)
 
+            nonlocal self
             self.sims += 1
             self.wins += winner
             root = self
@@ -115,7 +118,7 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
-    def bestchild(self, conf_const=0.0, amaf_const=0.5):
+    def bestchild(self, conf_const=1):
         """
         Find the child name with the highest score
 
@@ -123,6 +126,7 @@ class NodeMCTS(tree.Node):
         The best AMAF child is created as a node if it is not already in the tree.
         :param conf_const: float
         :return: NodeMCTS
+        :raises: go.MoveError (from self.new_child() calls)
         """
         def score(node):
             """Return the node score as formula below
@@ -144,8 +148,11 @@ class NodeMCTS(tree.Node):
             rate_balancer = (1/(1 + exp(n - 15)))
             return (1- rate_balancer) * (w / n) + rate_balancer*(ar)
 
+        scores = dict(self.amaf_rates)
+        for child in self.children.values():
+            scores[child.name] = score(child)
+        return max(scores, key=lambda x: scores[x])
 
-        return max(self.children.values(), key=score)
 
 
 def search(state, sim_limit=100, const=0):
@@ -172,27 +179,30 @@ def search(state, sim_limit=100, const=0):
 
         while True:
             try:
-                node = node.bestchild()
-            except ValueError:  # no children
-                try:
-                    node = node.new_child()
-                except go.MoveError:    # terminal position
-                    node = root.bestchild(conf_const=1, amaf_const=0)   # start from root again
-            if node.sims == 0:
-                node.random_sim()
+                bestchildname = node.bestchild()
+            except ValueError:  # no children or AMAF totals
+                node = node.new_child()
                 break
 
+            try:
+                node = node.children[bestchildname]
+            except KeyError:    # selected child is not a node yet
+                pass
+            else:
+                continue
+
+            try:
+                node = node.new_child(move_pt=bestchildname)
+            except go.MoveError:   # bad move from AMAF
+                del node.amaf_rates[bestchildname]
+                del node.amaf_sims[bestchildname]
+
     root = NodeMCTS(state=state)
-    for move in root.state.actions:
-        try:
-            root.new_child(move_pt=move)
-        except go.MoveError:
-            continue
 
     while root.sims < sim_limit:
         treepolicy(root)
 
-    return root.bestchild(conf_const=0).name
+    return root.bestchild(conf_const=0)
 
 
 
