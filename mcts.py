@@ -152,8 +152,10 @@ class NodeMCTS(tree.Node):
                 ar = node.parent.amaf_rates[node.name]
             except KeyError:
                 ar = 0
-
-            rate_balancer = (1 - conf_const) * (1/(1 + exp(n - amaf_const)))
+            try:
+                rate_balancer = (1 - conf_const) * (1/(1 + exp(n - amaf_const)))
+            except OverflowError:
+                rate_balancer = 0
             return ((1- rate_balancer) * (w / n)
                     + rate_balancer * (ar)
                     + conf_const * sqrt(log(N)/n)
