@@ -140,7 +140,8 @@ class NodeMCTS(tree.Node):
             Name of best child node
         """
         def score(node):
-            """Return the node score as formula below
+            """
+            Return the node score as formula below
 
             :return: float
             """
@@ -160,8 +161,10 @@ class NodeMCTS(tree.Node):
                     + rate_balancer * (ar)
                     + conf_const * sqrt(log(N)/n)
                     )
-
-        scores = dict(self.amaf_rates)
+        if amaf_const > 0:
+            scores = dict(self.amaf_rates)
+        else:
+            scores = {}
         for child in self.children.values():
             scores[child.name] = score(child)
         return max(scores, key=lambda x: scores[x])
