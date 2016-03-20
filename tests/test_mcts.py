@@ -12,7 +12,7 @@ def test_search_open_board():
     move_pt = None
     position = go.Position(size=9, komi=0.5)
     for idx in range(4):
-        move_pt, last_pt = mcts.search(position, sim_limit=300), move_pt
+        move_pt, last_pt = mcts.search(position, sim_limit=400), move_pt
         assert type(move_pt) is int
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
@@ -57,7 +57,7 @@ def expanded_root(unexpanded_root):
             break
         else:
             increasing_counter += 1
-            assert len(unexpanded_root.children) == increasing_counter  #must contain a new child each loop
+            assert len(unexpanded_root.children) == increasing_counter  # must contain a new child each loop
     return unexpanded_root
 
 
