@@ -7,6 +7,7 @@ It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search
 """
 from copy import deepcopy
 from math import sqrt, log
+from collections import Counter
 
 import go
 from util import tree
@@ -27,8 +28,8 @@ class NodeMCTS(tree.Node):
         self.state = state
         self.wins = 0
         self.sims = 0
-        self.amaf_wins = 0
-        self.amaf_sims = 0
+        self.amaf_rates = Counter()
+        self.amaf_sims = Counter()
         super(NodeMCTS, self).__init__(children=children)
         self.children = {}
 
@@ -36,8 +37,7 @@ class NodeMCTS(tree.Node):
         """
         :return: A string representation of a node
         """
-        return 'n: {0} w: {1}  amaf: {2} aw: {3}'.format(self.sims, self.wins,
-                                                         self.amaf_sims, self.amaf_wins)
+        return 'n: {0} w: {1}'.format(self.sims, self.wins,)
 
     @property
     def colour(self):
@@ -82,18 +82,22 @@ class NodeMCTS(tree.Node):
             :param move_set: {BLACK:iter, WHITE:iter}
             """
             def update_children(node, moves):
-                for child_name in moves[node.colour]:
+                """
+                Update AMAF counters recursively
+                """
+                node.amaf_sims.update(moves[node.colour])
+                rate_update = {}
+                for move in moves[node.colour]:
                     try:
-                        child = node.children[child_name]
+                        r = node.amaf_rates[move]
                     except KeyError:
-                        continue
-                    else:
-                        child.amaf_sims += 1
-                        child.amaf_wins += result
-                        if child.sims > 0:
-                            reduced_moves = deepcopy(moves)
-                            reduced_moves[node.colour] -= {child.name}
-                            update_children(node=child, moves=reduced_moves)
+                        r = 0
+                    rate_adj = (winner - r) / node.amaf_sims[move]
+                    rate_update[move] = rate_adj
+                node.amaf_rates.update(rate_update)
+                for child in node.children.values():
+                    update_children(node=child, moves=moves)
+
             self.sims += 1
             self.wins += winner
             root = self
@@ -113,40 +117,33 @@ class NodeMCTS(tree.Node):
 
     def bestchild(self, conf_const=0.0, amaf_const=0.5):
         """
-        Find the child with the highest upper confidence bound
+        Find the child name with the highest score
 
-        Formula from "A Survery of Monte Carlo Tree Search Methods"
-
+        Formula is a mix of MCTS, AMAF, Permutation-AMAF and RAVE.
+        The best AMAF child is created as a node if it is not already in the tree.
         :param conf_const: float
-        :param amaf_const: float
         :return: NodeMCTS
         """
-        def win_rate(node):
+        def score(node):
+            """Return the node score as formula below
+
+            (n/(n+an))*(w/n) + (an/(n+an))*(aw/an) + (n/(n+an))* (c*sqrt(log(N)/n))
+            :return: float
+            """
             w = node.wins
             n = node.sims
-            try:
-                return (1 - amaf_const) * (w / n)
-            except ZeroDivisionError:
-                return 0
-
-        def confidence(node):
-            n = node.sims
             N = node.parent.sims
-            try:
-                return conf_const * (1 - amaf_const) * sqrt(log(N) / n)
-            except ZeroDivisionError:
-                return 0
 
-        def amaf_rate(node):
-            w = node.amaf_wins
-            n = node.amaf_sims
             try:
-                return amaf_const * (w / n)
-            except ZeroDivisionError:
-                return 0
+                an = node.parent.amaf_sims[node.name]
+            except KeyError:
+                an = 0
+                ar = 0
+            else:
+                ar = node.parent.amaf_rates[node.name]
+            rate_balancer = (1/(1 + exp(n - 15)))
+            return (1- rate_balancer) * (w / n) + rate_balancer*(ar)
 
-        def score(node):
-            return win_rate(node) + (amaf_rate(node) if conf_const == 0 else confidence(node))
 
         return max(self.children.values(), key=score)
 
