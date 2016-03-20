@@ -90,14 +90,14 @@ class NodeMCTS(tree.Node):
                 Update AMAF counters recursively
                 """
                 node.amaf_sims.update(moves[node.colour])
-                winner = abs(result + node.colour)/2
+                amaf_winner = abs(result + node.colour)/2
                 rate_update = {}
                 for move in moves[node.colour]:
                     try:
                         r = node.amaf_rates[move]
                     except KeyError:
                         r = 0
-                    rate_adj = (winner - r) / node.amaf_sims[move]
+                    rate_adj = (amaf_winner - r) / node.amaf_sims[move]
                     rate_update[move] = rate_adj
                 node.amaf_rates.update(rate_update)
                 for child in node.children.values():
@@ -105,12 +105,12 @@ class NodeMCTS(tree.Node):
 
             nonlocal self
             self.sims += 1
-            self.wins += abs(result + self.colour)/2
+            self.wins += abs(result - self.colour)/2
             root = self
             while root.parent is not None:
                 root = root.parent
                 root.sims += 1
-                root.wins += abs(result + root.colour)/2
+                root.wins += abs(result - root.colour)/2
 
             update_children(node=root, moves=moves)
 
