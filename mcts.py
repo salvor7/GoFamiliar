@@ -80,7 +80,9 @@ class NodeMCTS(tree.Node):
                    node.amaf_sims total by 1
             for any node which can be reached by moves of the sam colour form the play out.
 
-            move_set is expected to exclude moves after the first game capture.
+            Note: move_set is expected to exclude moves after the first game capture.
+            Note: the colour relative scoring. 
+
             :param move_set: {BLACK:iter, WHITE:iter}
             """
             def update_children(node, moves):
@@ -88,6 +90,7 @@ class NodeMCTS(tree.Node):
                 Update AMAF counters recursively
                 """
                 node.amaf_sims.update(moves[node.colour])
+                winner = abs(result + node.colour)/2
                 rate_update = {}
                 for move in moves[node.colour]:
                     try:
@@ -102,19 +105,19 @@ class NodeMCTS(tree.Node):
 
             nonlocal self
             self.sims += 1
-            self.wins += winner
+            self.wins += abs(result + self.colour)/2
             root = self
             while root.parent is not None:
                 root = root.parent
                 root.sims += 1
-                root.wins += winner
+                root.wins += abs(result + root.colour)/2
 
             update_children(node=root, moves=moves)
 
         terminal_state, moves = self.state.random_playout()
-        winner = max(0, self.colour * terminal_state.winner())
+        result = terminal_state.winner()
 
-        update_tree(moves=moves, result=winner)
+        update_tree(moves=moves, result=result)
 
         return terminal_state
 
