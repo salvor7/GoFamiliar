@@ -118,20 +118,27 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
-    def bestchild(self, conf_const=1):
+    def bestchild(self, conf_const=0, amaf_const=15):
         """
         Find the child name with the highest score
 
         Formula is a mix of MCTS, AMAF, Permutation-AMAF and RAVE.
         The best AMAF child is created as a node if it is not already in the tree.
+
         :param conf_const: float
-        :return: NodeMCTS
-        :raises: go.MoveError (from self.new_child() calls)
+            Interpolates between usual confidence algorithm and AMAF.
+            0 means do not use confidence term; 1 means do not use AMAF term.
+        :param amaf_const:
+            the number of MCTS simulations required for even mixing between AMAF and MCTS
+            terms.
+        :raises: go.MoveError
+            Raised from self.new_child() calls
+        :return: int
+            Name of best child node
         """
         def score(node):
             """Return the node score as formula below
 
-            (n/(n+an))*(w/n) + (an/(n+an))*(aw/an) + (n/(n+an))* (c*sqrt(log(N)/n))
             :return: float
             """
             w = node.wins
@@ -139,20 +146,20 @@ class NodeMCTS(tree.Node):
             N = node.parent.sims
 
             try:
-                an = node.parent.amaf_sims[node.name]
-            except KeyError:
-                an = 0
-                ar = 0
-            else:
                 ar = node.parent.amaf_rates[node.name]
-            rate_balancer = (1/(1 + exp(n - 15)))
-            return (1- rate_balancer) * (w / n) + rate_balancer*(ar)
+            except KeyError:
+                ar = 0
+
+            rate_balancer = (1 - conf_const) * (1/(1 + exp(n - amaf_const)))
+            return ((1- rate_balancer) * (w / n)
+                    + rate_balancer * (ar)
+                    + conf_const * sqrt(log(N)/n)
+                    )
 
         scores = dict(self.amaf_rates)
         for child in self.children.values():
             scores[child.name] = score(child)
         return max(scores, key=lambda x: scores[x])
-
 
 
 def search(state, sim_limit=100, const=0):
