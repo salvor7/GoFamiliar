@@ -6,7 +6,6 @@ import go
 import mcts
 import tests.test_fixtures as fixt
 from sgf.library import Library
-from util import tree
 
 
 def test_search_open_board():
@@ -18,6 +17,11 @@ def test_search_open_board():
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
         print(position.board)
+
+
+@pytest.fixture(scope='module')
+def position_moves():
+    return fixt.first_position()(s=19)
 
 
 @pytest.fixture(scope='module')
@@ -128,10 +132,6 @@ def test_tsumego_solving(tsumego):
 def position():
     return fixt.open_position()()
 
-
-@pytest.fixture()
-def position_moves():
-    return fixt.first_position()(s=19)
 
 
 if __name__ == '__main__':
