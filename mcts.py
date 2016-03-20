@@ -81,7 +81,7 @@ class NodeMCTS(tree.Node):
             for any node which can be reached by moves of the sam colour form the play out.
 
             Note: move_set is expected to exclude moves after the first game capture.
-            Note: the colour relative scoring. 
+            Note: the colour relative scoring.
 
             :param move_set: {BLACK:iter, WHITE:iter}
             """
@@ -191,8 +191,7 @@ def search(state, sim_limit=100, const=0):
             try:
                 bestchildname = node.bestchild()
             except ValueError:  # no children or AMAF totals
-                node = node.new_child()
-                break
+                node.new_child()
 
             try:
                 node = node.children[bestchildname]
@@ -210,7 +209,10 @@ def search(state, sim_limit=100, const=0):
     root = NodeMCTS(state=state)
 
     while root.sims < sim_limit:
-        treepolicy(root)
+        try:
+            treepolicy(root)
+        except go.MoveError:    # hit a terminal position
+            root.random_sim()   # run another simulation to mix up all the totals.
 
     return root.bestchild(conf_const=False, amaf_const=0)
 
