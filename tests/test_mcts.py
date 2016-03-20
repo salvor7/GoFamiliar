@@ -20,7 +20,7 @@ def test_search_open_board():
         print(position.board)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def unexpanded_root(position_moves):
     position, moves = position_moves
 
@@ -43,7 +43,7 @@ def test_root(unexpanded_root):
     assert child.wins == unexpanded_root.wins
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def expanded_root(unexpanded_root):
     increasing_counter = 0
     while True:
@@ -57,7 +57,13 @@ def expanded_root(unexpanded_root):
     return unexpanded_root
 
 
-def test_children(expanded_root):
+def test_mutables_objects(expanded_root):
+    """
+    Test the mutable objects on the nodes are different objects
+
+    With so much copying going on, it would be easy for many nodes to be pointing at the
+    same state, or a number of states to be pointing at the same board object.
+    """
     assert len(expanded_root.children) == 361 - 23 - 2
 
     testing_lambdas = [(lambda x: x.state),
@@ -75,6 +81,11 @@ def test_children(expanded_root):
             assert type(obj1) == type(obj2)
             assert obj1 is not obj2
 
+
+def test_children_of_expanded(expanded_root):
+    """
+    Test the various properties of the children of the expanded root node
+    """
     for node in expanded_root.children.values():
         assert node.parent is expanded_root
         assert node.sims == 1
