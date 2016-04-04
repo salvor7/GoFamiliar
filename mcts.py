@@ -43,7 +43,7 @@ class NodeMCTS(tree.Node):
     @property
     def colour(self):
         """
-        Return the two player colour
+        Return the two player colour of the move to be made from this node
 
         :return: int
         """
@@ -121,7 +121,7 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
-    def bestchild(self, conf_const=False, amaf_const=15):
+    def bestchild(self, conf_const=False, amaf_const=100):
         """
         Find the child name with the highest score
 
@@ -153,14 +153,15 @@ class NodeMCTS(tree.Node):
                 ar = node.parent.amaf_rates[node.name]
             except KeyError:
                 ar = 0
-            try:
-                rate_balancer = (1 - conf_const) * (1/(1 + exp(n - amaf_const)))
-            except OverflowError:
+
+            if conf_const:
+                explore_term = sqrt(log(N)/n)
                 rate_balancer = 0
-            return ((1- rate_balancer) * (w / n)
-                    + rate_balancer * (ar)
-                    + conf_const * sqrt(log(N)/n)
-                    )
+            else:
+                rate_balancer = max(0, ((amaf_const + 1 - n)/(amaf_const + 1)))
+                explore_term = rate_balancer * ar
+            return (1- rate_balancer) * (w + 1) / (n + 1) + explore_term
+
         if amaf_const > 0:
             scores = dict(self.amaf_rates)
         else:
@@ -211,6 +212,8 @@ def search(state, sim_limit=100, const=0):
             except go.MoveError:   # bad move from AMAF
                 del node.amaf_rates[bestchildname]
                 del node.amaf_sims[bestchildname]
+            else:
+                break
 
     root = NodeMCTS(state=state)
 
@@ -220,7 +223,7 @@ def search(state, sim_limit=100, const=0):
         except go.MoveError:    # hit a terminal position
             root.random_sim()   # run another simulation to mix up all the totals.
 
-    return root.bestchild(conf_const=False, amaf_const=0)
+    return root.bestchild()
 
 
 
