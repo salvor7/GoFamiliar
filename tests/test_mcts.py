@@ -105,9 +105,9 @@ def test_children_of_expanded(expanded_root):
 
         best1stgen.new_child()
         assert best1stgen.sims == 1 + sum([child.sims for child in best1stgen.children.values()])
-        assert best1stgen.wins == -1 + sum([child.wins for child in best1stgen.children.values()])
+        assert best1stgen.sims - best1stgen.wins == -1 + sum([child.wins for child in best1stgen.children.values()])
         assert expanded_root.sims == 361 - 23 - 2 + idx
-        assert expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
+        assert expanded_root.sims - expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
 
 
 @pytest.fixture(scope='module')
