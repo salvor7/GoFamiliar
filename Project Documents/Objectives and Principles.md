@@ -1,4 +1,4 @@
-# Objective
+## Objective
 I believe that people should be able to understand, learn from, and even influence the outcomes of the complex algorithms making decisions around them.
 
 My goal here is to take a step in that direction, and make a user interface into the workings of Go player algorithms that allows output as well as input during the running of algorithm
@@ -7,7 +7,7 @@ Success would be that a GoFamiliar-aided and Go knowledgeable person can out-per
 
 AlphaGo is an amazing advance, but still an advance perpendicular to the the goal of the Go Familiar.
 
-# Why?
+## Why?
 Elon Musks fears of AI are not so much science fiction anymore.
 
 Machines and humans must be melded or cyborgized through better interfaces if we are to avoid the T2 or the Matrix scenarios.
@@ -15,7 +15,7 @@ Machines and humans must be melded or cyborgized through better interfaces if we
 This project is one attempt to play at creating a go playing machine + human meld.
 This is similar to Advanced or Freestyle Chess.
 
-# Additional Reasons Why
+## Additional Reasons Why
 ### Machine Learning
 I am using this project as a way to go from knowing about various machine learning techniques to having implemented and used them myself.
 
@@ -37,7 +37,7 @@ I play as salvor7 on most english sites: KGS, DGS, OGS.
 If I'm not on one, tell me about it; I'll join it.
 
 
-# Some ways forward
+## Some ways forward
 
 ### Professional Game Library
 The library can be used for several machine learning algorithms and visualizations.
