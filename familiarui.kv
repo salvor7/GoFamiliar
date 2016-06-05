@@ -1,0 +1,64 @@
+##:include debug.kv
+#:import Logger kivy.logger.Logger
+
+
+<Button>
+    background_color: 0, 0, 0, 0
+
+
+<GoKivyGo>: 
+    orientation: 'horizontal'
+    padding: 20
+    spacing: 10
+
+    Board:
+
+
+    BoxLayout:
+        size_hint: 0.7, 1
+        orientation: 'vertical'
+        padding: 20
+        spacing: 10
+        Button:
+            text: 'Captures'
+        Button:
+            text: 'Context'
+        Button:
+            id: _info_button
+            text: ''
+
+
+<BoardImage>:
+    source: 'board.png'
+
+
+<Board>:
+    BoardImage:
+        id: _image_id
+        pos: self.parent.x, self.parent.y
+    ButtonGrid:
+        size: _image_id.norm_image_size
+        pos: _image_id.pos
+        padding: _image_id.width * 0.005
+        spacing: _image_id.width * 0.005
+
+
+<ButtonGrid>:
+    size_hint: None,None
+    pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
+    cols: 19
+
+
+<StoneImage>
+    sourceblack: 'stone_black.png'
+    sourcewhite: 'stone_white.png'
+    source: self.sourcewhite
+    pos: self.parent.pos
+    size: self.parent.size
+    color: 0, 0, 0, 0
+
+
+<Intersection>
+    stone_image: _stone_id
+    StoneImage:
+        id: _stone_id
