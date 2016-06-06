@@ -1,7 +1,7 @@
 import os
 import h5py
 
-import go
+from thick_goban import go
 import sgf.read
 
 doctest_dir = r'sgf_store\hikaru_sgfs'

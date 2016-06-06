@@ -10,7 +10,7 @@ from math import sqrt, log, exp
 
 from collections import Counter
 
-import go
+from thick_goban import go
 from util import tree
 
 
