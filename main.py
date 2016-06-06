@@ -11,8 +11,10 @@ from kivy.clock import Clock
 
 from thick_goban import go
 
-class GoKivyGo(BoxLayout):
+
+class GoFamiliar(BoxLayout):
     pass
+
 
 class Board(FloatLayout):
     background = ObjectProperty(None)
@@ -27,7 +29,8 @@ class Board(FloatLayout):
     def method1(self, inst=None, value=None):
         # Logger.info(str(self.background.texture))
         pass
-        
+
+
 class ButtonGrid(GridLayout):
     gamestate = ListProperty([])
 
@@ -125,10 +128,10 @@ class BoardImage(Image):
     pass
 
 
-class GoKivyGoApp(App):
+class GoFamiliarApp(App):
     def build(self):
-        return GoKivyGo()
+        return GoFamiliar()
 
 
 if __name__ == '__main__':
-    GoKivyGoApp().run()
+    GoFamiliarApp().run()

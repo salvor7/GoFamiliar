@@ -1,4 +1,4 @@
-##:include debug.kv
+#:include debug.kv
 #:import Logger kivy.logger.Logger
 
 
@@ -6,13 +6,12 @@
     background_color: 0, 0, 0, 0
 
 
-<GoKivyGo>: 
+<GoFamiliar>:
     orientation: 'horizontal'
     padding: 20
     spacing: 10
 
     Board:
-
 
     BoxLayout:
         size_hint: 0.7, 1
@@ -29,7 +28,7 @@
 
 
 <BoardImage>:
-    source: 'board.png'
+    source: 'static_assets/board.png'
 
 
 <Board>:
@@ -44,14 +43,14 @@
 
 
 <ButtonGrid>:
-    size_hint: None,None
+    size_hint: None, None
     pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
     cols: 19
 
 
 <StoneImage>
-    sourceblack: 'stone_black.png'
-    sourcewhite: 'stone_white.png'
+    sourceblack: 'static_assets/stone_black.png'
+    sourcewhite: 'static_assets/stone_white.png'
     source: self.sourcewhite
     pos: self.parent.pos
     size: self.parent.size
