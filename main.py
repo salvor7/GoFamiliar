@@ -8,11 +8,20 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
+from kivy.uix.stacklayout import StackLayout
 
 from thick_goban import go
 
 
 class GoFamiliar(BoxLayout):
+    pass
+
+
+class PlayPanel(BoxLayout):
+    pass
+
+
+class AnalysisPanel(BoxLayout):
     pass
 
 

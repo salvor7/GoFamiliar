@@ -11,20 +11,42 @@
     padding: 20
     spacing: 10
 
+    PlayPanel:
+
+    AnalysisPanel:
+
+
+<PlayPanel>
+    orientation: 'vertical'
+
+    Board:
+
+    Label:
+        id: _info_button
+        text: ''
+
+    BoxLayout:
+        orientation: 'horizontal'
+
+        Button:
+            text: 'Submit'
+
+        Button:
+            text: 'Start Analysis'
+
+<AnalysisPanel>
+    orientation: 'vertical'
+
     Board:
 
     BoxLayout:
-        size_hint: 0.7, 1
-        orientation: 'vertical'
-        padding: 20
-        spacing: 10
+        orientation: 'horizontal'
+
         Button:
-            text: 'Captures'
-        Button:
-            text: 'Context'
-        Button:
-            id: _info_button
-            text: ''
+            text: 'Up Move Tree'
+
+        Label:
+            text: 'Sims:'
 
 
 <BoardImage>:
