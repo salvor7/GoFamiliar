@@ -12,7 +12,7 @@ def test_search_open_board():
     move_pt = None
     position = go.Position(size=9, komi=0.5)
     for idx in range(4):
-        move_pt, last_pt = mcts.search(position, sim_limit=400), move_pt
+        move_pt, last_pt = mcts.move_search(position, sim_limit=400), move_pt
         assert type(move_pt) is int
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
@@ -74,11 +74,11 @@ def test_mutables_objects(expanded_root):
                        (lambda x: x.state.actions),
                        (lambda x: x.state.board),
                        (lambda x: x.state.board._pointers),
-                       (lambda x: x.state.board._board_colour),]
+                       (lambda x: x.state.board._board_colour), ]
 
     # test that nodes aren't sharing the same mutable objects
     all_nodes = list(expanded_root.children.values()) + [expanded_root]
-    mutable_objects = [ [func(node) for node in all_nodes] for func in testing_lambdas]
+    mutable_objects = [[func(node) for node in all_nodes] for func in testing_lambdas]
 
     for mutable_objs in mutable_objects:
         for obj1, obj2 in itertools.combinations(mutable_objs, r=2):
@@ -124,7 +124,7 @@ def tsumego(request):
 
 def test_tsumego_solving(tsumego):
     position, correct_move = tsumego
-    found_move = mcts.search(position, sim_limit=800)
+    found_move = mcts.move_search(position, sim_limit=800)
     assert correct_move == found_move
 
 
@@ -133,8 +133,7 @@ def position():
     return fixt.open_position()()
 
 
-
 if __name__ == '__main__':
     import cProfile
-    cProfile.run('expanded_root(unexpanded_root(position_moves()))')
 
+    cProfile.run('expanded_root(unexpanded_root(position_moves()))')

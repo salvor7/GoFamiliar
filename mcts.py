@@ -171,8 +171,8 @@ class NodeMCTS(tree.Node):
         return max(scores, key=lambda x: scores[x])
 
 
-def search(state, sim_limit=100, const=0):
-    """Find a good action
+def move_search(state, sim_limit=100, const=0):
+    """Find a good move in a Go game
 
     This is the main function of the MCTS algorithm.
     All other module methods are used by it.
@@ -196,7 +196,7 @@ def search(state, sim_limit=100, const=0):
         while True:
             try:
                 bestchildname = node.bestchild()
-            except ValueError:  # no children or AMAF totals
+            except ValueError:  # no children nor AMAF totals
                 node.new_child()
                 break
 
@@ -217,6 +217,8 @@ def search(state, sim_limit=100, const=0):
 
     root = NodeMCTS(state=state)
 
+    yield root
+
     while root.sims < sim_limit:
         try:
             treepolicy(root)
@@ -224,6 +226,3 @@ def search(state, sim_limit=100, const=0):
             root.random_sim()   # run another simulation to mix up all the totals.
 
     return root.bestchild()
-
-
-
