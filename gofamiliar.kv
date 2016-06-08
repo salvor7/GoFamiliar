@@ -24,15 +24,12 @@
     Label:
         id: _info_button
         text: ''
+        size_hint: 1, 0.06
+        halign: 'left'
 
-    BoxLayout:
-        orientation: 'horizontal'
-
-        Button:
-            text: 'Submit'
-
-        Button:
-            text: 'Start Analysis'
+    Button:
+        text: 'Submit Move'
+        size_hint: 0.5, .1
 
 <AnalysisPanel>
     orientation: 'vertical'
@@ -41,12 +38,23 @@
 
     BoxLayout:
         orientation: 'horizontal'
+        size_hint: 1, .06
+
+        Label:
+            text: 'Simulation Count:'
+
+        Label:
+            text: ''
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, .1
+
+        Button:
+            text: 'Start Analysis'
 
         Button:
             text: 'Up Move Tree'
-
-        Label:
-            text: 'Sims:'
 
 
 <BoardImage>:
