@@ -99,12 +99,13 @@ class ButtonGrid(GridLayout):
 
     def add_cell(self, index):
         def make_move(instance):
+            info_label = App.get_running_app().root.ids._play_panel.ids._move_info_label
             try:
                 self.state.move(move_pt=instance.intersection_id)
             except go.MoveError as e:
-                App.get_running_app().root.ids._info_button.text = str(e)
+                info_label.text = str(e)
             else:
-                App.get_running_app().root.ids._info_button.text = ''
+                info_label.text = ''
             self.gamestate = self.state.board._board_colour
 
         def _update_loc(inst, value):
