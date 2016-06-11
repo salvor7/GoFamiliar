@@ -11,6 +11,7 @@ from kivy.clock import Clock
 from kivy.uix.stacklayout import StackLayout
 
 from thick_goban import go
+from mcts import move_search
 
 
 class GoFamiliar(BoxLayout):
@@ -66,35 +67,29 @@ class ButtonGrid(GridLayout):
         # Logger.info('Board state: ' + str(value))
         for inter in self.intersectionlist:
             inter_colour = self.gamestate[inter.intersection_id]
-            if inter_colour == go.BLACK:
-                inter.stone_image.color = (1, 1, 1, 1)
-                inter.stone_image.source = inter.stone_image.sourceblack
-                if inter.intersection_id == self.state.lastmove:
-                    with inter.stone_image.canvas.after:
-                        Color(1, 1, 1, 1)
-                        inter.stone_image.lastmove = Line(
-                            circle=circle_values(inter.stone_image),
-                            width=inter.stone_image.width * 0.05
-                            )
-                        inter.stone_image.bind(pos=_update_marker, size=_update_marker)
-                else:
-                    inter.stone_image.canvas.after.clear()
 
+            if inter_colour == go.BLACK:
+                alpha = 1
+                move_marker_colour = (1, 1, 1, 1)
+                inter.stone_image.source = inter.stone_image.sourceblack
             elif inter_colour == go.WHITE:
-                inter.stone_image.color = (1, 1, 1, 1)
+                alpha = 1
+                move_marker_colour = (0, 0, 0, 1)
                 inter.stone_image.source = inter.stone_image.sourcewhite
-                if inter.intersection_id == self.state.lastmove:
-                    with inter.stone_image.canvas.after:
-                        Color(0, 0, 0, 1)
-                        inter.stone_image.lastmove = Line(
-                            circle=circle_values(inter.stone_image),
-                            width=inter.stone_image.width * 0.05
-                        )
-                        inter.stone_image.bind(pos=_update_marker, size=_update_marker)
-                else:
-                    inter.stone_image.canvas.after.clear()
             elif inter_colour == go.OPEN:
-                inter.stone_image.color = (0, 0, 0, 0)
+                alpha = 0
+
+            inter.stone_image.color = (1, 1, 1, alpha)
+
+            if inter.intersection_id == self.state.lastmove:
+                with inter.stone_image.canvas.after:
+                    Color(*move_marker_colour)
+                    inter.stone_image.lastmove = Line(
+                        circle=circle_values(inter.stone_image),
+                        width=inter.stone_image.width * 0.05
+                    )
+                    inter.stone_image.bind(pos=_update_marker, size=_update_marker)
+            else:
                 inter.stone_image.canvas.after.clear()
 
     def add_cell(self, index):
