@@ -36,7 +36,7 @@
 <AnalysisPanel>
     orientation: 'vertical'
 
-    Board:
+    AnalysisBoard:
 
     BoxLayout:
         orientation: 'horizontal'
@@ -59,10 +59,6 @@
             text: 'Up Move Tree'
 
 
-<BoardImage>:
-    source: 'static_assets/board.png'
-
-
 <Board>:
     BoardImage:
         id: _image_id
@@ -74,7 +70,28 @@
         spacing: _image_id.width * 0.005
 
 
+<AnalysisBoard>:
+    BoardImage:
+        id: _image_id
+        pos: self.parent.x, self.parent.y
+    AnalysisButtonGrid:
+        size: _image_id.norm_image_size
+        pos: _image_id.pos
+        padding: _image_id.width * 0.005
+        spacing: _image_id.width * 0.005
+
+
+<BoardImage>:
+    source: 'static_assets/board.png'
+
+
 <ButtonGrid>:
+    size_hint: None, None
+    pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
+    cols: 19
+
+
+<AnalysisButtonGrid>:
     size_hint: None, None
     pos_hint: { 'center_x': 0.5, 'center_y': 0.5 }
     cols: 19
