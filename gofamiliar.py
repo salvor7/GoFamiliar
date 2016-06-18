@@ -1,7 +1,8 @@
 
 # Don't use multiprocessing.queue.Queue
 # http://stackoverflow.com/questions/24941359/ctx-parameter-in-multiprocessing-queue
-from multiprocessing import Queue
+from multiprocessing import Queue, Process
+import matplotlib.pyplot as plt
 
 from kivy.app import App
 from kivy.graphics import Color, Line, Rectangle
@@ -13,7 +14,6 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
-from multiprocessing import Process
 
 from thick_goban import go
 import mcts
@@ -128,6 +128,7 @@ class ButtonGrid(GridLayout):
 
 class AnalysisButtonGrid(GridLayout):
     gamestate = ListProperty([])
+    heat_cmap = plt.get_cmap('cool')
 
     def update_board_overlay(self, dt):
         current_state = self.analysis_queue.get()
@@ -135,8 +136,11 @@ class AnalysisButtonGrid(GridLayout):
             if inter.intersection_id in current_state:
                 inter.stone_image.canvas.clear()
                 with inter.stone_image.canvas:
-                    Color(0, .5, .5, 0.6)
-                    Rectangle(pos=inter.pos, size=inter.size)
+                    inter_score = current_state[inter.intersection_id]
+                    if inter_score != 0:
+                        r, g, b, a = self.heat_cmap(inter_score**2)
+                        Color(r, g, b, inter_score)
+                        Rectangle(pos=inter.pos, size=inter.size)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -146,7 +150,7 @@ class AnalysisButtonGrid(GridLayout):
         self.state = go.Position()
         self.intersectionlist = []
 
-        Clock.schedule_interval(self.update_board_overlay, 1)
+        Clock.schedule_interval(self.update_board_overlay, .25)
 
         # Idea to use queue came from here
         # https://pymotw.com/2/multiprocessing/communication.html
@@ -217,7 +221,7 @@ class AnalysisButtonGrid(GridLayout):
             inst.cover.pos = inst.pos
 
         intersection = Intersection(intersection_id=index)
-        intersection.bind(on_press=make_move)
+        #intersection.bind(on_press=make_move)
         self.add_widget(intersection)
         try:
             self.intersectionlist.append(intersection)

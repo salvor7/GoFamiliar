@@ -130,15 +130,15 @@ class NodeMCTS(tree.Node):
         n = self.sims
         N = self.parent.sims
 
-        try:
-            ar = self.parent.amaf_rates[self.name]
-        except KeyError:
-            ar = 0
 
         if conf_const:
             explore_term = sqrt(log(N) / n)
             rate_balancer = 0
         else:
+            try:
+                ar = self.parent.amaf_rates[self.name]
+            except KeyError:
+                ar = 0
             rate_balancer = max(0, ((amaf_const + 1 - n) / (amaf_const + 1)))
             explore_term = rate_balancer * ar
         return (1 - rate_balancer) * (w + 1) / (n + 1) + explore_term
@@ -226,7 +226,7 @@ def move_search(state, sim_limit=1000):
 
 
 def gof_move_search(queue, state, sim_limit=10000):
-    """Pass
+    """Pass search scores from the MCTS algorithm in to a queue
 
     This is the main function of the MCTS algorithm.
     All other module methods are used by it.
@@ -245,4 +245,7 @@ def gof_move_search(queue, state, sim_limit=10000):
             treepolicy(rootnode)
         except go.MoveError:  # hit a terminal position
             rootnode.random_sim()  # run another simulation to mix up all the totals.
-        queue.put({child.name: child.score() for child in rootnode.children.values()})
+        child_scores = {child.name: child.score(conf_const=True) for child in rootnode.children.values()}
+        score_dict = dict(rootnode.amaf_rates)
+        score_dict.update(child_scores)
+        queue.put(score_dict)
