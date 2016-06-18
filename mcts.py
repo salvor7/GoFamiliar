@@ -6,8 +6,7 @@ It is not intended to be specialized for go, though that is the first and only u
 It is based on the basic algorithm shown in "A Survey of Monte Carlo Tree Search Methods".
 """
 from copy import deepcopy
-from math import sqrt, log, exp
-
+from math import sqrt, log
 from collections import Counter
 
 from thick_goban import go
@@ -121,6 +120,29 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
+    def score(self, conf_const=False, amaf_const=100):
+        """
+        Return a node's own score as formula below
+
+        :return: float
+        """
+        w = self.wins
+        n = self.sims
+        N = self.parent.sims
+
+        try:
+            ar = self.parent.amaf_rates[self.name]
+        except KeyError:
+            ar = 0
+
+        if conf_const:
+            explore_term = sqrt(log(N) / n)
+            rate_balancer = 0
+        else:
+            rate_balancer = max(0, ((amaf_const + 1 - n) / (amaf_const + 1)))
+            explore_term = rate_balancer * ar
+        return (1 - rate_balancer) * (w + 1) / (n + 1) + explore_term
+
     def bestchild(self, conf_const=False, amaf_const=100):
         """
         Find the child name with the highest score
@@ -139,39 +161,48 @@ class NodeMCTS(tree.Node):
         :return: int
             Name of best child node
         """
-        def score(node):
-            """
-            Return the node score as formula below
-
-            :return: float
-            """
-            w = node.wins
-            n = node.sims
-            N = node.parent.sims
-
-            try:
-                ar = node.parent.amaf_rates[node.name]
-            except KeyError:
-                ar = 0
-
-            if conf_const:
-                explore_term = sqrt(log(N)/n)
-                rate_balancer = 0
-            else:
-                rate_balancer = max(0, ((amaf_const + 1 - n)/(amaf_const + 1)))
-                explore_term = rate_balancer * ar
-            return (1- rate_balancer) * (w + 1) / (n + 1) + explore_term
-
         if amaf_const > 0:
             scores = dict(self.amaf_rates)
         else:
             scores = {}
         for child in self.children.values():
-            scores[child.name] = score(child)
+            scores[child.name] = child.score(conf_const=conf_const, amaf_const=amaf_const)
         return max(scores, key=lambda x: scores[x])
 
 
-def move_search(state, sim_limit=100, const=0):
+def treepolicy(root):
+    """Simulate a select node using MCTS with AMAF
+
+    :param root: NodeMCTS
+    :param const: float
+    :return: NodeMCTS
+    """
+    node = root
+
+    while True:
+        try:
+            bestchildname = node.bestchild()
+        except ValueError:  # no children nor AMAF totals
+            node.new_child()
+            break
+
+        try:
+            node = node.children[bestchildname]
+        except KeyError:  # selected child is not a node yet
+            pass
+        else:
+            continue
+
+        try:
+            node = node.new_child(move_pt=bestchildname)
+        except go.MoveError:  # bad move from AMAF
+            del node.amaf_rates[bestchildname]
+            del node.amaf_sims[bestchildname]
+        else:
+            break
+
+
+def move_search(state, sim_limit=1000):
     """Find a good move in a Go game
 
     This is the main function of the MCTS algorithm.
@@ -179,50 +210,39 @@ def move_search(state, sim_limit=100, const=0):
     sim_limit limits the total number of terminal playouts can occur before a move is returned/
     const is a constant value used in bestchild as part of move evaluation
 
-    :param state: state object
+    :param rootnode: root node with starting state
     :param sim_limit: int
-    :param const: float
     :return: action
     """
-    def treepolicy(root):
-        """Simulate a select node using MCTS with AMAF
+    rootnode = NodeMCTS(state=state)
 
-        :param root: NodeMCTS
-        :param const: float
-        :return: NodeMCTS
-        """
-        node = root
-
-        while True:
-            try:
-                bestchildname = node.bestchild()
-            except ValueError:  # no children nor AMAF totals
-                node.new_child()
-                break
-
-            try:
-                node = node.children[bestchildname]
-            except KeyError:    # selected child is not a node yet
-                pass
-            else:
-                continue
-
-            try:
-                node = node.new_child(move_pt=bestchildname)
-            except go.MoveError:   # bad move from AMAF
-                del node.amaf_rates[bestchildname]
-                del node.amaf_sims[bestchildname]
-            else:
-                break
-
-    root = NodeMCTS(state=state)
-
-    yield root
-
-    while root.sims < sim_limit:
+    while rootnode.sims < sim_limit:
         try:
-            treepolicy(root)
+            treepolicy(rootnode)
         except go.MoveError:    # hit a terminal position
-            root.random_sim()   # run another simulation to mix up all the totals.
+            rootnode.random_sim()   # run another simulation to mix up all the totals.
 
-    return root.bestchild()
+    return rootnode.bestchild()
+
+
+def gof_move_search(queue, state, sim_limit=10000):
+    """Pass
+
+    This is the main function of the MCTS algorithm.
+    All other module methods are used by it.
+    sim_limit limits the total number of terminal playouts can occur before a move is returned/
+    const is a constant value used in bestchild as part of move evaluation
+
+    :param queue: multiprocessing.Queue object to allow algorithm state passing
+    :param rootnode: root node with starting state
+    :param sim_limit: int
+    :return: action
+    """
+    rootnode = NodeMCTS(state=state)
+
+    while rootnode.sims < sim_limit:
+        try:
+            treepolicy(rootnode)
+        except go.MoveError:  # hit a terminal position
+            rootnode.random_sim()  # run another simulation to mix up all the totals.
+        queue.put({child.name: child.score() for child in rootnode.children.values()})

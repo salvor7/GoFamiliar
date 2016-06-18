@@ -1,5 +1,10 @@
+
+# Don't use multiprocessing.queue.Queue
+# http://stackoverflow.com/questions/24941359/ctx-parameter-in-multiprocessing-queue
+from multiprocessing import Queue
+
 from kivy.app import App
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Rectangle
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
@@ -8,9 +13,10 @@ from kivy.uix.image import Image
 from kivy.logger import Logger
 from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
+from multiprocessing import Process
 
 from thick_goban import go
-from mcts import move_search
+import mcts
 
 
 class GoFamiliarApp(App):
@@ -122,18 +128,36 @@ class ButtonGrid(GridLayout):
 
 class AnalysisButtonGrid(GridLayout):
     gamestate = ListProperty([])
-    root_node = ObjectProperty(None)
-    current_node = ObjectProperty(None)
+
+    def update_board_overlay(self, dt):
+        current_state = self.analysis_queue.get()
+        for inter in self.intersectionlist:
+            if inter.intersection_id in current_state:
+                inter.stone_image.canvas.clear()
+                with inter.stone_image.canvas:
+                    Color(0, .5, .5, 0.6)
+                    Rectangle(pos=inter.pos, size=inter.size)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         for i in range(19*19):
             self.add_cell(i)
-        move_search_gen = move_search(state=Position(), sim_limit=500)
-        self.root_node = next(move_search_gen)
-        self.current_node = self.root_node
-        self.state = current_node.state
+
+        self.state = go.Position()
         self.intersectionlist = []
+
+        Clock.schedule_interval(self.update_board_overlay, 1)
+
+        # Idea to use queue came from here
+        # https://pymotw.com/2/multiprocessing/communication.html
+        self.analysis_queue = Queue()
+        self.analysis_process = Process(target=mcts.gof_move_search, args=(self.analysis_queue, self.state, 10000))
+        self.analysis_process.start()
+
+    def __del__(self, **kwargs):
+        self.analysis_process.terminate()
+        super().__del__(**kwargs)
+
 
     def on_gamestate(self, instance, value):
 
