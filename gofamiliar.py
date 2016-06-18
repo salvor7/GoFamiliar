@@ -23,6 +23,12 @@ class GoFamiliarApp(App):
     def build(self):
         return GoFamiliar()
 
+    def on_stop(self, **kwargs):
+        analysis = self.root.ids['_analysis_panel']
+        board = analysis.ids['_board']
+        analysis_grid = board.ids['_analysis_grid']
+        analysis_grid.analysis_process.terminate()
+
 
 class GoFamiliar(BoxLayout):
     pass
@@ -157,11 +163,6 @@ class AnalysisButtonGrid(GridLayout):
         self.analysis_queue = Queue()
         self.analysis_process = Process(target=mcts.gof_move_search, args=(self.analysis_queue, self.state, 10000))
         self.analysis_process.start()
-
-    def __del__(self, **kwargs):
-        self.analysis_process.terminate()
-        super().__del__(**kwargs)
-
 
     def on_gamestate(self, instance, value):
 

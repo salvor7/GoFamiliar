@@ -15,6 +15,7 @@
         id: _play_panel
 
     AnalysisPanel:
+        id: _analysis_panel
 
 
 <PlayPanel>
@@ -37,6 +38,7 @@
     orientation: 'vertical'
 
     AnalysisBoard:
+        id: _board
 
     BoxLayout:
         orientation: 'horizontal'
@@ -76,6 +78,7 @@
         pos: self.parent.x, self.parent.y
 
     AnalysisButtonGrid:
+        id: _analysis_grid
         size: _image_id.norm_image_size
         pos: _image_id.pos
         padding: _image_id.width * 0.005
