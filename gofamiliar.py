@@ -25,7 +25,7 @@ class GoFamiliarApp(App):
 
     def on_stop(self, **kwargs):
         analysis = self.root.ids['_analysis_panel']
-        board = analysis.ids['_board']
+        board = analysis.ids['_analysis_board']
         analysis_grid = board.ids['_analysis_grid']
         analysis_grid.analysis_process.terminate()
 
@@ -107,9 +107,16 @@ class ButtonGrid(GridLayout):
             else:
                 inter.stone_image.canvas.after.clear()
 
+        analysis_grid = self.my_root().ids._analysis_panel.ids._analysis_board.ids._analysis_grid
+        analysis_grid.state = self.state
+        analysis_grid.gamestate = analysis_grid.state.board._board_colour
+
+    def my_root(self):
+        return App.get_running_app().root
+
     def add_cell(self, index):
         def make_move(instance):
-            info_label = App.get_running_app().root.ids._play_panel.ids._move_info_label
+            info_label = self.my_root().ids._play_panel.ids._move_info_label
             try:
                 self.state.move(move_pt=instance.intersection_id)
             except go.MoveError as e:
@@ -140,11 +147,11 @@ class AnalysisButtonGrid(GridLayout):
         current_state = self.analysis_queue.get()
         for inter in self.intersectionlist:
             if inter.intersection_id in current_state:
-                inter.stone_image.canvas.clear()
-                with inter.stone_image.canvas:
+                inter.stone_image.canvas.after.clear()
+                with inter.stone_image.canvas.after:
                     inter_score = current_state[inter.intersection_id]
                     if inter_score != 0:
-                        r, g, b, a = self.heat_cmap(inter_score**2)
+                        r, g, b, a = self.heat_cmap(inter_score)
                         Color(r, g, b, inter_score)
                         Rectangle(pos=inter.pos, size=inter.size)
 
@@ -177,8 +184,15 @@ class AnalysisButtonGrid(GridLayout):
             instance.lastmove.circle = circle_values(instance)
             instance.lastmove.width = instance.width * 0.05
 
+        self.analysis_process.terminate()
+        self.analysis_queue = Queue()
+        self.analysis_process = Process(target=mcts.gof_move_search, args=(self.analysis_queue, self.state, 10000))
+        self.analysis_process.start()
+
         Logger.info('Board state: ' + str(value))
         for inter in self.intersectionlist:
+            inter.stone_image.canvas.after.clear()
+
             inter_colour = self.gamestate[inter.intersection_id]
 
             if inter_colour == go.BLACK:
