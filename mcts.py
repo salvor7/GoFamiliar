@@ -245,7 +245,6 @@ def gof_move_search(queue, state, sim_limit=10000):
             treepolicy(rootnode)
         except go.MoveError:  # hit a terminal position
             rootnode.random_sim()  # run another simulation to mix up all the totals.
-        child_scores = {child.name: child.score(conf_const=True) for child in rootnode.children.values()}
-        score_dict = dict(rootnode.amaf_rates)
-        score_dict.update(child_scores)
-        queue.put(score_dict)
+        if rootnode.sims % 10 == 0:
+            child_scores = {child.name: child.score() for child in rootnode.children.values()}
+            queue.put(child_scores)
