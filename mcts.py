@@ -16,7 +16,18 @@ from util import tree
 class NodeMCTS(tree.Node):
     """
     A node of MC search tree
+
+    Two algorithm tuning parameters are defined at the class level.
+    :CONFIDENCE_ALG: boolean
+        Interpolates between usual confidence algorithm and AMAF.
+        False means do not use confidence term.
+        True means use it and do not use AMAF term, so the AMAF_LIMIT is ignored.
+    :AMAF_LIMIT: int
+        the number of MCTS simulations before the normal win rate term takes over for scoring.
     """
+    CONFIDENCE_ALG = False
+    AMAF_LIMIT = 20
+
     def __init__(self, state, name=None, children=None):
         """
         Initialize a MCTS node object
@@ -120,7 +131,7 @@ class NodeMCTS(tree.Node):
 
         return terminal_state
 
-    def score(self, conf_const=False, amaf_const=100):
+    def score(self):
         """
         Return a node's own score as formula below
 
@@ -130,43 +141,39 @@ class NodeMCTS(tree.Node):
         n = self.sims
         N = self.parent.sims
 
-
-        if conf_const:
-            explore_term = sqrt(log(N) / n)
+        if self.CONFIDENCE_ALG:
             rate_balancer = 0
+            explore_term = log(N) / sqrt(n)
         else:
             try:
                 ar = self.parent.amaf_rates[self.name]
             except KeyError:
                 ar = 0
-            rate_balancer = max(0, ((amaf_const + 1 - n) / (amaf_const + 1)))
+            rate_balancer = max(0, ((self.AMAF_LIMIT + 1 - n) / (self.AMAF_LIMIT + 1)))
             explore_term = rate_balancer * ar
-        return (1 - rate_balancer) * (w + 1) / (n + 1) + explore_term
 
-    def bestchild(self, conf_const=False, amaf_const=100):
+        win_rate_term = (1 - rate_balancer) * (w + 1) / (n + 1)
+
+        return win_rate_term + explore_term
+
+    def bestchild(self):
         """
         Find the child name with the highest score
 
         Formula is a mix of MCTS, AMAF, Permutation-AMAF and RAVE.
         The best AMAF child is created as a node if it is not already in the tree.
 
-        :param conf_const: boolean
-            Interpolates between usual confidence algorithm and AMAF.
-            0 means do not use confidence term; 1 means do not use AMAF term.
-        :param amaf_const:
-            the number of MCTS simulations required for even mixing between AMAF and MCTS
-            terms.
         :raises: go.MoveError
             Raised from self.new_child() calls
         :return: int
             Name of best child node
         """
-        if amaf_const > 0:
+        if not self.CONFIDENCE_ALG and self.AMAF_LIMIT > 0:
             scores = dict(self.amaf_rates)
         else:
             scores = {}
         for child in self.children.values():
-            scores[child.name] = child.score(conf_const=conf_const, amaf_const=amaf_const)
+            scores[child.name] = child.score()
         return max(scores, key=lambda x: scores[x])
 
 
@@ -174,8 +181,6 @@ def treepolicy(root):
     """Simulate a select node using MCTS with AMAF
 
     :param root: NodeMCTS
-    :param const: float
-    :return: NodeMCTS
     """
     node = root
 
@@ -239,6 +244,11 @@ def gof_move_search(queue, state, sim_limit=10000):
     :return: action
     """
     rootnode = NodeMCTS(state=state)
+    for move in rootnode.state.board:
+        try:
+            rootnode.new_child(move_pt=move)
+        except go.MoveError:
+            pass
 
     while rootnode.sims < sim_limit:
         try:
@@ -247,6 +257,4 @@ def gof_move_search(queue, state, sim_limit=10000):
             rootnode.random_sim()  # run another simulation to mix up all the totals.
         if rootnode.sims % 10 == 0:
             child_scores = {child.name: child.score() for child in rootnode.children.values()}
-            score_dict = dict(rootnode.amaf_rates)
-            score_dict.update(child_scores)
-            queue.put(score_dict)
+            queue.put(child_scores)
