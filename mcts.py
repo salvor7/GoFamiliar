@@ -244,17 +244,13 @@ def gof_move_search(queue, state, sim_limit=10000):
     :return: action
     """
     rootnode = NodeMCTS(state=state)
-    for move in rootnode.state.board:
-        try:
-            rootnode.new_child(move_pt=move)
-        except go.MoveError:
-            pass
 
     while rootnode.sims < sim_limit:
         try:
             treepolicy(rootnode)
         except go.MoveError:  # hit a terminal position
             rootnode.random_sim()  # run another simulation to mix up all the totals.
+
         if rootnode.sims % 10 == 0:
             child_scores = {child.name: child.score() for child in rootnode.children.values()}
             queue.put(child_scores)
