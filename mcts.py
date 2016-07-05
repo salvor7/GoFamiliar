@@ -247,4 +247,6 @@ def gof_move_search(queue, state, sim_limit=10000):
             rootnode.random_sim()  # run another simulation to mix up all the totals.
         if rootnode.sims % 10 == 0:
             child_scores = {child.name: child.score() for child in rootnode.children.values()}
-            queue.put(child_scores)
+            score_dict = dict(rootnode.amaf_rates)
+            score_dict.update(child_scores)
+            queue.put(score_dict)
