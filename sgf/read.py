@@ -9,8 +9,10 @@ import os
 import re
 from collections import namedtuple
 from string import ascii_letters
-import h5py
+# import h5py
 import numpy as np
+from thick_goban import go
+
 import util.directory_tools as dt
 
 sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
@@ -278,3 +280,41 @@ class GoMove(namedtuple('GoMove', 'player x y')):
     GoMove(player=-1, x=3, y=4)
     """
     pass
+
+
+def parse_to_thick_goban(sgf_file_name):
+    """Parse an sgf file into a Position object
+
+    :param sgf_file_name: string of the file location
+    :return: tick_goban.Position
+    """
+    with open(sgf_file_name, 'r') as sgf_file:
+        sgf_node_gen = main_branch(parser(sgf_file.read()))
+    game_attrs = {}
+    move_list = []
+    for node in sgf_node_gen:
+        try:
+            size = int(game_attrs['SZ'])
+        except KeyError:
+            size = 19
+        try:
+            move_list.append(intmove(gomove=node_to_gomove(node), size=size))
+        except ValueError:
+            name, value = info(node)
+            if value == '' or value == ' ':  # don't record blank info
+                continue
+            if name == 'C':
+                name += str(
+                    len(move_list))  # associated game comment to specific move
+            game_attrs[name] = value
+
+    try:
+        size = int(game_attrs['SZ'])
+    except KeyError:
+        raise KeyError('SGF has no size attribute')
+    try:
+        komi = float(game_attrs['KM'])
+    except KeyError:
+        komi = 6.5
+
+    return go.Position(moves=move_list, size=size, komi=komi)

@@ -16,6 +16,7 @@ from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
 
 from thick_goban import go
+from sgf import parse_to_thick_goban
 import mcts
 
 
@@ -63,8 +64,15 @@ class ButtonGrid(GridLayout):
         super().__init__(**kwargs)
         for i in range(19*19):
             self.add_cell(i)
-        self.state = go.Position()
+        self.state = parse_to_thick_goban(sgf_file_name='static_assets/ahocat-salvor7.sgf') #go.Position()
         self.intersectionlist = []
+        while True:
+            try:
+                self.gamestate = self.state.board._board_colour
+            except AttributeError:
+                Clock.schedule_once(lambda dt: None)
+            else:
+                break
 
     def on_gamestate(self, instance, value):
 
@@ -79,7 +87,7 @@ class ButtonGrid(GridLayout):
             instance.lastmove.circle = circle_values(instance)
             instance.lastmove.width = instance.width * 0.05
 
-        Logger.info('Board state: ' + str(value))
+        #Logger.info('Board state: ' + str(value))
         for inter in self.intersectionlist:
             inter_colour = self.gamestate[inter.intersection_id]
 
@@ -163,7 +171,7 @@ class AnalysisButtonGrid(GridLayout):
         self.state = go.Position()
         self.intersectionlist = []
 
-        Clock.schedule_interval(self.update_board_overlay, .25)
+        Clock.schedule_interval(self.update_board_overlay, .05)
 
         # Idea to use queue came from here
         # https://pymotw.com/2/multiprocessing/communication.html
@@ -189,7 +197,7 @@ class AnalysisButtonGrid(GridLayout):
         self.analysis_process = Process(target=mcts.gof_move_search, args=(self.analysis_queue, self.state, 10000))
         self.analysis_process.start()
 
-        Logger.info('Board state: ' + str(value))
+        #Logger.info('Board state: ' + str(value))
         for inter in self.intersectionlist:
             inter.stone_image.canvas.after.clear()
 
