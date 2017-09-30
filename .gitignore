@@ -69,5 +69,6 @@ docs/_build/
 # PyBuilder
 target/
 
-# Created by .ignore support plugin (hsz.mobi)
+# OSX system files
+.DS_Store
 
