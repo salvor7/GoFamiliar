@@ -3,7 +3,11 @@
 The data structures are all based on how the OpenAI gym defines it's Go9x9-v0
 environment.
 """
+from datetime import datetime
+from os import path
 
+import keras
+import numpy as np
 from keras import models, layers, backend as K
 
 
@@ -32,7 +36,7 @@ def rewardloss(actionreward, policy):
     return -K.dot(actionreward, K.transpose(policy))
 
 
-class Net:
+class PolicyNet:
     """The policy network model
 
         Defines the neural net architecture for the policy net, ie the neural net which
@@ -57,7 +61,7 @@ class Net:
         output = layers.Dense(len(ACTION_SPACE), activation='softmax')(bn)
         model = models.Model(inputs=inputs, outputs=output)
 
-        self.model.compile(optimizer=kwargs.pop('optimizer', 'adam'),
+        model.compile(optimizer=kwargs.pop('optimizer', 'adam'),
                            loss=kwargs.pop('loss', rewardloss),
                            **kwargs
                            )
@@ -90,3 +94,42 @@ class Net:
             position = position.reshape(BOARD_SHAPE_1)
 
         return self.model.predict(position, **kwargs)
+
+    def save(self, fileheader, folder='models'):
+        """Save the model json and weights
+
+        Files are saved with a time tag to ensure uniqueness.
+
+        :param fileheader: str    prepended to both file names
+        :param folder: str        folder to save model and weights
+        """
+        time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+        filename = '_'.join([fileheader, time])
+
+        h5name = '.'.join([filename, 'h5'])
+        self.model.save(path.join(folder, h5name))
+
+    def load_model(self, h5model):
+        """Load model from json description
+
+        This will replace self.model
+
+        :param h5model:
+        """
+        self.model = models.load_model(h5model)
+
+
+if __name__ == '__main__':
+    from quilt.data.andrewbrown import gofamiliar as gf
+
+    import sys
+
+    print(sys.path)
+
+    observations = np.load(gf.positions())
+    actionrewards = keras.utils.to_categorical(np.load(gf.moves())) * np.load(gf.rewards()).reshape(10430,1)
+    net = PolicyNet()
+    net.train(observations=observations, actionrewards=actionrewards, epochs=1)
+
+    net.save('policy0,0')
+
