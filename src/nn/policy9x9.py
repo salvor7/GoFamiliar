@@ -79,7 +79,7 @@ class PolicyNet:
         """
         self.model.fit(observations,
                        actionrewards,
-                       verbose=kwargs.pop('verbos', 2),
+                       verbose=kwargs.pop('verbose', 2),
                        **kwargs
                        )
 
@@ -93,7 +93,14 @@ class PolicyNet:
         if position.shape == BOARD_SHAPE:
             position = position.reshape(BOARD_SHAPE_1)
 
-        return self.model.predict(position, **kwargs)
+        return np.array(self.model.predict(position, **kwargs)).reshape((len(ACTION_SPACE),))
+
+    def move(self, position):
+        """Make a move from 9x9 go board
+
+        :return: int    move from 9x9 game
+        """
+        return np.random.choice(ACTION_SPACE, p=self.probailities(position=position))
 
     def save(self, fileheader, folder='models'):
         """Save the model json and weights
