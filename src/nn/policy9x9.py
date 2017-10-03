@@ -53,15 +53,28 @@ class PolicyNet:
         :return: keras Model
         """
         inputs = layers.Input(shape=BOARD_SHAPE)
-        zeros = layers.ZeroPadding2D((1,1))(inputs)
-        conv = layers.Convolution2D(filters=16, kernel_size=(3, 3), activation='elu')(zeros)
-        flat = layers.Flatten()(conv)
-        hidden = layers.Dense(2 ** 8, activation='elu')(flat)
-        bn = layers.BatchNormalization()(hidden)
-        output = layers.Dense(len(ACTION_SPACE), activation='softmax')(bn)
+
+        zeros1 = layers.ZeroPadding2D((1,1))(inputs)
+        conv1 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation='elu')(zeros1)
+
+        zeros2 = layers.ZeroPadding2D((1,1))(conv1)
+        conv2 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation='elu')(zeros2)
+
+        flat = layers.Flatten()(conv2)
+
+        hidden1 = layers.Dense(2 ** 10, activation='elu')(flat)
+        bn1 = layers.BatchNormalization()(hidden1)
+        drop1 = layers.Dropout(0.5)(bn1)
+
+        hidden2 = layers.Dense(2 ** 10, activation='elu')(drop1)
+        bn2 = layers.BatchNormalization()(hidden2)
+        drop2 = layers.Dropout(0.5)(bn2)
+
+        output = layers.Dense(len(ACTION_SPACE), activation='softmax')(drop2)
+
         model = models.Model(inputs=inputs, outputs=output)
 
-        model.compile(optimizer=kwargs.pop('optimizer', 'adam'),
+        model.compile(optimizer=kwargs.pop('optimizer', keras.optimizers.Adagrad(lr=0.0005)),
                            loss=kwargs.pop('loss', rewardloss),
                            **kwargs
                            )
