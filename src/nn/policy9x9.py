@@ -64,11 +64,11 @@ class PolicyNet:
 
         hidden1 = layers.Dense(2 ** 10, activation='elu')(flat)
         bn1 = layers.BatchNormalization()(hidden1)
-        drop1 = layers.Dropout(0.5)(bn1)
+        drop1 = (bn1)
 
         hidden2 = layers.Dense(2 ** 10, activation='elu')(drop1)
         bn2 = layers.BatchNormalization()(hidden2)
-        drop2 = layers.Dropout(0.5)(bn2)
+        drop2 = (bn2)
 
         output = layers.Dense(len(ACTION_SPACE), activation='softmax')(drop2)
 
