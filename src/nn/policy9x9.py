@@ -49,21 +49,22 @@ class PolicyNet:
         :param kwargs: unpacked dict    model.compile keywords
         :return: keras Model
         """
+        activation = 'elu'
         inputs = layers.Input(shape=BOARD_SHAPE)
 
         zeros1 = layers.ZeroPadding2D((1,1))(inputs)
-        conv1 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation='elu')(zeros1)
+        conv1 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation=activation)(zeros1)
 
         zeros2 = layers.ZeroPadding2D((1,1))(conv1)
-        conv2 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation='elu')(zeros2)
+        conv2 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation=activation)(zeros2)
 
         flat = layers.Flatten()(conv2)
 
-        hidden1 = layers.Dense(2 ** 10, activation='elu')(flat)
+        hidden1 = layers.Dense(2 ** 10, activation=activation)(flat)
         bn1 = layers.BatchNormalization()(hidden1)
         drop1 = (bn1)
 
-        hidden2 = layers.Dense(2 ** 10, activation='elu')(drop1)
+        hidden2 = layers.Dense(2 ** 10, activation=activation)(drop1)
         bn2 = layers.BatchNormalization()(hidden2)
         drop2 = (bn2)
 
@@ -148,5 +149,5 @@ if __name__ == '__main__':
     net = PolicyNet()
     net.train(observations=observations, actionrewards=actionrewards, epochs=1)
 
-    net.save('policy0,0')
+    net.save('policy')
 
