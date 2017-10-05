@@ -12,10 +12,7 @@ from keras import models, layers, backend as K
 
 
 BOARD_SIZE = 9
-BOARD_ACTIONS = list(range(9*9))
-PASS_ACTION = 81
-RESIGN_ACTION = 82
-ACTION_SPACE = BOARD_ACTIONS + [PASS_ACTION] + [RESIGN_ACTION]
+ACTION_SPACE = list(range(BOARD_SIZE**2))
 BOARD_SHAPE = (3,9,9)
 BOARD_SHAPE_1 = (1,3,9,9)
 
