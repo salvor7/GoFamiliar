@@ -50,9 +50,12 @@ class PolicyNet:
         :return: keras Model
         """
         activation = 'elu'
-        inputs = layers.Input(shape=BOARD_SHAPE)
 
-        zeros1 = layers.ZeroPadding2D((1,1))(inputs)
+        stones = layers.Input(shape=(2,9,9))
+        open = layers.Input(shape=(9,9))
+        open_flat = layers.Flatten()(open)
+
+        zeros1 = layers.ZeroPadding2D((1,1))(stones)
         conv1 = layers.Convolution2D(filters=32, kernel_size=(3, 3), activation=activation)(zeros1)
 
         zeros2 = layers.ZeroPadding2D((1,1))(conv1)
@@ -66,11 +69,13 @@ class PolicyNet:
         hidden2 = layers.Dense(2 ** 10, activation=activation)(bn1)
         bn2 = layers.BatchNormalization()(hidden2)
 
-        output = layers.Dense(len(ACTION_SPACE), activation='softmax')(bn2)
+        soft = layers.Dense(len(ACTION_SPACE), activation='softmax')(bn2)
 
-        model = models.Model(inputs=inputs, outputs=output)
+        output = layers.Multiply()([soft, open_flat])
 
-        model.compile(optimizer=kwargs.pop('optimizer', keras.optimizers.Adagrad(lr=0.0005)),
+        model = models.Model(inputs=[stones, open], outputs=output)
+
+        model.compile(optimizer=kwargs.pop('optimizer', keras.optimizers.Adagrad()),
                            loss=kwargs.pop('loss', rewardloss),
                            **kwargs
                            )
@@ -86,7 +91,7 @@ class PolicyNet:
         :param actionrewards: array
         :param kwargs: unpacked dict    model.fit keywords
         """
-        self.model.fit(observations,
+        self.model.fit([observations[:,:2,:,:], observations[:,2,:,:]],
                        actionrewards,
                        verbose=kwargs.pop('verbose', 2),
                        **kwargs
@@ -102,14 +107,16 @@ class PolicyNet:
         if position.shape == BOARD_SHAPE:
             position = position.reshape(BOARD_SHAPE_1)
 
-        return np.array(self.model.predict(position, **kwargs)).reshape((len(ACTION_SPACE),))
+        return np.array(self.model.predict([position[:, :2, :, :], position[:,2,:,:]], **kwargs)).reshape((len(ACTION_SPACE),))
 
     def move(self, position):
         """Make a move from 9x9 go board
 
         :return: int    move from 9x9 game
         """
-        return np.random.choice(ACTION_SPACE, p=self.probailities(position=position))
+        probs = self.probailities(position=position)
+        probs = probs / np.sum(probs)
+        return np.random.choice(ACTION_SPACE, p=probs)
 
     def save(self, fileheader, folder='models'):
         """Save the model json and weights
@@ -119,7 +126,7 @@ class PolicyNet:
         :param fileheader: str    prepended to both file names
         :param folder: str        folder to save model and weights
         """
-        time = datetime.datetime.now().strftime('%Y%m%d%H%M')
+        time = datetime.now().strftime('%Y%m%d%H%M')
         filename = '_'.join([fileheader, time])
 
         h5name = '.'.join([filename, 'h5'])
@@ -143,7 +150,7 @@ if __name__ == '__main__':
     print(sys.path)
 
     observations = np.load(gf.positions())
-    actionrewards = keras.utils.to_categorical(np.load(gf.moves())) * np.load(gf.rewards()).reshape(10430,1)
+    actionrewards = keras.utils.to_categorical(np.load(gf.moves()) % 81, num_classes=81) * np.load(gf.rewards()).reshape(10430,1)
     net = PolicyNet()
     net.train(observations=observations, actionrewards=actionrewards, epochs=1)
 
