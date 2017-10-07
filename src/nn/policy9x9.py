@@ -9,6 +9,7 @@ from os import path
 import keras
 import numpy as np
 from keras import models, layers, backend as K
+from keras.preprocessing import image
 
 
 BOARD_SIZE = 9
@@ -49,7 +50,7 @@ class PolicyNet:
         :param kwargs: unpacked dict    model.compile keywords
         :return: keras Model
         """
-        activation = 'elu'
+        activation = 'selu'
 
         stones = layers.Input(shape=(2,9,9))
         open = layers.Input(shape=(9,9))
@@ -69,13 +70,13 @@ class PolicyNet:
         hidden2 = layers.Dense(2 ** 10, activation=activation)(bn1)
         bn2 = layers.BatchNormalization()(hidden2)
 
-        soft = layers.Dense(len(ACTION_SPACE), activation='softmax')(bn2)
+        soft = layers.Dense(len(ACTION_SPACE), activation='sigmoid')(bn2)
 
         output = layers.Multiply()([soft, open_flat])
 
         model = models.Model(inputs=[stones, open], outputs=output)
 
-        model.compile(optimizer=kwargs.pop('optimizer', keras.optimizers.Adagrad()),
+        model.compile(optimizer=kwargs.pop('optimizer', keras.optimizers.Adagrad(lr=0.001)),
                            loss=kwargs.pop('loss', rewardloss),
                            **kwargs
                            )
