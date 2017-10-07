@@ -112,7 +112,7 @@ def test_children_of_expanded(expanded_root):
 
 @pytest.fixture(scope='module')
 def library():
-    return Library(direc='sgf_store\\sgf_tests', file='sgf_tests.hdf5')
+    return Library(direc='..\\sgf_store\\sgf_tests', file='sgf_tests.hdf5')
 
 
 @pytest.fixture(params=list(library()))

@@ -9,7 +9,7 @@ import os
 import re
 from collections import namedtuple
 from string import ascii_letters
-# import h5py
+import h5py
 import numpy as np
 from thick_goban import go
 
