@@ -7,7 +7,7 @@ def convert_observation(go_obs):
 
     BLACK is set to pixel value 1
     WHITE is set to pixel value 255
-    BOARD is set to pixel value 127
+    BOARD is set to pixel value 128
 
     :param go_obs: np.array     SIZE x SIZE x 3
     :return: np.array           SIZE x SIZE
@@ -15,6 +15,6 @@ def convert_observation(go_obs):
     if len(go_obs.shape) == 3:
         go_obs = go_obs[np.newaxis]
 
-    colour_values = np.array((1, 255, 127)).reshape(1,3,1,1)       # black, white, board
+    colour_values = np.array((1, 255, 128)).reshape(1,3,1,1)       # black, white, board
     scaled_obs = go_obs * colour_values
     return np.sum(scaled_obs, axis=1)
