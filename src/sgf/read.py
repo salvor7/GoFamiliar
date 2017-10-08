@@ -270,7 +270,10 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                             len(move_list))  # associated game comment to specific move
                     game_attrs[name] = value
 
-            sgf_name = (sgf_path.split('\\')[-1]).split('.')[0]
+            sgf_year, sgf_month, sgf_file = sgf_path.split('\\')[-3:]
+            sgf_name = sgf_file.split('.')[0]
+            if 'DT' not in game_attrs:
+                game_attrs['DT'] = ' '.join(['Year:', sgf_year, 'Month:', sgf_month])
             pro_games.create_dataset(sgf_name, data=np.array(move_list))
 
             for name in game_attrs:
