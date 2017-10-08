@@ -89,8 +89,8 @@ def parser(sgf_str):
 def main_branch(sgf_list):
     """Yield the nodes of the main branch of an sgf string.
 
-    :param sgf_list: list
-    :yield: str
+    :param sgf_list: list       parser parsed sgf
+    :yield: str                 string representing the sgf node
 
     Searches every branch of the sgf list, and returns each first subbranch.
     >>> basic_branching1 = '(;SZ[19](;B[qd];W[dd];B[oc])(;B[do];W[dq]))'
@@ -201,8 +201,7 @@ def store_parser(sgf_direc=SGF_DIR):
         try:
             yield file_path, main_branch(parser(sgf_str))
         except Exception as err:
-            message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii',
-                                                                       errors='ignore')
+            message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii', errors='ignore')
             bad_files.append(message)
 
     for msg in bad_files:
@@ -237,6 +236,7 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
 
     :param file: string
     :param direc: string
+    :param sgf_direc: string
     :return: None
 
     Add sgf details from sgf files in data to a hdf5 binary.
@@ -294,7 +294,7 @@ def parse_to_thick_goban(sgf_file_name):
     """Parse an sgf file into a Position object
 
     :param sgf_file_name: string of the file location
-    :return: tick_goban.Position
+    :return: thick_goban.Position
     """
     with open(sgf_file_name, 'r') as sgf_file:
         sgf_node_gen = main_branch(parser(sgf_file.read()))

@@ -66,7 +66,7 @@ def test_node_to_move():
     ...     sgf.node_to_gomove('error')
     ... except ValueError as err:
     ...     print(err)
-    "error" is not a sgf move formatted node
+    "error" is not an sgf move formatted node
     """
     pass
 
