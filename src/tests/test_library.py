@@ -8,5 +8,5 @@ def test_sgf_position():
 
 
 def test_9by9_sgflibrary():
-    _ = Library(direc='sgf_store\\sgf_tests',
-                       file='sgf_tests.hdf5').sgf_position('tsumego013')
+    _ = Library(direc='data\\test_sets',
+                       file='test_sets.hdf5').sgf_position('tsumego013')

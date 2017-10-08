@@ -15,7 +15,7 @@ from thick_goban import go
 
 import util.directory_tools as dt
 
-sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/sgf_store'
+sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/data'
 
 # regex pattern found at at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
@@ -154,11 +154,11 @@ def info(attribute):
 
 
 def store(direc=sgfdir):
-    """Yield all raw strings from size 19 sgfs in sgf_store
+    """Yield all raw strings from size 19 sgfs in data
 
     :param direc: string
     :yield: string
-    >>> for file_path, game in store(sgfdir+'/hikaru_sgfs'):
+    >>> for file_path, game in store(sgfdir+test_sets):
     ...     print(len(game))
     1847
     2576
@@ -178,7 +178,7 @@ def store(direc=sgfdir):
 
 
 def store_parser(direc=sgfdir):
-    """Generator of parsed main branches of all sgf files in sgf_store
+    """Generator of parsed main branches of all sgf files in data
 
     :param direc: string
     :yield: generator of sgf nodes
@@ -206,16 +206,16 @@ class SGFError(Exception):
 
 
 def create_pro_csv(file='', direc='', limit=None):
-    """Create csv file of sgf_store
+    """Create csv file of data
 
     :param file: string
     :param direc: string
     :param limit: int
     :return: None
 
-    Add sgf strings from files in sgf_store folder as single lines in the csv file.
+    Add sgf strings from files in data folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='sgf_store\\hikaru_sgfs')
+    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='data\\hikaru_sgfs')
     """
     with open(os.path.join(direc, file), 'w', encoding='utf-8') as csv_file:
         for sgf_id, (sgf_path, sgf_str) in enumerate(store(direc=direc)):
@@ -225,19 +225,18 @@ def create_pro_csv(file='', direc='', limit=None):
 
 
 def create_pro_hdf5(file='', direc='', limit=np.inf):
-    """Create hdf5 file of sgf_store
+    """Create hdf5 file of data
 
     :param file: string
     :param direc: string
     :return: None
 
-    Add sgf details from sgf files in sgf_store to a hdf5 binary.
+    Add sgf details from sgf files in data to a hdf5 binary.
     Each game is added as a group.
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc='sgf_store\\hikaru_sgfs')
-    """
+    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc=ddata"""
     with h5py.File(os.path.join(direc, file), 'w') as pro_games:
 
         for game_id, (sgf_path, node_gen) in enumerate(store_parser(direc=direc)):

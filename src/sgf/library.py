@@ -4,7 +4,7 @@ import h5py
 from thick_goban import go
 import sgf.read
 
-doctest_dir = r'..\sgf_store\hikaru_sgfs'
+doctest_dir = r'..\data\test_sets'
 doctest_file = 'sgfhdf5_doctest.hdf5'
 
 class Library():

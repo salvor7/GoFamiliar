@@ -71,7 +71,7 @@ def test_node_to_move():
     pass
 
 def test_pro_library_access():
-    hdf5_file = os.path.join('sgf_store', 'pro_collection.hdf5')
+    hdf5_file = os.path.join('data', 'pro_collection.hdf5')
 
     try:
         pro_games = h5py.File(hdf5_file, 'r')
