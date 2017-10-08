@@ -16,7 +16,7 @@ from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
 
 from thick_goban import go
-from sgf import parse_to_thick_goban
+from sgf.read import parse_to_thick_goban
 import mcts
 
 

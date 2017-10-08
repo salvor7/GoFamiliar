@@ -5,8 +5,9 @@ An SGF string is formatted as described at the website.
 """
 
 import ast
-import os
+from os import path
 import re
+import pathlib
 from collections import namedtuple
 from string import ascii_letters
 
@@ -16,7 +17,16 @@ from thick_goban import go
 
 import util.directory_tools as dt
 
-sgfdir = u'C:/AllProgrammingProjects/GoFamiliar/data'
+
+DATA_DIR = path.join(str(pathlib.Path(__file__).parents[2]), 'data')
+SGF_DIR = path.join(DATA_DIR, 'sgf_store')
+SGF_CSV = path.join(DATA_DIR, 'pro_sgf.csv')
+SGF_H5 = path.join(DATA_DIR, 'pro_sgf.h5')
+
+TEST_DIR = path.join(DATA_DIR, 'test_sets')
+TEST_H5 = path.join(TEST_DIR, 'tests_sgf.h5')
+TEST_CSV = path.join(TEST_DIR, 'tests_sgf.csv')
+
 
 # regex pattern found at at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
 sgf_move_patt = re.compile(r'[BW]\[[a-s][a-s]\]')
@@ -154,18 +164,18 @@ def info(attribute):
     return name, value
 
 
-def store(direc=sgfdir):
-    """Yield all raw strings from size 19 sgfs in data
+def store(sgf_direc=SGF_DIR):
+    """Yield all raw sgf strings from sgfs in store
 
-    :param direc: string
-    :yield: string
-    >>> for file_path, game in store(sgfdir+test_sets):
+    :param sgf_direc: string    path string
+    :yield: string              sgf game string
+    >>> for file_path, game in store(sgf_direc=TEST_DIR):
     ...     print(len(game))
     1847
     2576
     1678
     """
-    files_found = dt.search_tree(directory=direc, file_sig='*.sgf')
+    files_found = dt.search_tree(directory=sgf_direc, file_sig='*.sgf')
 
     for file_path in files_found:
         with open(file_path, errors='ignore', encoding='utf-8') as sgf_file:
@@ -178,19 +188,19 @@ def store(direc=sgfdir):
             yield file_path, sgf_str
 
 
-def store_parser(direc=sgfdir):
-    """Generator of parsed main branches of all sgf files in data
+def store_parser(sgf_direc=SGF_DIR):
+    """Generator of parsed main branches of all sgf files in store
 
     :param direc: string
     :yield: generator of sgf nodes
-    >>> for file_path, game in store_parser(direc=sgfdir+'/hikaru_sgfs'):
+    >>> for file_path, game in store_parser(sgf_direc=TEST_DIR):
     ...     print(next(game))
     AP[MultiGo:3.9.4]
     GM[1]
     AP[MultiGo:3.9.4]
     """
     bad_files = []
-    for file_path, sgf_str in store(direc):
+    for file_path, sgf_str in store(sgf_direc):
         try:
             yield file_path, main_branch(parser(sgf_str))
         except Exception as err:
@@ -206,7 +216,7 @@ class SGFError(Exception):
     pass
 
 
-def create_pro_csv(file='', direc='', limit=None):
+def create_pro_csv(file=SGF_CSV, direc=DATA_DIR, limit=None):
     """Create csv file of data
 
     :param file: string
@@ -216,16 +226,16 @@ def create_pro_csv(file='', direc='', limit=None):
 
     Add sgf strings from files in data folder as single lines in the csv file.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_csv(file='sgfcsv_doctest.csv', direc='data\\hikaru_sgfs')
+    >>> create_pro_csv(file=TEST_CSV, direc=TEST_DIR)
     """
-    with open(os.path.join(direc, file), 'w', encoding='utf-8') as csv_file:
-        for sgf_id, (sgf_path, sgf_str) in enumerate(store(direc=direc)):
+    with open(path.join(direc, file), 'w', encoding='utf-8') as csv_file:
+        for sgf_id, (sgf_path, sgf_str) in enumerate(store(sgf_direc=direc)):
             if limit and sgf_id > abs(limit):
                 break
             csv_file.writelines(sgf_path + ', ' + sgf_str.replace('\n', '') + '\n')
 
 
-def create_pro_hdf5(file='', direc='', limit=np.inf):
+def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf):
     """Create hdf5 file of data
 
     :param file: string
@@ -237,10 +247,11 @@ def create_pro_hdf5(file='', direc='', limit=np.inf):
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file='sgfhdf5_doctest.hdf5', direc=ddata"""
-    with h5py.File(os.path.join(direc, file), 'w') as pro_games:
+    >>> create_pro_hdf5(file=TEST_H5, direc=TEST_DIR, sgf_direc=TEST_DIR)
+    """
+    with h5py.File(path.join(direc, file), 'w') as pro_games:
 
-        for game_id, (sgf_path, node_gen) in enumerate(store_parser(direc=direc)):
+        for game_id, (sgf_path, node_gen) in enumerate(store_parser(sgf_direc=sgf_direc)):
             if game_id > abs(limit):
                 break
 

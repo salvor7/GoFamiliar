@@ -5,7 +5,7 @@ import pytest
 from thick_goban import go
 import mcts
 import tests.test_fixtures as fixt
-from sgf.library import Library
+import sgf
 
 
 def test_search_open_board():

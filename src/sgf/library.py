@@ -2,31 +2,29 @@ import os
 import h5py
 
 from thick_goban import go
-import sgf.read
+from . import read
 
-doctest_dir = r'..\data\test_sets'
-doctest_file = 'sgfhdf5_doctest.hdf5'
 
 class Library():
     """SGF Library object
 
-    >>> Library(doctest_dir, doctest_file)['chap075'][:10]
+    >>> Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR)['chap075'][:10]
     array([ 72, 288, 300,  42,  59,  97,  61,  62,  80,  41])
     """
-    def __init__(self, direc, file):
+    def __init__(self, file=read.SGF_H5, direc=read.SGF_DIR,  sgf_direc=read.SGF_DIR):
         while True:
             try:
                 self._library_file = h5py.File(os.path.join(direc, file), 'r')
                 break
             except OSError:
-                sgf.read.create_pro_hdf5(direc=direc, file=file)
+                read.create_pro_hdf5(file=file, direc=direc, sgf_direc=sgf_direc)
 
     def __getitem__(self, sgf_name):
         """Return the sgf dataset
 
         :param item: str
         :return: h5py.dataset
-        >>> Library(doctest_dir, doctest_file)['chap116']
+        >>> Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR)['chap116']
         <HDF5 dataset "chap116": shape (262,), type "<i4">
         """
         return self._library_file[sgf_name]
@@ -35,7 +33,7 @@ class Library():
         """Return number of stored sgfs
 
         :return: int
-        >>> len(Library(doctest_dir, doctest_file))
+        >>> len(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR))
         3
         """
         return len(self._library_file)
@@ -44,7 +42,7 @@ class Library():
         """Return iterator over stored go games
 
         :return: iter
-        >>> for sgf_name in Library(doctest_dir, doctest_file):
+        >>> for sgf_name in Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR):
         ...     print(sgf_name)
         chap075
         chap116
@@ -57,7 +55,7 @@ class Library():
 
         :param sgf_name: str
         :return: h5py.attributes
-        >>> l = Library(doctest_dir, doctest_file).sgf_attributes('chap116')
+        >>> l = Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_attributes('chap116')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
         ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.50', 'W+0.50')
         >>> l
@@ -70,7 +68,7 @@ class Library():
         The returned position is the final state of the sgf.
         :param sgf_name: str
         :return: godata.Position
-        >>> type(Library(doctest_dir, doctest_file).sgf_position('chap075'))
+        >>> type(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_position('chap075'))
         <class 'go.Position'>
         """
         sgf_data = self[sgf_name]

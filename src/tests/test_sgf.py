@@ -2,7 +2,7 @@ import os
 import h5py
 import numpy as np
 
-import sgf.read as sgf
+import sgf
 
 
 def test_sgf_parser():
@@ -71,13 +71,11 @@ def test_node_to_move():
     pass
 
 def test_pro_library_access():
-    hdf5_file = os.path.join('data', 'pro_collection.hdf5')
-
     try:
-        pro_games = h5py.File(hdf5_file, 'r')
+        pro_games = h5py.File(sgf.SGF_H5, 'r')
     except OSError:
-        sgf.create_pro_hdf5(file=hdf5_file)
-        pro_games = h5py.File(hdf5_file, 'r')
+        sgf.read.create_pro_hdf5()
+        pro_games = h5py.File(sgf.SGF_H5, 'r')
 
     assert len(pro_games['19']) == 51500
     #access size 19 games
