@@ -5,7 +5,6 @@ import pytest
 from thick_goban import go
 import mcts
 import tests.test_fixtures as fixt
-import sgf
 
 
 def test_search_open_board():
@@ -108,24 +107,6 @@ def test_children_of_expanded(expanded_root):
         assert best1stgen.sims - best1stgen.wins == -1 + sum([child.wins for child in best1stgen.children.values()])
         assert expanded_root.sims == 361 - 23 - 2 + idx
         assert expanded_root.sims - expanded_root.wins == sum([child.wins for child in expanded_root.children.values()])
-
-
-@pytest.fixture(scope='module')
-def library():
-    return Library(direc='..\\data\\test_sets', file='test_sets.hdf5')
-
-
-@pytest.fixture(params=list(library()))
-def tsumego(request):
-    tsumego_name = request.param
-    correct_move = int(tsumego_name[7:10])  # correct move encoded in file name
-    return library().sgf_position(tsumego_name), correct_move
-
-
-def test_tsumego_solving(tsumego):
-    position, correct_move = tsumego
-    found_move = mcts.move_search(position, sim_limit=800)
-    assert correct_move == found_move
 
 
 @pytest.fixture()
