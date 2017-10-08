@@ -51,4 +51,3 @@ class Node(object):
             raise TypeError('Node expected. ' + str(type(child)) + ' received.')
         child.parent = self
         self.children.append(child)
-

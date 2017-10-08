@@ -60,6 +60,7 @@ class Library():
         >>> l = Library(doctest_dir, doctest_file).sgf_attributes('chap116')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
         ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.50', 'W+0.50')
+        >>> l
         """
         return self[sgf_name].attrs
 
