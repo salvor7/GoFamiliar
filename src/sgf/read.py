@@ -169,11 +169,8 @@ def store(sgf_direc=SGF_DIR):
 
     :param sgf_direc: string    path string
     :yield: string              sgf game string
-    >>> for file_path, game in store(sgf_direc=TEST_DIR):
-    ...     print(len(game))
-    1847
-    2576
-    1678
+    >>> sum([len(game) for file_path, game in store(sgf_direc=TEST_DIR)])
+    166473
     """
     files_found = dt.search_tree(directory=sgf_direc, file_sig='*.sgf')
 
@@ -193,11 +190,11 @@ def store_parser(sgf_direc=SGF_DIR):
 
     :param direc: string
     :yield: generator of sgf nodes
-    >>> for file_path, game in store_parser(sgf_direc=TEST_DIR):
-    ...     print(next(game))
-    AP[MultiGo:3.9.4]
-    GM[1]
-    AP[MultiGo:3.9.4]
+    >>> first_nodes = set([next(game).split('[')[0] for file_path, game in store_parser(sgf_direc=TEST_DIR)])
+    >>> first_nodes = list(first_nodes)
+    >>> first_nodes.sort()
+    >>> first_nodes
+    ['AB', 'AP', 'FF', 'GM', 'OM', 'PW', 'SZ']
     """
     bad_files = []
     for file_path, sgf_str in store(sgf_direc):

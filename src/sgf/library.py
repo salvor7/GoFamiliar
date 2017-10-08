@@ -34,7 +34,7 @@ class Library():
 
         :return: int
         >>> len(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR))
-        3
+        115
         """
         return len(self._library_file)
 
@@ -43,10 +43,8 @@ class Library():
 
         :return: iter
         >>> for sgf_name in Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR):
-        ...     print(sgf_name)
-        chap075
-        chap116
-        chap170a
+        ...     print(sgf_name); break
+        anime028a
         """
         return iter(self._library_file)
 
@@ -57,8 +55,7 @@ class Library():
         :return: h5py.attributes
         >>> l = Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_attributes('chap116')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
-        ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.50', 'W+0.50')
-        >>> l
+        ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.5', 'W+0.5')
         """
         return self[sgf_name].attrs
 
@@ -69,7 +66,7 @@ class Library():
         :param sgf_name: str
         :return: godata.Position
         >>> type(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_position('chap075'))
-        <class 'go.Position'>
+        <class 'thick_goban.go.Position'>
         """
         sgf_data = self[sgf_name]
         d = dict(sgf_data.attrs)
