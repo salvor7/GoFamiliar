@@ -247,7 +247,7 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
     >>> create_pro_hdf5(file=TEST_H5, direc=TEST_DIR, sgf_direc=TEST_DIR)
     """
     with h5py.File(path.join(direc, file), 'w') as pro_games:
-
+        failed_sgfs = []
         for game_id, (sgf_path, node_gen) in enumerate(store_parser(sgf_direc=sgf_direc)):
             if game_id > abs(limit):
                 break
@@ -269,10 +269,22 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
             sgf_name = sgf_file.replace('.sgf', '')
             if 'DT' not in game_attrs:
                 game_attrs['DT'] = ' '.join(['Year:', sgf_year, 'Month:', sgf_month])
-            pro_games.create_dataset(sgf_name, data=np.array(move_list))
+            try:
+                pro_games.create_group(sgf_name)
+            except RuntimeError as err:
+                raise ValueError('This SGF name already added to H5 file: '+sgf_name)
+            try:
+                pro_games[sgf_name].create_dataset('moves', data=np.array(move_list))
+                pro_games[sgf_name].create_dataset('sgf', data=list(node_gen))
+                pro_games[sgf_name].create_dataset('gray', data=go.Position.grayscaled_game(move_list))
+            except Exception as err:
+                failed_sgfs.append(str((sgf_name, str(err))))
+                raise
 
             for name in game_attrs:
                 pro_games[sgf_name].attrs[name] = game_attrs[name]
+    if failed_sgfs:
+        raise ValueError('Incorrectly constructed sgfs\n'+'\n'.join(failed_sgfs))
 
 
 class GoMove(namedtuple('GoMove', 'player x y')):
