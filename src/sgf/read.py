@@ -256,11 +256,7 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
             move_list = []
             for node in node_gen:
                 try:
-                    size = int(game_attrs['SZ'])
-                except KeyError:
-                    size = 19
-                try:
-                    move_list.append(intmove(gomove=node_to_gomove(node), size=size))
+                    move_list.append(intmove(gomove=node_to_gomove(node), size=19))
                 except ValueError:
                     name, value = info(node)
                     if value == '' or value == ' ':  # don't record blank info
