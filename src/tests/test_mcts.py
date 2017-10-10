@@ -11,7 +11,7 @@ def test_search_open_board():
     move_pt = None
     position = go.Position(size=9, komi=0.5)
     for idx in range(4):
-        move_pt, last_pt = mcts.move_search(position, sim_limit=400), move_pt
+        move_pt, last_pt = mcts.move_search(position, sim_limit=100), move_pt
         assert type(move_pt) is int
         assert move_pt != last_pt
         position.move(move_pt=move_pt)
