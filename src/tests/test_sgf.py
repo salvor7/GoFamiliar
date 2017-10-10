@@ -77,12 +77,28 @@ def test_pro_library_access():
         sgf.read.create_pro_hdf5()
         pro_games = h5py.File(sgf.SGF_H5, 'r')
 
-    assert len(pro_games['19']) == 51500
-    #access size 19 games
-    count_board = np.zeros(shape=(19,19), dtype=np.int)
-    for idx, game in enumerate(pro_games['19']):
+    assert len(pro_games) == 51508
 
-        player, x, y = pro_games['19'][game][0]
-        count_board[x-1, y-1] += 1
-        if idx > 100:
-            break
+    # test a subsample
+    # ensure all meta data is stored, and that the number of moves is correct
+    standard_attributes = ['FF', 'EV', 'PB', 'BR', 'PW', 'WR', 'KM', 'RE', 'DT', 'SZ']
+    subsamplegames = {'HoshinoToshi-YamabeToshiro4762': (standard_attributes + ['PC', 'CA'], 411),
+                      'HayashiYutaro-HashimotoUtaro4546': (standard_attributes + ['GM', 'CA'], 306),
+                      '-1': (standard_attributes + ['PC', 'CA'], 284),
+                      'ZouJunjie-ZhuSongli25339': (standard_attributes + ['RU', 'CA'], 161),
+                      '.-.21425': (standard_attributes + ['PC', 'RU', 'CA'], 148),
+                      'WangLei-WangYao35430': (standard_attributes + ['AP'], 121),
+                      '-2432': (standard_attributes + ['PC', 'GM', 'CA'], 61),
+                      }
+
+    for gamename in subsamplegames:
+        expected_attributes, expected_game_len = subsamplegames[gamename]
+
+        # ensure all expected attributes are present
+        for attr in expected_attributes:
+            assert attr in pro_games[gamename].attrs
+
+        moves = list(pro_games[gamename])
+        assert len(moves) == expected_game_len
+        for m in moves:
+            assert 0 <= m < 19**2
