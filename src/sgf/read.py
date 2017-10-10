@@ -128,7 +128,7 @@ def node_to_gomove(node):
     try:
         move = re.findall(sgf_move_patt, node)[0]
     except IndexError:
-        raise ValueError('"' + node + '" is not a sgf move formatted node')
+        raise ValueError('"' + node + '" is not an sgf move formatted node')
 
     player = player_assign[move[0]]
     x_coord, y_coord = letter_coord_id[move[2]], letter_coord_id[move[3]]
@@ -266,8 +266,7 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                     if value == '' or value == ' ':  # don't record blank info
                         continue
                     if name == 'C':
-                        name += str(
-                            len(move_list))  # associated game comment to specific move
+                        name += str(len(move_list))  # associate game comment to specific move
                     game_attrs[name] = value
 
             sgf_year, sgf_month, sgf_file = sgf_path.split('\\')[-3:]
