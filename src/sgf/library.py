@@ -66,7 +66,7 @@ class Library():
         The returned position is the final state of the sgf.
         :param sgf_name: str
         :return: godata.Position
-        >>> type(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_position('chap075'))
+        >>> type(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_position('chap005a'))
         <class 'thick_goban.go.Position'>
         """
         sgf_data = self[sgf_name]

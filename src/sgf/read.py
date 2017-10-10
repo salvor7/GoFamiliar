@@ -265,6 +265,12 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                         name += str(len(move_list))  # associate game comment to specific move
                     game_attrs[name] = value
 
+            add_black = 'AB'
+            if add_black in game_attrs:
+                handicaps = [intmove(node_to_gomove('B['+handi+']')) for handi in game_attrs[add_black].split(' ')]
+            else:
+                handicaps = []
+
             sgf_year, sgf_month, sgf_file = sgf_path.split('\\')[-3:]
             sgf_name = sgf_file.replace('.sgf', '')
             if 'DT' not in game_attrs:
@@ -275,11 +281,11 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                 raise ValueError('This SGF name already added to H5 file: '+sgf_name)
             try:
                 pro_games[sgf_name].create_dataset('moves', data=np.array(move_list))
+                pro_games[sgf_name].create_dataset('handicap', data=np.array(handicaps))
                 pro_games[sgf_name].create_dataset('sgf', data=list(node_gen))
-                pro_games[sgf_name].create_dataset('gray', data=go.Position.grayscaled_game(move_list))
+                pro_games[sgf_name].create_dataset('gray', data=go.Position.grayscaled_game(move_list, handicap=handicaps))
             except Exception as err:
                 failed_sgfs.append(str((sgf_name, str(err))))
-                raise
 
             for name in game_attrs:
                 pro_games[sgf_name].attrs[name] = game_attrs[name]
