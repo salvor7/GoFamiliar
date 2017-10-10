@@ -1,6 +1,8 @@
 
-import nn.policy9x9 as policy
+from nn.policy9x9 import PolicyNet
 
 
 def test_define():
-    policy.net()
+    """Test the creation of the PolicyNet object has no runtime bugs
+    """
+    PolicyNet()
