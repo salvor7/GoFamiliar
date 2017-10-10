@@ -20,6 +20,10 @@ class Library():
             except OSError:
                 read.create_pro_hdf5(file=file, direc=direc, sgf_direc=sgf_direc)
 
+    def __del__(self):
+        """Close the h5 file"""
+        self._library_file.close()
+
     def __getitem__(self, sgf_name):
         """Return the sgf dataset
 
