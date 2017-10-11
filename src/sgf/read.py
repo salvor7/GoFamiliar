@@ -24,7 +24,7 @@ SGF_CSV = path.join(DATA_DIR, 'pro_sgf.csv')
 SGF_H5 = path.join(DATA_DIR, 'pro_sgf.h5')
 
 TEST_DIR = path.join(DATA_DIR, 'test_sets')
-TEST_H5 = path.join(TEST_DIR, 'tests_sgf.h5')
+READTEST_H5 = path.join(TEST_DIR, 'readtests_sgf.h5')
 TEST_CSV = path.join(TEST_DIR, 'tests_sgf.csv')
 
 
@@ -244,7 +244,7 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file=TEST_H5, direc=TEST_DIR, sgf_direc=TEST_DIR)
+    >>> create_pro_hdf5(file=READTEST_H5, direc=TEST_DIR, sgf_direc=TEST_DIR)
     """
     with h5py.File(path.join(direc, file), 'w') as pro_games:
         failed_sgfs = []
