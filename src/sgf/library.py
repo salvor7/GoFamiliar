@@ -1,6 +1,7 @@
 
 import os
 import h5py
+from os import path
 
 from thick_goban import go
 from . import read
@@ -9,7 +10,7 @@ from . import read
 class Library():
     """SGF Library object
 
-    >>> Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR)['chap075'][:10]
+    >>> _doctest_library['chap075']['moves'][:10]
     array([ 72, 288, 300,  42,  59,  97,  61,  62,  80,  41])
     """
     def __init__(self, file=read.SGF_H5, direc=read.SGF_DIR,  sgf_direc=read.SGF_DIR):
@@ -29,8 +30,8 @@ class Library():
 
         :param item: str
         :return: h5py.dataset
-        >>> Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR)['chap116']
-        <HDF5 dataset "chap116": shape (262,), type "<i4">
+        >>> _doctest_library['chap116']
+        <HDF5 group "/chap116" (4 members)>
         """
         return self._library_file[sgf_name]
 
@@ -38,7 +39,7 @@ class Library():
         """Return number of stored sgfs
 
         :return: int
-        >>> len(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR))
+        >>> len(_doctest_library)
         115
         """
         return len(self._library_file)
@@ -47,7 +48,7 @@ class Library():
         """Return iterator over stored go games
 
         :return: iter
-        >>> for sgf_name in Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR):
+        >>> for sgf_name in _doctest_library:
         ...     print(sgf_name); break
         anime028a
         """
@@ -58,7 +59,7 @@ class Library():
 
         :param sgf_name: str
         :return: h5py.attributes
-        >>> l = Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_attributes('chap116')
+        >>> l = _doctest_library.sgf_attributes('chap116')
         >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
         ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.5', 'W+0.5')
         """
@@ -70,7 +71,7 @@ class Library():
         The returned position is the final state of the sgf.
         :param sgf_name: str
         :return: godata.Position
-        >>> type(Library(file=read.TEST_H5, direc=read.TEST_DIR, sgf_direc=read.TEST_DIR).sgf_position('chap005a'))
+        >>> type(_doctest_library.sgf_position('chap005a'))
         <class 'thick_goban.go.Position'>
         """
         sgf_data = self[sgf_name]
@@ -85,3 +86,8 @@ class Library():
             komi = 6.5
 
         return go.Position(moves=sgf_data, size=size, komi=komi)
+
+
+_doctest_library = Library(file=path.join(read.TEST_DIR, 'libtests_sgf.h5'),
+                           direc=read.TEST_DIR,
+                           sgf_direc=read.TEST_DIR)
