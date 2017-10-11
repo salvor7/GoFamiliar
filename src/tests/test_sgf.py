@@ -1,6 +1,7 @@
 import os
 import h5py
 import numpy as np
+import pytest
 
 import sgf
 
@@ -70,17 +71,25 @@ def test_node_to_move():
     """
     pass
 
-def test_pro_library_access():
+
+@pytest.fixture(scope='module')
+def pro_games():
     try:
-        pro_games = h5py.File(sgf.SGF_H5, 'r')
+        return h5py.File(sgf.SGF_H5, 'r')
     except OSError:
         sgf.read.create_pro_hdf5()
-        pro_games = h5py.File(sgf.SGF_H5, 'r')
+        return h5py.File(sgf.SGF_H5, 'r')
 
+
+def test_all_pro_games_included(pro_games):
     assert len(pro_games) == 51508
 
-    # test a subsample
-    # ensure all meta data is stored, and that the number of moves is correct
+
+def test_sgf_data_correct(pro_games):
+    """ Test the data for a subsample of sgf
+
+    Ensure all meta data is stored, and that the number of moves is correct
+    """
     standard_attributes = ['FF', 'EV', 'PB', 'BR', 'PW', 'WR', 'KM', 'RE', 'DT', 'SZ']
     subsamplegames = {'HoshinoToshi-YamabeToshiro4762': (standard_attributes + ['PC', 'CA'], 411),
                       'HayashiYutaro-HashimotoUtaro4546': (standard_attributes + ['GM', 'CA'], 306),
