@@ -284,10 +284,12 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                 pro_games.create_group(sgf_name)
             except RuntimeError as err:
                 raise ValueError('This SGF name already added to H5 file: '+sgf_name)
+
+            pro_games[sgf_name].create_dataset('moves', data=np.array(move_list))
+            pro_games[sgf_name].create_dataset('handicap', data=np.array(handicaps))
+            pro_games[sgf_name].create_dataset('sgf', data=list(node_gen))
+
             try:
-                pro_games[sgf_name].create_dataset('moves', data=np.array(move_list))
-                pro_games[sgf_name].create_dataset('handicap', data=np.array(handicaps))
-                pro_games[sgf_name].create_dataset('sgf', data=list(node_gen))
                 pro_games[sgf_name].create_dataset('gray', data=go.Position.grayscaled_game(move_list, handicap=handicaps))
             except Exception as err:
                 failed_sgfs.append(str((sgf_name, str(err))))
