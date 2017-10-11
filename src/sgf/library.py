@@ -85,7 +85,7 @@ class Library():
         except KeyError:
             komi = 6.5
 
-        return go.Position(moves=sgf_data, size=size, komi=komi)
+        return go.Position(moves=sgf_data['moves'], handicap=sgf_data['handicap'], size=size, komi=komi)
 
 
 _doctest_library = Library(file=path.join(read.TEST_DIR, 'libtests_sgf.h5'),

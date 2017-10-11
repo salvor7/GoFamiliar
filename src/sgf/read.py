@@ -120,6 +120,7 @@ def node_to_gomove(node):
     GoMove(player=-1, x=16, y=17)
     """
     size = 19
+
     letter_coord_id = {letter: coord for letter, coord in
                        zip(ascii_letters, range(1, size + 1))}
     player_assign = {'B': 1, 'W': -1}
@@ -266,10 +267,14 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                     game_attrs[name] = value
 
             add_black = 'AB'
+            handicaps = []
             if add_black in game_attrs:
-                handicaps = [intmove(node_to_gomove('B['+handi+']')) for handi in game_attrs[add_black].split(' ')]
-            else:
-                handicaps = []
+                for handi in game_attrs[add_black].split(' '):
+                    if handi == 'tt':
+                        handi_pt = 19**2
+                    else:
+                        handi_pt = intmove(node_to_gomove('B[' + handi + ']'))
+                    handicaps.append(handi_pt)
 
             sgf_year, sgf_month, sgf_file = sgf_path.split('\\')[-3:]
             sgf_name = sgf_file.replace('.sgf', '')
