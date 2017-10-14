@@ -75,47 +75,6 @@ def test_node_to_move():
     pass
 
 
-@pytest.fixture(scope='module')
-def pro_games():
-    try:
-        return h5py.File(sgf.SGF_H5, 'r')
-    except OSError:
-        sgf.create_pro_hdf5()
-        return h5py.File(sgf.SGF_H5, 'r')
-
-
-def test_all_pro_games_included(pro_games):
-    assert len(pro_games) == 51508
-
-
-def test_sgf_data_correct(pro_games):
-    """ Test the data for a subsample of sgf
-
-    Ensure all meta data is stored, and that the number of moves is correct
-    """
-    standard_attributes = ['FF', 'EV', 'PB', 'BR', 'PW', 'WR', 'KM', 'RE', 'DT', 'SZ']
-    subsamplegames = {'HoshinoToshi-YamabeToshiro4762': (standard_attributes + ['PC', 'CA'], 411),
-                      'HayashiYutaro-HashimotoUtaro4546': (standard_attributes + ['GM', 'CA'], 302),
-                      '-1': (standard_attributes + ['PC', 'CA'], 284),
-                      'ZouJunjie-ZhuSongli25339': (standard_attributes + ['RU', 'CA'], 161),
-                      '.-.21425': (standard_attributes + ['PC', 'RU', 'CA'], 148),
-                      'WangLei-WangYao35430': (standard_attributes + ['AP'], 121),
-                      '-2432': (standard_attributes + ['PC', 'GM', 'CA'], 61),
-                      }
-
-    for gamename in subsamplegames:
-        expected_attributes, expected_game_len = subsamplegames[gamename]
-
-        # ensure all expected attributes are present
-        for attr in expected_attributes:
-            assert attr in pro_games[gamename].attrs
-
-        moves = list(pro_games[gamename]['moves'])
-        assert len(moves) == expected_game_len
-        for m in moves:
-            assert 0 <= m[0] < 19**2
-
-
 def test_sgf_position():
     position = sgf.Library(file=path.join(sgf.TEST_DIR, 'libtests_sgf.h5'),
                            direc=sgf.TEST_DIR,
