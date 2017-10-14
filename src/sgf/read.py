@@ -106,6 +106,19 @@ def main_branch(sgf_list):
             yield node
 
 
+class GoMove(namedtuple('GoMove', 'player x y')):
+    """GoMove namedtuple object
+
+    >>> black_tengen = GoMove(player=1, x=10, y=10)
+    >>> black_tengen
+    GoMove(player=1, x=10, y=10)
+    >>> white_komoku = GoMove(-1,3,4)
+    >>> white_komoku
+    GoMove(player=-1, x=3, y=4)
+    """
+    pass
+
+
 def node_to_gomove(node):
     """Return the GoMove for an SGF move node.
 
@@ -298,19 +311,6 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                 pro_games[sgf_name].attrs[name] = game_attrs[name]
     if failed_sgfs:
         raise ValueError('Incorrectly constructed sgfs\n'+'\n'.join(failed_sgfs))
-
-
-class GoMove(namedtuple('GoMove', 'player x y')):
-    """GoMove namedtuple object
-
-    >>> black_tengen = GoMove(player=1, x=10, y=10)
-    >>> black_tengen
-    GoMove(player=1, x=10, y=10)
-    >>> white_komoku = GoMove(-1,3,4)
-    >>> white_komoku
-    GoMove(player=-1, x=3, y=4)
-    """
-    pass
 
 
 def parse_to_thick_goban(sgf_file_name):
