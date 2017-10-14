@@ -107,7 +107,7 @@ def test_sgf_data_correct(pro_games):
         for attr in expected_attributes:
             assert attr in pro_games[gamename].attrs
 
-        moves = list(pro_games[gamename])
+        moves = list(pro_games[gamename]['moves'])
         assert len(moves) == expected_game_len
         for m in moves:
             assert 0 <= m < 19**2

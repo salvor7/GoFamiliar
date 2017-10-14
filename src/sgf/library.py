@@ -31,7 +31,7 @@ class Library():
         :param item: str
         :return: h5py.dataset
         >>> _doctest_library['chap116']
-        <HDF5 group "/chap116" (4 members)>
+        <HDF5 group "/chap116" (3 members)>
         """
         return self._library_file[sgf_name]
 
@@ -85,7 +85,7 @@ class Library():
         except KeyError:
             komi = 6.5
 
-        return go.Position(moves=sgf_data['moves'], handicap=sgf_data['handicap'], size=size, komi=komi)
+        return go.Position(moves=sgf_data['moves'], setup=sgf_data['setup'], size=size, komi=komi)
 
 
 _doctest_library = Library(file=path.join(read.TEST_DIR, 'libtests_sgf.h5'),

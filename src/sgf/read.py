@@ -199,27 +199,50 @@ def store(sgf_direc=SGF_DIR):
             yield file_path, sgf_str
 
 
-def store_parser(sgf_direc=SGF_DIR):
+def store_parser(sgf_gen=store(SGF_DIR)):
     """Generator of parsed main branches of all sgf files in store
 
     :param direc: string
     :yield: generator of sgf nodes
-    >>> first_nodes = set([next(game).split('[')[0] for file_path, game in store_parser(sgf_direc=TEST_DIR)])
-    >>> first_nodes = list(first_nodes)
-    >>> first_nodes.sort()
-    >>> first_nodes
-    ['AB', 'AP', 'FF', 'GM', 'OM', 'PW', 'SZ']
+    >>> next(store_parser(store(sgf_direc=TEST_DIR)))['name']
+    'anime028a'
     """
     bad_files = []
-    for file_path, sgf_str in store(sgf_direc):
+    for file_path, sgf_str in sgf_gen:
         try:
-            yield file_path, main_branch(parser(sgf_str))
+            node_gen = main_branch(parser(sgf_str))
         except Exception as err:
             message = str(err).encode('utf-8', errors='ignore').decode(encoding='ascii', errors='ignore')
             bad_files.append(message)
+        else:
+            game_details = {'sgfstr': sgf_str,
+                            'path': file_path,
+                            'name': file_path.split('\\')[-1].replace('.sgf', ''),
+                            'moves': [],
+                            'setup': [],
+                            }
+            for node in node_gen:
+                try:
+                    game_details['moves'].append(intmove(gomove=node_to_gomove(node), size=19))
+                except ValueError:
+                    name, value = info(node)
+                    if value == '' or value == ' ':  # don't record blank info
+                        continue
+                    elif name in ['AB', 'AW']:
+                        for handi in value.split(' '):
+                            if handi == 'tt':
+                                pass
+                            else:
+                                handi_pt = intmove(node_to_gomove(name[-1]+'[' + handi + ']'))
+                                game_details['setup'].append(handi_pt)
+                    elif name == 'C':
+                        name += str(len(game_details['moves']))  # associate game comment to specific move
 
-    for msg in bad_files:
-        print(msg)
+                    game_details[name] = value
+            yield game_details
+
+    if bad_files:
+        raise ValueError('Unparsed SGFs sgfs\n' + '\n'.join(bad_files))
 
 
 class SGFError(Exception):
@@ -262,53 +285,28 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
     """
     with h5py.File(path.join(direc, file), 'w') as pro_games:
         failed_sgfs = []
-        for game_id, (sgf_path, node_gen) in enumerate(store_parser(sgf_direc=sgf_direc)):
+        for game_id, game_details in enumerate(store_parser(store(sgf_direc=sgf_direc))):
             if game_id > abs(limit):
                 break
 
-            game_attrs = {}
-            move_list = []
-            for node in node_gen:
-                try:
-                    move_list.append(intmove(gomove=node_to_gomove(node), size=19))
-                except ValueError:
-                    name, value = info(node)
-                    if value == '' or value == ' ':  # don't record blank info
-                        continue
-                    if name == 'C':
-                        name += str(len(move_list))  # associate game comment to specific move
-                    game_attrs[name] = value
-
-            add_black = 'AB'
-            handicaps = []
-            if add_black in game_attrs:
-                for handi in game_attrs[add_black].split(' '):
-                    if handi == 'tt':
-                        handi_pt = 19**2
-                    else:
-                        handi_pt = intmove(node_to_gomove('B[' + handi + ']'))
-                    handicaps.append(handi_pt)
-
-            sgf_year, sgf_month, sgf_file = sgf_path.split('\\')[-3:]
-            sgf_name = sgf_file.replace('.sgf', '')
-            if 'DT' not in game_attrs:
-                game_attrs['DT'] = ' '.join(['Year:', sgf_year, 'Month:', sgf_month])
+            sgf = game_details['name']
             try:
-                pro_games.create_group(sgf_name)
+                pro_games.create_group(sgf)
             except RuntimeError as err:
-                raise ValueError('This SGF name already added to H5 file: '+sgf_name)
+                raise ValueError('This SGF name already added to H5 file: ' + sgf)
 
-            pro_games[sgf_name].create_dataset('moves', data=np.array(move_list))
-            pro_games[sgf_name].create_dataset('handicap', data=np.array(handicaps))
-            pro_games[sgf_name].create_dataset('sgf', data=list(node_gen))
-
+            pro_games[sgf].create_dataset('moves', data=np.array(game_details['moves']))
+            pro_games[sgf].create_dataset('setup', data=np.array(game_details['setup']))
             try:
-                pro_games[sgf_name].create_dataset('gray', data=go.Position.grayscaled_game(move_list, handicap=handicaps))
+                posi = go.Position.grayscaled_game(moves=game_details['moves'], setup=game_details['setup'])
             except Exception as err:
-                failed_sgfs.append(str((sgf_name, str(err))))
+                failed_sgfs.append(str((sgf, str(err))))
+            else:
+                pro_games[sgf].create_dataset('gray', data=posi)
 
-            for name in game_attrs:
-                pro_games[sgf_name].attrs[name] = game_attrs[name]
+            for name in game_details:
+                if name not in ['moves', 'setup']:
+                    pro_games[sgf].attrs[name] = game_details[name]
     if failed_sgfs:
         raise ValueError('Incorrectly constructed sgfs\n'+'\n'.join(failed_sgfs))
 
@@ -320,32 +318,10 @@ def parse_to_thick_goban(sgf_file_name):
     :return: thick_goban.Position
     """
     with open(sgf_file_name, 'r') as sgf_file:
-        sgf_node_gen = main_branch(parser(sgf_file.read()))
-    game_attrs = {}
-    move_list = []
-    for node in sgf_node_gen:
-        try:
-            size = int(game_attrs['SZ'])
-        except KeyError:
-            size = 19
-        try:
-            move_list.append(intmove(gomove=node_to_gomove(node), size=size))
-        except ValueError:
-            name, value = info(node)
-            if value == '' or value == ' ':  # don't record blank info
-                continue
-            if name == 'C':
-                name += str(
-                    len(move_list))  # associated game comment to specific move
-            game_attrs[name] = value
+        sgf_str = sgf_file.read()
+    game_details = next(store_parser([(sgf_file_name, sgf_str)]))
 
-    try:
-        size = int(game_attrs['SZ'])
-    except KeyError:
-        raise KeyError('SGF has no size attribute')
-    try:
-        komi = float(game_attrs['KM'])
-    except KeyError:
-        komi = 6.5
-
-    return go.Position(moves=move_list, size=size, komi=komi)
+    return go.Position(moves=game_details['moves'],
+                       setup=game_details['setup'],
+                       size=game_details.get('SZ', 19),
+                       komi=game_details.get('KM', '6.5'))
