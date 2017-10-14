@@ -92,7 +92,7 @@ def test_sgf_data_correct(pro_games):
     """
     standard_attributes = ['FF', 'EV', 'PB', 'BR', 'PW', 'WR', 'KM', 'RE', 'DT', 'SZ']
     subsamplegames = {'HoshinoToshi-YamabeToshiro4762': (standard_attributes + ['PC', 'CA'], 411),
-                      'HayashiYutaro-HashimotoUtaro4546': (standard_attributes + ['GM', 'CA'], 306),
+                      'HayashiYutaro-HashimotoUtaro4546': (standard_attributes + ['GM', 'CA'], 302),
                       '-1': (standard_attributes + ['PC', 'CA'], 284),
                       'ZouJunjie-ZhuSongli25339': (standard_attributes + ['RU', 'CA'], 161),
                       '.-.21425': (standard_attributes + ['PC', 'RU', 'CA'], 148),
