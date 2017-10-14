@@ -110,4 +110,4 @@ def test_sgf_data_correct(pro_games):
         moves = list(pro_games[gamename]['moves'])
         assert len(moves) == expected_game_len
         for m in moves:
-            assert 0 <= m < 19**2
+            assert 0 <= m[0] < 19**2

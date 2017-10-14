@@ -157,9 +157,9 @@ def intmove(gomove, size=19):
     :param size: int
     :return: int
     >>> intmove(GoMove(player=-1, x=16, y=17))
-    319
+    (319, -1)
     """
-    return gomove.x - 1 + (gomove.y - 1)*size
+    return gomove.x - 1 + (gomove.y - 1)*size, gomove.player
 
 
 def info(attribute):

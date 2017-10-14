@@ -10,8 +10,8 @@ from . import read
 class Library():
     """SGF Library object
 
-    >>> _doctest_library['chap075']['moves'][:10]
-    array([ 72, 288, 300,  42,  59,  97,  61,  62,  80,  41])
+    >>> _doctest_library['chap075']['moves'][0]
+    array([72,  1])
     """
     def __init__(self, file=read.SGF_H5, direc=read.SGF_DIR,  sgf_direc=read.SGF_DIR):
         while True:
