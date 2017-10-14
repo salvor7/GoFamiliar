@@ -1,6 +1,7 @@
-import os
+
+from os import path
+
 import h5py
-import numpy as np
 import pytest
 
 import sgf
@@ -29,6 +30,7 @@ def test_sgf_parser():
     ['B[oq]', 'W[dd]']
     """
     pass
+
 
 def test_main_branch():
     """
@@ -61,6 +63,7 @@ def test_main_branch():
     """
     pass
 
+
 def test_node_to_move():
     """
     >>> try:
@@ -77,7 +80,7 @@ def pro_games():
     try:
         return h5py.File(sgf.SGF_H5, 'r')
     except OSError:
-        sgf.read.create_pro_hdf5()
+        sgf.create_pro_hdf5()
         return h5py.File(sgf.SGF_H5, 'r')
 
 
@@ -111,3 +114,12 @@ def test_sgf_data_correct(pro_games):
         assert len(moves) == expected_game_len
         for m in moves:
             assert 0 <= m[0] < 19**2
+
+
+def test_sgf_position():
+    position = sgf.Library(file=path.join(sgf.TEST_DIR, 'libtests_sgf.h5'),
+                           direc=sgf.TEST_DIR,
+                           sgf_direc=sgf.TEST_DIR
+                           ).sgf_position('chap075')
+    assert position.komi == 5.5
+    assert position.size == 19
