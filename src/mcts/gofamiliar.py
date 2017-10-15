@@ -2,19 +2,17 @@
 # Don't use multiprocessing.queue.Queue
 # http://stackoverflow.com/questions/24941359/ctx-parameter-in-multiprocessing-queue
 from multiprocessing import Queue, Process
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 from kivy.app import App
+from kivy.clock import Clock
 from kivy.graphics import Color, Line, Rectangle
+from kivy.properties import ObjectProperty, ListProperty
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.button import Button
 from kivy.uix.image import Image
-from kivy.logger import Logger
-from kivy.properties import ObjectProperty, ListProperty
-from kivy.clock import Clock
-
 from thick_goban import go
 
 import mcts
