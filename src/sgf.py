@@ -280,23 +280,23 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                 break
 
             sgf = game_details['name']
-            try:
-                pro_games.create_group(sgf)
-            except RuntimeError as err:
-                raise ValueError('This SGF name already added to H5 file: ' + sgf)
 
-            pro_games[sgf].create_dataset('moves', data=np.array(game_details['moves']))
-            pro_games[sgf].create_dataset('setup', data=np.array(game_details['setup']))
             try:
                 posi = go.Position.grayscaled_game(moves=game_details['moves'], setup=game_details['setup'])
             except Exception as err:
                 failed_sgfs.append(str((sgf, str(err))))
             else:
+                try:
+                    pro_games.create_group(sgf)
+                except RuntimeError as err:
+                    raise ValueError('This SGF name already added to H5 file: ' + sgf)
+                pro_games[sgf].create_dataset('moves', data=np.array(game_details['moves']))
+                pro_games[sgf].create_dataset('setup', data=np.array(game_details['setup']))
                 pro_games[sgf].create_dataset('gray', data=posi)
 
-            for name in game_details:
-                if name not in ['moves', 'setup']:
-                    pro_games[sgf].attrs[name] = game_details[name]
+                for detail in game_details:
+                    if detail not in ['moves', 'setup']:
+                        pro_games[sgf].attrs[detail] = game_details[detail]
     if failed_sgfs:
         raise ValueError('Incorrectly constructed sgfs\n'+'\n'.join(failed_sgfs))
 

@@ -15,7 +15,7 @@ def pro_games():
 
 def test_all_pro_games_included(pro_games):
     """Assert all the games in the pro library are present"""
-    assert len(pro_games) == 51508
+    assert len(pro_games) == 51471
 
 
 def test_pro_games_dataleaves(pro_games):
