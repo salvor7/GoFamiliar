@@ -18,14 +18,10 @@ from thick_goban import go
 import util.directory_tools as dt
 
 
-DATA_DIR = path.join(str(pathlib.Path(__file__).parents[2]), 'data')
+DATA_DIR = path.join(str(pathlib.Path(__file__).parents[1]), 'data')
 SGF_DIR = path.join(DATA_DIR, 'sgf_store')
 SGF_CSV = path.join(DATA_DIR, 'pro_sgf.csv')
 SGF_H5 = path.join(DATA_DIR, 'pro_sgf.h5')
-
-TEST_DIR = path.join(DATA_DIR, 'test_sets')
-READTEST_H5 = path.join(TEST_DIR, 'readtests_sgf.h5')
-TEST_CSV = path.join(TEST_DIR, 'tests_sgf.csv')
 
 
 # regex pattern found at at http://www.nncron.ru/help/EN/add_info/regexp.htm Operators section
@@ -183,8 +179,6 @@ def store(sgf_direc=SGF_DIR):
 
     :param sgf_direc: string    path string
     :yield: string              sgf game string
-    >>> sum([len(game) for file_path, game in store(sgf_direc=TEST_DIR)])
-    166473
     """
     files_found = dt.search_tree(directory=sgf_direc, file_sig='*.sgf')
 
@@ -204,8 +198,6 @@ def store_parser(sgf_gen=store(SGF_DIR)):
 
     :param direc: string
     :yield: generator of sgf nodes
-    >>> next(store_parser(store(sgf_direc=TEST_DIR)))['name']
-    'anime028a'
     """
     bad_files = []
     for file_path, sgf_str in sgf_gen:
@@ -252,14 +244,13 @@ class SGFError(Exception):
 def create_pro_csv(file=SGF_CSV, direc=DATA_DIR, limit=None):
     """Create csv file of data
 
+    Add sgf strings from files in data folder as single lines in the csv file.
+    Limit caps the number of iterations to that integer for testing.
+
     :param file: string
     :param direc: string
     :param limit: int
     :return: None
-
-    Add sgf strings from files in data folder as single lines in the csv file.
-    Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_csv(file=TEST_CSV, direc=TEST_DIR)
     """
     with open(path.join(direc, file), 'w', encoding='utf-8') as csv_file:
         for sgf_id, (sgf_path, sgf_str) in enumerate(store(sgf_direc=direc)):
@@ -271,17 +262,16 @@ def create_pro_csv(file=SGF_CSV, direc=DATA_DIR, limit=None):
 def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf):
     """Create hdf5 file of data
 
-    :param file: string
-    :param direc: string
-    :param sgf_direc: string
-    :return: None
-
     Add sgf details from sgf files in data to a hdf5 binary.
     Each game is added as a group.
     Each sgf piece of info is added as an attribute of the group.
     All the moves are added as a data set under the group.
     Limit caps the number of iterations to that integer for testing.
-    >>> create_pro_hdf5(file=READTEST_H5, direc=TEST_DIR, sgf_direc=TEST_DIR)
+
+    :param file: string
+    :param direc: string
+    :param sgf_direc: string
+    :return: None
     """
     with h5py.File(path.join(direc, file), 'w') as pro_games:
         failed_sgfs = []
@@ -330,8 +320,7 @@ def parse_to_thick_goban(sgf_file_name):
 class Library:
     """SGF Library object
 
-    >>> _doctest_library['chap075']['moves'][0]
-    array([72,  1])
+    >>> libr = Library()
     """
     def __init__(self, file=SGF_H5, direc=SGF_DIR,  sgf_direc=SGF_DIR):
         while True:
@@ -350,8 +339,6 @@ class Library:
 
         :param item: str
         :return: h5py.dataset
-        >>> _doctest_library['chap116']
-        <HDF5 group "/chap116" (3 members)>
         """
         return self._library_file[sgf_name]
 
@@ -359,8 +346,6 @@ class Library:
         """Return number of stored sgfs
 
         :return: int
-        >>> len(_doctest_library)
-        115
         """
         return len(self._library_file)
 
@@ -368,9 +353,6 @@ class Library:
         """Return iterator over stored go games
 
         :return: iter
-        >>> for sgf_name in _doctest_library:
-        ...     print(sgf_name); break
-        anime028a
         """
         return iter(self._library_file)
 
@@ -379,9 +361,6 @@ class Library:
 
         :param sgf_name: str
         :return: h5py.attributes
-        >>> l = _doctest_library.sgf_attributes('chap116')
-        >>> l['EV'], l['PB'], l['PW'], l['SZ'], l['KM'], l['RE']
-        ('22nd Meijin League', 'Rin Kaiho', 'Yoda Norimoto', '19', '5.5', 'W+0.5')
         """
         return self[sgf_name].attrs
 
@@ -391,8 +370,6 @@ class Library:
         The returned position is the final state of the sgf.
         :param sgf_name: str
         :return: godata.Position
-        >>> type(_doctest_library.sgf_position('chap005a'))
-        <class 'thick_goban.go.Position'>
         """
         sgf_data = self[sgf_name]
         d = dict(sgf_data.attrs)
@@ -406,8 +383,3 @@ class Library:
             komi = 6.5
 
         return go.Position(moves=sgf_data['moves'], setup=sgf_data['setup'], size=size, komi=komi)
-
-
-_doctest_library = Library(file=path.join(TEST_DIR, 'libtests_sgf.h5'),
-                           direc=TEST_DIR,
-                           sgf_direc=TEST_DIR)
