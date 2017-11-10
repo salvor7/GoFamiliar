@@ -9,7 +9,6 @@ from os import path
 import keras
 import numpy as np
 from keras import models, layers, backend as K
-from keras.preprocessing import image
 
 
 BOARD_SIZE = 19

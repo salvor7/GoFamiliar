@@ -158,6 +158,20 @@ def intmove(gomove, size=19):
     return gomove.x - 1 + (gomove.y - 1)*size, gomove.player
 
 
+def move_image(intmove, size=19):
+    """Return one hot encoded "image" of int move
+
+    That is a zero aray with a 1 in the postion the move was made.
+
+    :param intmove: int
+    :param size: int
+    :return: np.array
+    """
+    boardimage = np.zeros((size, size))
+    boardimage[intmove // size, intmove % size] = 1
+    return boardimage
+
+
 def info(attribute):
     """Return the sgf attribute name and data.
 
@@ -293,6 +307,8 @@ def create_pro_hdf5(file=SGF_H5, direc=DATA_DIR, sgf_direc=SGF_DIR, limit=np.inf
                 pro_games[sgf].create_dataset('moves', data=np.array(game_details['moves']))
                 pro_games[sgf].create_dataset('setup', data=np.array(game_details['setup']))
                 pro_games[sgf].create_dataset('gray', data=posi)
+                graymoves = [move_image(move) for move, _ in game_details['moves']]
+                pro_games[sgf].create_dataset('graymoves', data=np.array(graymoves))
 
                 for detail in game_details:
                     if detail not in ['moves', 'setup']:
